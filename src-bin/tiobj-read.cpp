@@ -9,32 +9,32 @@ using namespace std;
 
 int main(int argc, char **argv){
 	if ( argc < 2 ){
-		cerr << "Syntax: " << argv[0] << " CampName1,CampName2,... [File]\n";
+		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";
 		return 1;
 	}
 
-	TiObj tion;
-	string camp = argv[1];
+	TiObj obj;
+	string field = argv[1];
 	if ( argc == 2 ){
-		tion.loadFile(stdin);
+		obj.loadFile(stdin);
 	} else {
-		tion.loadFile(argv[2]);
+		obj.loadFile(argv[2]);
 	}
 
 	
 	char token[1024];
 	int i, cursor;
-	if ( camp.size() > 1024 ){
+	if ( field.size() > 1024 ){
 		return 1;
 	}
-	for (i=0,cursor=0; i<camp.size(); i++){
-		char c = camp[i];
+	for (i=0,cursor=0; i<field.size(); i++){
+		char c = field[i];
 		if ( c == ','){
 			token[cursor] = '\0';
 			if ( strcmp(token, "@") == 0 ){
-				cout << tion.encode();
+				cout << obj.encode();
 			} else {
-				cout << tion.toString(token) << endl;
+				cout << obj.toString(token) << endl;
 			}
 			cursor = 0;
 		} else {
@@ -44,9 +44,9 @@ int main(int argc, char **argv){
 	if ( token > 0 ){
 		token[cursor] = '\0';
 		if ( strcmp(token, "@") == 0 ){
-			cout << tion.encode();
+			cout << obj.encode();
 		} else {
-			cout << tion.toString(token) << endl;
+			cout << obj.toString(token) << endl;
 		}
 	}
 	return 0;
