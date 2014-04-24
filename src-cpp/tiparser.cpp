@@ -184,6 +184,7 @@ class TiLex {
 
 	int next(string& out_token, int& out_type){
 		out_token = "";
+		out_type  = L_NONE;
 		char c, aspa=0;
 		int type;
 		type = this->symbols[this->lastsymbol];
@@ -206,6 +207,8 @@ class TiLex {
 			out_type  = L_SYMB;
 			return true;
 		} else if ( type == L_ASPA ){
+
+			out_type = L_CHAR;
 			bool special = false;
 			while ( buffer.next(c) ){
 				if ( special ){
@@ -227,9 +230,9 @@ class TiLex {
 				} else
 					out_token += c;
 			}
-			out_type = L_CHAR;
 		} else if ( type == L_CHAR ){
 			out_token = c;
+			out_type = L_CHAR;
 			while ( buffer.next(c) ){
 				type = this->symbols[c];
 				if ( type == L_CHAR || type == L_INT ){
@@ -238,8 +241,7 @@ class TiLex {
 					this->lastsymbol = c;
 					break;
 				}
-			}
-			out_type = L_CHAR;
+			}		
 		} else if ( type == L_INT ){
 			out_token = c;
 			out_type = L_INT;
@@ -254,7 +256,7 @@ class TiLex {
 				out_token += c;
 			}
 		}
-		if ( out_token.size() > 0 )
+		if ( out_type != L_NONE )
 			return true;
 		return false;
 	}
@@ -305,6 +307,7 @@ class TiParser {
 	TiLex lex;
 	char translate[256];
 	vector<string> memory;
+	std::string error_msg;
 
   public:
 	TiParser(){
@@ -336,6 +339,7 @@ class TiParser {
 	bool parse(TiObj& obj, int level=0){
 		int ivalue;
 		double fvalue;
+		this->error_msg = "";
 		do {
 			int reduce = step();
 			if ( reduce == 0 ){
@@ -409,9 +413,30 @@ class TiParser {
 			if ( csy == TiLex::L_SYMB ){
 				csy = this->translate[token[0]];
 			}
+
 			act = PARSER_ACTION[state][csy];
 			if ( act == 0 ){
-				cout << "ERROR!\n";
+				error_msg = "ERROR {msg='Expected a [";
+				if ( PARSER_ACTION[state][1] != 0 ){
+					error_msg += "String;";
+				} else if ( PARSER_ACTION[state][2] != 0 ){
+					error_msg += "Integer;";
+				} else if ( PARSER_ACTION[state][3] != 0 ){
+					error_msg += "Float;";
+				} else if ( PARSER_ACTION[state][4] != 0 ){
+					error_msg += "'{';";
+				} else if ( PARSER_ACTION[state][5] != 0 ){
+					error_msg += "'}';";
+				} else if ( PARSER_ACTION[state][6] != 0 ){
+					error_msg += "'[';";
+				} else if ( PARSER_ACTION[state][7] != 0 ){
+					error_msg += "'[';";
+				} else if ( PARSER_ACTION[state][8] != 0 ){
+					error_msg += "'=';";
+				} else if ( PARSER_ACTION[state][9] != 0 ){
+					error_msg += "';';";
+				}
+				error_msg += "';";
 				return false;
 			} else if ( act == 1 ){
 				this->memPush(token);
@@ -424,7 +449,7 @@ class TiParser {
 			state = PARSER_NEXT[state][csy];
 		} while ( lex.next(token, type) );
 		if ( state != 1 ){
-			cout << "ERROR!\n";
+			error_msg = "ERROR! Ainda existe item na Pilha\n";
 			return 0;
 		}
 

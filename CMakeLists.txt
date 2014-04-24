@@ -12,4 +12,7 @@ add_executable (tiobj-select src-bin/tiobj-select.cpp)
 
 target_link_libraries (tiobj-read tiobj) 
 target_link_libraries (tiobj-select tiobj) 
- 
+
+install(TARGETS tiobj DESTINATION lib)
+install(TARGETS tiobj-read DESTINATION bin)
+install(TARGETS tiobj-select DESTINATION bin)
