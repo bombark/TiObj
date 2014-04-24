@@ -163,7 +163,50 @@ void TiObj::clear(){
 
 int TiObj::loadFile(FILE* fd){
 	this->clear();
+	TiParser parser;
+	parser.loadFile(fd);
+	parser.parse(*this);
 }
+
+int TiObj::loadFile(string filename){
+	this->clear();
+	TiParser parser;
+	parser.loadFile(filename);
+	parser.parse(*this);
+}
+
+int TiObj::loadStream(FILE* fd){
+	this->clear();
+	TiParser parser;
+	parser.loadFile(fd);
+	do {
+		TiObj* item = new TiObj();
+		if ( parser.parse(*item) ){
+			this->addObject(item);
+		} else {
+			// EM CASO DE ERRO DEVE FAZER ALGO
+			break;
+		}
+	} while(true);
+	return true;
+}
+
+int TiObj::loadStream(string filename){
+	this->clear();
+	TiParser parser;
+	parser.loadFile(filename);
+	do {
+		TiObj* item = new TiObj();
+		if ( parser.parse(*item) ){
+			this->addObject(item);
+		} else {
+			// EM CASO DE ERRO DEVE FAZER ALGO
+			break;
+		}
+	} while(true);
+	return true;
+}
+
 
 TiAttr* TiObj::getAttr(string name){
 	/*if ( name == "" )
@@ -180,12 +223,6 @@ TiAttr* TiObj::getAttr(string name){
 		this->last_ptr  = it->second;
 		return it->second;
 	}
-}
-
-int TiObj::loadFile(string filename){
-	TiParser parser;
-	parser.loadFile(filename);
-	parser.parse(*this);
 }
 
 void TiObj::set(string name, string value){
@@ -363,11 +400,10 @@ int TiObj::is(string name){
 	return false;
 }
 
-string TiObj::atStr(string name){
+string TiObj::atStr(string name, string _default){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
-		cerr << "Error{msg='Field " << name << " not found'};\n";
-		return "";
+		return _default;
 	}
 	return attr->svalue;
 }

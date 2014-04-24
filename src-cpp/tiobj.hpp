@@ -70,6 +70,8 @@ class TiObj {
 	void clear();
 	int  loadFile(FILE*  fd);
 	int  loadFile(string filename);
+	int  loadStream(FILE* fd);
+	int  loadStream(string filename);
 
 	TiAttr* getAttr(string name);
 	void set(string name, string value);
@@ -105,7 +107,7 @@ class TiObj {
 		}
 	}
 
-	string atStr(string name);
+	string atStr(string name, string _default="");
 
 	string toString(string name);
 

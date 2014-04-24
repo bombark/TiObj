@@ -16,9 +16,9 @@ int main(int argc, char **argv){
 	TiObj obj;
 	string field = argv[1];
 	if ( argc == 2 ){
-		obj.loadFile(stdin);
+		obj.loadStream(stdin);
 	} else {
-		obj.loadFile(argv[2]);
+		obj.loadStream(argv[2]);
 	}
 
 	
