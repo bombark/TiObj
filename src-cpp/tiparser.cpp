@@ -247,7 +247,7 @@ class TiLex {
 			out_type = L_INT;
 			while ( buffer.next(c) ){
 				type = this->symbols[c];
-				if ( c == '.' || c == 'e' ){
+				if ( c == '.' || c == ',' || c == 'e' ){
 					out_type = L_FLOAT;
 				} else if ( type != L_INT ){
 					this->lastsymbol = c;
