@@ -96,10 +96,11 @@ class TiObj {
 			cout << "Error{msg='Field " << name << " not found'};\n";
 		}
 
-
 		TiAttr* attr = it->second;
 		if ( tptype == "i"){
-			return (_Tp&) attr->ivalue;
+			return (_Tp&) attr->ivalue;	
+		} else if ( tptype == "d" ){
+			return (_Tp&) attr->fvalue;
 		} else if ( tptype == "Ss" ){
 			return (_Tp&) attr->svalue;
 		} else if ( attr->type == TYPE_OBJECT || attr->type == TYPE_VECTOR ){
