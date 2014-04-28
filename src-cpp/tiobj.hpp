@@ -89,6 +89,10 @@ class TiObj {
 	void sort();
 
 	template<typename _Tp> _Tp& at(string name){
+		if ( name == "class" ){
+			return (_Tp&) this->classe;
+		}
+
 		map<string,TiAttr*>::iterator it;
 		it = this->itens.find(name);
 		string tptype = typeid(_Tp).name();

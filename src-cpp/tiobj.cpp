@@ -106,30 +106,30 @@ string TiAttr::toString(){
 string TiAttr::encode(int tab){
 	string res = "";
 	if (this->type == TYPE_STRING){
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			res += '\t';
 		res += this->name + " = \"" + this->svalue + "\";\n";
 	} else if (this->type == TYPE_INT){
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			res += '\t';
 		res += this->name; 
 		res += " = "; 
 		res += std::to_string(this->ivalue); 
 		res += ";\n";
 	} else if (this->type == TYPE_FLOAT){
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			 res += '\t';
 		res += this->name; 
 		res += " = ";
 		res += std::to_string(this->fvalue); 
 		res += ";\n";
 	} else if (this->type == TYPE_OBJECT ){
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			 res += '\t';
 		res += this->name+" = ";
 		res += this->objptr->encode(tab,false);
 	} else if (this->type == TYPE_VECTOR ){
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			 res += '\t';
 		TiVector* ptr = (TiVector*) this->objptr;
 		res += this->name+" = ";
@@ -446,12 +446,17 @@ string TiObj::toString(string name){
 string TiObj::encode(int tab, bool indent, bool jmpline){
 	string res = "";
 	if ( indent == true ){ 
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			res += '\t';
 	}
-	if ( this->classe != "" )
-		res += this->classe + " ";
-	res += "{\n";
+	if ( tab == 0 ){
+		if ( this->classe != "" )
+			res += "class = \""+this->classe+"\";\n";
+	} else {
+		if ( this->classe != "" )
+			res += this->classe + " ";
+		res += "{\n";
+	}
 
 	for (auto& item: this->itens) {
 		res += item.second->encode(tab+1);
@@ -461,9 +466,12 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 		res += this->box[i]->encode(tab+1);
 	}
 
-	for (int i=0; i<tab; i++)
-		res += '\t';
-	res += "}";
+	if ( tab == 0 ){
+	} else {
+		for (int i=1; i<tab; i++)
+			res += '\t';
+		res += "}";
+	}
 	if (jmpline == true)
 		res += '\n';
 	return res;
@@ -564,7 +572,7 @@ string TiVector::encode(int tab, bool indent, bool jmpline){
 
 	string res = "";
 	if ( indent == true ){ 
-		for (int i=0; i<tab; i++)
+		for (int i=1; i<tab; i++)
 			res += '\t';
 	}
 	res += "[";

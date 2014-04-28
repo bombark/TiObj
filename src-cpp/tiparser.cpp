@@ -133,6 +133,7 @@ class TiLex {
 	static const int L_FLOAT = 3;
 	static const int  L_ASPA = 4;
 	static const int  L_SYMB = 5;
+	static const int  L_LCMT = 6;	// Line Comment
 
   public:
 	TiLex(){
@@ -166,7 +167,7 @@ class TiLex {
 		symbols['@']  = L_CHAR;
 		symbols['$']  = L_CHAR;
 		symbols['&']  = L_CHAR;
-		symbols['#']  = L_CHAR;
+		symbols['#']  = L_LCMT;
 		lastsymbol = 0;
 	}
 
@@ -195,11 +196,19 @@ class TiLex {
 		}
 		this->lastsymbol = 0;
 
+		bool is_lcmt = false;
 		while ( buffer.next(c) ){
-			type = this->symbols[c];
-			if ( type != L_NONE ){
-				aspa = c;
-				break;
+			if ( is_lcmt == false ){
+				type = this->symbols[c];
+				if ( type == L_LCMT ){
+					is_lcmt = true;
+				} else if ( type != L_NONE ){
+					aspa = c;
+					break;
+				}
+			} else {
+				if ( c == '\n' )
+					is_lcmt = false;
 			}
 		}
 		if ( type == L_SYMB ){
@@ -345,56 +354,60 @@ class TiParser {
 			if ( reduce == 0 ){
 				return false;
 			} else if ( reduce == 1 ){
-				obj.set(memory[mem_i-2], memory[mem_i-1]);
+				if ( memory[mem_i-2] == "class" ){
+					obj.classe = memory[mem_i-1];
+				} else {
+					obj.set(memory[mem_i-2], memory[mem_i-1]);
+				}
 				this->memPop(2);
 			} else if ( reduce == 2 ){
-				ivalue = atoi(memory[mem_i-1].c_str());
-				obj.set(memory[mem_i-2], ivalue);
+				if ( memory[mem_i-1] != "class" ){
+					ivalue = atoi(memory[mem_i-1].c_str());
+					obj.set(memory[mem_i-2], ivalue);
+				}
 				this->memPop(2);
 			} else if ( reduce == 3 ){
-				fvalue = atof(memory[mem_i-1].c_str());
-				obj.set(memory[mem_i-2], fvalue);
+				if ( memory[mem_i-1] != "class" ){
+					fvalue = atof(memory[mem_i-1].c_str());
+					obj.set(memory[mem_i-2], fvalue);
+				}
 				this->memPop(2);
 			} else if ( reduce == 4 ){
 				break;
 			} else if ( reduce == 5 ){
-				if ( level > 0 ){
-					TiObj* novo = new TiObj();
-					if ( !this->parse(*novo, level+1) )
-						return false;
-					obj.addObject(novo);
-				} else {
-					level = 1;
-				}
+				TiObj* novo = new TiObj();
+				if ( !this->parse(*novo, level+1) )
+					return false;
+				obj.addObject(novo);
 			} else if ( reduce == 6 ){
-				if ( level > 0 ){
-					TiObj* novo = new TiObj();
-					if ( !this->parse(*novo, level+1) )
-						return false;
-					novo->classe = memory[mem_i-1];
-					obj.addObject(novo);
-					this->memPop(1);
-				} else {
-					level = 1;
-					obj.classe = memory[mem_i-1];
-					this->memPop(1);
-				}
+				TiObj* novo = new TiObj();
+				if ( !this->parse(*novo, level+1) )
+					return false;
+				novo->classe = memory[mem_i-1];
+				obj.addObject(novo);
+				this->memPop(1);
 			} else if ( reduce == 7 ){
 				TiObj* novo = new TiObj();
 				if ( !this->parse(*novo, level+1) )
 					return false;
-				obj.set(memory[mem_i-1], novo);
+				if ( memory[mem_i-2] != "class" ){
+					obj.set(memory[mem_i-1], novo);
+				}
 				this->memPop(1);
 			} else if ( reduce == 8 ){
 				TiObj* novo = new TiObj();
 				if ( !this->parse(*novo, level+1) )
 					return false;
 				novo->classe = memory[mem_i-1]; 
-				obj.set(memory[mem_i-2], novo);
+				if ( memory[mem_i-2] != "class" ){
+					obj.set(memory[mem_i-2], novo);
+				}
 				this->memPop(2);
 			} else if ( reduce == 9 ){
 				TiVector* vetor = this->parseVector();
-				obj.set(memory[mem_i-1], vetor);
+				if ( memory[mem_i-1] != "class" ){
+					obj.set(memory[mem_i-1], vetor);
+				}
 				this->memPop(1);
 			}
 		} while (true);
@@ -478,6 +491,12 @@ class TiParser {
 		while ( lex.next(token, type) ){
 			if ( token == "]" ){
 				return vetor;
+			} else if ( token == "[" ){
+				/*TiVector* novo = this->parseVector();
+				if ( novo == NULL ){
+					// Mensagem de ERRO
+				}
+				vetor->add(novo);*/
 			} else if (type == TiLex::L_CHAR ){
 				vetor->add(token);
 			} else if (type == TiLex::L_INT ){
