@@ -24,10 +24,13 @@ class TiObj {
 		$parser->parse($this, 0);
 	}
 
-	function toString(){
+	function toString($nivel=0){
 		$res = "";
 		$class_vars = get_object_vars($this);
-		$res .= $this->class."{";
+		if ( $nivel == 0 )
+			$res .= "class='".$this->class."';";
+		else 
+			$res .= $this->class."{";
 		foreach ($class_vars as $name => $value) {
 			if ( $name == "class" || $name == "box" )
 				continue;
@@ -49,20 +52,21 @@ class TiObj {
 				}
 				$res .= "]";
 			} else if ( is_object($this->$name) ){
-				$res .= $this->$name->toString();
+				$res .= $this->$name->toString($nivel+1);
 			}
 		}
 		foreach ($this->box as $item){
-			$res .= $item->toString();
+			$res .= $item->toString($nivel+1);
 		}
-		$res .= "}";
+		if ($nivel != 0 )
+			$res .= "}";
 		return $res;
 	}
 
 	function write(){
 	}
 
-	function isA($classname){
+	function is($classname){
 		$vetclass = explode(":",$this->class);
 		foreach ($vetclass as $class){
 			if ( $class == $classname )
@@ -94,6 +98,12 @@ class TiObj {
 		return $out;
 	}
 }
+
+
+$obj = new TiObj();
+$obj->loadFile("teste.ti");
+echo $obj->teste."\n";
+echo $obj->toString()."\n";
 
 
 

@@ -34,12 +34,12 @@ class TiAttr {
 	TiAttr(string name);
 
 	int getType();
-	int isNull();
-	int isString();
-	int isFloat();
-	int isInt();
-	int isObject();
-	int isVector();	
+	bool isNull();
+	bool isString();
+	bool isFloat();
+	bool isInt();
+	bool isObject();
+	bool isVector();	
 
 	int    getInt();
 	double getFloat();
@@ -57,12 +57,13 @@ class TiAttr {
 
 class TiObj {
   private:
-	map<string,TiAttr*> itens;
+
 	TiAttr* last_ptr;
 	string  last_name;
 
   public:
 	string classe;
+	map<string,TiAttr*> attrs;
 	vector<TiObj*> box;
 
 	TiObj();
@@ -94,9 +95,9 @@ class TiObj {
 		}
 
 		map<string,TiAttr*>::iterator it;
-		it = this->itens.find(name);
+		it = this->attrs.find(name);
 		string tptype = typeid(_Tp).name();
-		if ( it == this->itens.end() ){
+		if ( it == this->attrs.end() ){
 			cout << "Error{msg='Field " << name << " not found'};\n";
 		}
 
@@ -113,6 +114,9 @@ class TiObj {
 	}
 
 	string atStr(string name, string _default="");
+	int    atInt(string name, int _default=0);
+	double atFloat(string name, double _default=0.0);
+	bool atObj (string name, TiObj& out);
 
 	string toString(string name);
 

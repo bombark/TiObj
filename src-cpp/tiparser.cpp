@@ -154,8 +154,8 @@ class TiLex {
 		symbols[';']  = L_SYMB;
 		symbols['.']  = L_SYMB;
 		symbols[',']  = L_SYMB;
-		symbols['(']  = L_SYMB;
-		symbols[')']  = L_SYMB;
+		symbols['(']  = L_ASPA;
+		symbols[')']  = L_ASPA;
 		symbols['{']  = L_SYMB;
 		symbols['}']  = L_SYMB;
 		symbols['[']  = L_SYMB;
@@ -216,7 +216,8 @@ class TiLex {
 			out_type  = L_SYMB;
 			return true;
 		} else if ( type == L_ASPA ){
-
+			if ( c == '(' )
+				aspa = ')';
 			out_type = L_CHAR;
 			bool special = false;
 			while ( buffer.next(c) ){
@@ -231,6 +232,8 @@ class TiLex {
 						out_token += '\"';
 					else if ( c == '\\' )
 						out_token += '\\';
+					else
+						out_token += c;
 					special = false;
 				} else if ( c == '\\' ){
 					special = true;

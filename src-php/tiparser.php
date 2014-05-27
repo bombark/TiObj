@@ -15,7 +15,7 @@ class TiBuffer {
 	function loadFile($filename){
 		$this->cursor = 0;
 		$this->text = file_get_contents($filename);
-		$this->size = strlen($text);
+		$this->size = strlen($this->text);
 	}
 
 	function next(){
@@ -57,34 +57,36 @@ class TiLex {
 			$this->symbols[$i] = self::L_NONE;
 		}
 		for ($i='a'; $i<='z'; $i++){
-			$this->symbols[$i] = self::L_CHAR;
+			$this->symbols[ord($i)] = self::L_CHAR;
 		}
 		for ($i='A'; $i<='Z'; $i++){
-			$this->symbols[$i] = self::L_CHAR;
+			$this->symbols[ord($i)] = self::L_CHAR;
 		}
 		for ($i='0'; $i<='9'; $i++){
-			$this->symbols[$i] = self::L_INT;
+			$this->symbols[ord($i)] = self::L_INT;
 		}
-		$this->symbols[' ']  = self::L_NONE;
-		$this->symbols['=']  = self::L_SYMB;
-		$this->symbols[':']  = self::L_CHAR;
-		$this->symbols[';']  = self::L_SYMB;
-		$this->symbols['.']  = self::L_SYMB;
-		$this->symbols[',']  = self::L_SYMB;
-		$this->symbols['(']  = self::L_SYMB;
-		$this->symbols[')']  = self::L_SYMB;
-		$this->symbols['{']  = self::L_SYMB;
-		$this->symbols['}']  = self::L_SYMB;
-		$this->symbols['[']  = self::L_SYMB;
-		$this->symbols[']']  = self::L_SYMB;
-		$this->symbols['\''] = self::L_ASPA;
-		$this->symbols['\"'] = self::L_ASPA;
-		$this->symbols['-']  = self::L_INT;
-		$this->symbols['_']  = self::L_CHAR;
-		$this->symbols['@']  = self::L_CHAR;
-		$this->symbols['$']  = self::L_CHAR;
-		$this->symbols['&']  = self::L_CHAR;
-		$this->symbols['#']  = self::L_CHAR;
+
+		$this->symbols[ord(' ')]  = self::L_NONE;
+		$this->symbols[ord("\t")] = self::L_NONE;
+		$this->symbols[ord('=')]  = self::L_SYMB;
+		$this->symbols[ord(':')]  = self::L_CHAR;
+		$this->symbols[ord(';')]  = self::L_SYMB;
+		$this->symbols[ord('.')]  = self::L_SYMB;
+		$this->symbols[ord(',')]  = self::L_SYMB;
+		$this->symbols[ord('(')]  = self::L_ASPA;
+		$this->symbols[ord(')')]  = self::L_ASPA;
+		$this->symbols[ord('{')]  = self::L_SYMB;
+		$this->symbols[ord('}')]  = self::L_SYMB;
+		$this->symbols[ord('[')]  = self::L_SYMB;
+		$this->symbols[ord(']')]  = self::L_SYMB;
+		$this->symbols[ord('\'')] = self::L_ASPA;
+		$this->symbols[ord('"')]  = self::L_ASPA;
+		$this->symbols[ord('-')]  = self::L_INT;
+		$this->symbols[ord('_')]  = self::L_CHAR;
+		$this->symbols[ord('@')]  = self::L_CHAR;
+		$this->symbols[ord('$')]  = self::L_CHAR;
+		$this->symbols[ord('&')]  = self::L_CHAR;
+		$this->symbols[ord('#')]  = self::L_CHAR;
 		$this->lastsymbol = 0;
 	}
 
@@ -102,7 +104,7 @@ class TiLex {
 		$out["type"] = self::L_NONE;
 		$c = '';
 		$aspa=0;
-		$type = $this->symbols[$this->lastsymbol];
+		$type = $this->symbols[ord($this->lastsymbol)];
 		if ( $type == self::L_SYMB ){
 			$this->buffer->back();
 		} else if ( $type == self::L_CHAR ){
@@ -112,7 +114,7 @@ class TiLex {
 
 		while ( $this->buffer->isContinue() ){
 			$c = $this->buffer->next();
-			$type = $this->symbols[$c];
+			$type = $this->symbols[ord($c)];
 			if ( $type != self::L_NONE ){
 				$aspa = $c;
 				break;
@@ -123,6 +125,8 @@ class TiLex {
 			$out['type']  = self::L_SYMB;
 			return $out;
 		} else if ( $type == self::L_ASPA ){
+			if ( $c == '(' )
+				$aspa = ')';
 			$special = false;
 			while ( $this->buffer->isContinue() ){
 				$c = $this->buffer->next();
@@ -150,7 +154,7 @@ class TiLex {
 			$out['token'] = $c;
 			while ( $this->buffer->isContinue() ){
 				$c = $this->buffer->next();
-				$type = $this->symbols[$c];
+				$type = $this->symbols[ord($c)];
 				if ( $type == self::L_CHAR || $type == self::L_INT ){
 					$out['token'] .= $c;
 				} else {
@@ -164,7 +168,7 @@ class TiLex {
 			$out['type'] = self::L_INT;
 			while ( $this->buffer->isContinue() ){
 				$c = $this->buffer->next();
-				$type = $this->symbols[$c];
+				$type = $this->symbols[ord($c)];
 				if ( $c == '.' || $c == 'e' ){
 					$out['type'] = self::L_FLOAT;
 				} else if ( $type != self::L_INT ){
@@ -275,17 +279,12 @@ class TiParser {
 			} else if ( $reduce == 4 ){
 				break;
 			} else if ( $reduce == 5 ){
-				if ( $level > 0 ){
 					$novo = new TiObj();
 					if ( $this->parse($novo, $level+1) == false ){
 						return false;
 					}
 					$obj->addObject($novo);
-				} else {
-					$level = 1;
-				}
 			} else if ( $reduce == 6 ){
-				if ( $level > 0 ){
 					$novo = new TiObj();
 					if ( $this->parse($novo, $level+1) == false ){
 						return false;
@@ -293,11 +292,6 @@ class TiParser {
 					$novo->class = $this->memory[$this->mem_i-1];
 					$obj->addObject($novo);
 					$this->memPop(1);
-				} else {
-					$level = 1;
-					$obj->class = $this->memory[$this->mem_i-1];
-					$this->memPop(1);
-				}
 			} else if ( $reduce == 7 ){
 				$novo = new TiObj();
 				if ( $this->parse($novo, $level+1) == false ){
@@ -338,6 +332,9 @@ class TiParser {
 			$fout  = $this->lex->next();
 			$token = $fout["token"];
 			$type  = $fout["type"];
+			if ( $token == "" ){
+				break;
+			}
 
 			// Next state
 			$csy = $type;

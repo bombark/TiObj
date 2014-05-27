@@ -11,6 +11,9 @@
 // Temporario
 #include "tiparser.cpp"
 
+
+TiAttr ATTR_NULL;
+
 /*-------------------------------------------------------------------------------------*/
 
 
@@ -21,30 +24,23 @@
 /*=====================================================================================*/
 
 TiAttr::TiAttr(){
+	this->type = TYPE_NULL;
 }
 
 TiAttr::TiAttr(string name){
+	this->type = TYPE_NULL;
 	this->name = name;
 }
 
-int TiAttr::getType(){
-	return this->type;
-}
-int TiAttr::isString(){
-	return this->type == TYPE_STRING;
-}
-int TiAttr::isFloat(){
-	return this->type == TYPE_FLOAT;
-}
-int TiAttr::isInt(){
-	return this->type == TYPE_INT;
-}
-int TiAttr::isObject(){
-	return this->type == TYPE_OBJECT;
-}
-int TiAttr::isVector(){
-	return this->type == TYPE_VECTOR;
-}
+int   TiAttr::getType() {return this->type;}
+bool   TiAttr::isNull() {return this->type == TYPE_NULL;}
+bool TiAttr::isString() {return this->type == TYPE_STRING;}
+bool  TiAttr::isFloat() {return this->type == TYPE_FLOAT;}
+bool    TiAttr::isInt() {return this->type == TYPE_INT;}
+bool TiAttr::isObject() {return this->type == TYPE_OBJECT;}
+bool TiAttr::isVector() {return this->type == TYPE_VECTOR;}
+
+
 
 int TiAttr::getInt(){
 	return this->ivalue;
@@ -157,7 +153,7 @@ TiObj::TiObj(string text){
 }
 
 void TiObj::clear(){
-	this->itens.clear();
+	this->attrs.clear();
 	this->box.clear();
 }
 
@@ -215,8 +211,8 @@ TiAttr* TiObj::getAttr(string name){
 		return this->last_ptr;*/
 
 	map<string,TiAttr*>::iterator it;
-	it = this->itens.find(name);
-	if ( it == this->itens.end() ){
+	it = this->attrs.find(name);
+	if ( it == this->attrs.end() ){
 		return NULL;
 	} else {
 		this->last_name = name;
@@ -229,7 +225,7 @@ void TiObj::set(string name, string value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->set(value);
 }
@@ -238,7 +234,7 @@ void TiObj::set(string name, int value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->set(value);
 }
@@ -247,7 +243,7 @@ void TiObj::set(string name, double value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->set(value);
 }
@@ -256,7 +252,7 @@ void TiObj::set(string name, TiVector* value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->set(value);
 }
@@ -265,7 +261,7 @@ void TiObj::set(string name, TiObj* value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->type   = TYPE_OBJECT;
 	attr->objptr = value;
@@ -275,7 +271,7 @@ void TiObj::setObject(string name, string text){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->type   = TYPE_OBJECT;
 	TiObj* novo  = new TiObj(text);
@@ -286,7 +282,7 @@ void TiObj::setVector(string name, string value){
 	TiAttr* attr = this->getAttr(name);
 	if ( attr == NULL ){
 		attr = new TiAttr(name);
-		this->itens.insert( pair<string,TiAttr*>(name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(name, attr) );
 	}
 	attr->type     = TYPE_VECTOR;
 	TiVector* novo = new TiVector();
@@ -298,7 +294,7 @@ void TiObj::set(TiAttr& newattr){
 	TiAttr* attr = this->getAttr(newattr.name);
 	if ( attr == NULL ){
 		attr = new TiAttr(newattr.name);
-		this->itens.insert( pair<string,TiAttr*>(newattr.name, attr) );
+		this->attrs.insert( pair<string,TiAttr*>(newattr.name, attr) );
 	} 
 	attr->set(newattr);
 }
@@ -408,12 +404,36 @@ string TiObj::atStr(string name, string _default){
 	return attr->svalue;
 }
 
+int TiObj::atInt(string name, int _default){
+	TiAttr* attr = this->getAttr(name);
+	if ( attr == NULL ){
+		return _default;
+	}
+	return attr->ivalue;
+}
+
+double TiObj::atFloat(string name, double _default){
+	TiAttr* attr = this->getAttr(name);
+	if ( attr == NULL ){
+		return _default;
+	}
+	return attr->fvalue;
+}
+
+bool TiObj::atObj (string name, TiObj& out){
+	TiAttr* attr = this->getAttr(name);
+	if ( attr == NULL ){
+		return false;
+	}
+	out = *attr->objptr;
+}
+
 /*template<typename _Tp> _Tp& TiObj::at(string index){
 	int i = this->find(index);
 	assert(i != -1);
 	string tptype = typeid(_Tp).name();
 
-	TiAttr* attr = this->itens[i];
+	TiAttr* attr = this->attrs[i];
 	if ( tptype == "i"){
 		return (_Tp&) attr->ivalue;
 	} else if ( tptype == "Ss" ){
@@ -425,7 +445,7 @@ string TiObj::atStr(string name, string _default){
 
 string TiObj::toString(string name){
 	map<string,TiAttr*>::iterator it;
-	it = this->itens.find(name);
+	it = this->attrs.find(name);
 
 	TiAttr* attr = it->second;
 	if ( attr->isString() ){
@@ -458,7 +478,7 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 		res += "{\n";
 	}
 
-	for (auto& item: this->itens) {
+	for (auto& item: this->attrs) {
 		res += item.second->encode(tab+1);
 	}
 
