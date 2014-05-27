@@ -171,6 +171,9 @@ class TiLex {
 				$type = $this->symbols[ord($c)];
 				if ( $c == '.' || $c == 'e' ){
 					$out['type'] = self::L_FLOAT;
+				} else if ( $c == ',' ){
+					$out['type'] = self::L_FLOAT;
+					$c = '.';					
 				} else if ( $type != self::L_INT ){
 					$this->lastsymbol = $c;
 					break;
