@@ -100,10 +100,10 @@ class TiObj {
 }
 
 
-$obj = new TiObj();
+/*$obj = new TiObj();
 $obj->loadFile("teste.ti");
 echo $obj->teste."\n";
-echo $obj->toString()."\n";
+echo $obj->toString()."\n";*/
 
 
 

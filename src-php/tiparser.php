@@ -125,6 +125,7 @@ class TiLex {
 			$out['type']  = self::L_SYMB;
 			return $out;
 		} else if ( $type == self::L_ASPA ){
+			$out['type']  = self::L_CHAR;
 			if ( $c == '(' )
 				$aspa = ')';
 			$special = false;
@@ -149,8 +150,8 @@ class TiLex {
 				} else
 					$out['token'] .= $c;
 			}
-			$out['type'] = self::L_CHAR;
 		} else if ( $type == self::L_CHAR ){
+			$out['type'] = self::L_CHAR;
 			$out['token'] = $c;
 			while ( $this->buffer->isContinue() ){
 				$c = $this->buffer->next();
@@ -162,7 +163,6 @@ class TiLex {
 					break;
 				}
 			}
-			$out['type'] = self::L_CHAR;
 		} else if ( $type == self::L_INT ){
 			$out['token'] = $c;
 			$out['type'] = self::L_INT;
@@ -328,16 +328,14 @@ class TiParser {
 
 	function step(){
 		$state=1;
-		if ( $this->lex->isContinue() == false )
-			return 0;
-		
+	
 		do {
+			if ( $this->lex->isContinue() == false )
+				break;
 			$fout  = $this->lex->next();
 			$token = $fout["token"];
 			$type  = $fout["type"];
-			if ( $token == "" ){
-				break;
-			}
+
 
 			// Next state
 			$csy = $type;
