@@ -21,8 +21,21 @@ int main(int argc, char **argv){
 		obj.loadFile(argv[2]);
 	}
 
-	
-	char token[1024];
+	obj["name"] = "opa";
+	obj["idade"] = 10;
+	obj["guer"] = "$opa{name='felipe';}";
+
+	cout << obj;
+
+
+
+	//string a = obj.box[0]["name"].Str();
+	//cout << a << endl;
+
+	//cout << obj.at("nome") << endl;	
+
+
+	/*char token[1024];
 	int i, cursor;
 	if ( field.size() > 1024 ){
 		return 1;
@@ -50,6 +63,6 @@ int main(int argc, char **argv){
 			obj.select(aux, token);
 			cout << aux << endl;
 		}
-	}
+	}*/
 	return 0;
 }

@@ -259,13 +259,17 @@ class TiLex {
 			out_type = L_INT;
 			while ( buffer.next(c) ){
 				type = this->symbols[c];
-				if ( c == '.' || c == ',' || c == 'e' ){
-					out_type = L_FLOAT;
+				if ( c == '.' || c == ',' ){
+					out_type   = L_FLOAT;
+					out_token += '.';
+				} else if ( c == 'e' || c == 'E' ){
+					out_type   = L_FLOAT;
+					out_token += 'e';					
 				} else if ( type != L_INT ){
 					this->lastsymbol = c;
 					break;
-				}
-				out_token += c;
+				} else
+					out_token += c;
 			}
 		}
 		if ( out_type != L_NONE )
@@ -352,6 +356,7 @@ class TiParser {
 		int ivalue;
 		double fvalue;
 		this->error_msg = "";
+
 		do {
 			int reduce = step();
 			if ( reduce == 0 ){
@@ -371,7 +376,7 @@ class TiParser {
 				this->memPop(2);
 			} else if ( reduce == 3 ){
 				if ( memory[mem_i-1] != "class" ){
-					fvalue = atof(memory[mem_i-1].c_str());
+					fvalue = (float) atof(memory[mem_i-1].c_str());
 					obj.set(memory[mem_i-2], fvalue);
 				}
 				this->memPop(2);
@@ -394,7 +399,7 @@ class TiParser {
 				if ( !this->parse(*novo, level+1) )
 					return false;
 				if ( memory[mem_i-2] != "class" ){
-					obj.set(memory[mem_i-1], novo);
+					obj.set(memory[mem_i-1], *novo);
 				}
 				this->memPop(1);
 			} else if ( reduce == 8 ){
@@ -403,13 +408,13 @@ class TiParser {
 					return false;
 				novo->classe = memory[mem_i-1]; 
 				if ( memory[mem_i-2] != "class" ){
-					obj.set(memory[mem_i-2], novo);
+					obj.set(memory[mem_i-2], *novo);
 				}
 				this->memPop(2);
 			} else if ( reduce == 9 ){
 				TiVector* vetor = this->parseVector();
 				if ( memory[mem_i-1] != "class" ){
-					obj.set(memory[mem_i-1], vetor);
+					obj.set(memory[mem_i-1], *vetor);
 				}
 				this->memPop(1);
 			}

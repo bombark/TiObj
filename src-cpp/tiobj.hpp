@@ -19,7 +19,7 @@ class TiVector;
 #define TYPE_OBJECT 4
 #define TYPE_VECTOR 5
 
-class TiAttr {
+class TiVar {
   public:
 	int       type;
 	string    name;
@@ -28,10 +28,11 @@ class TiAttr {
 		double    fvalue;
 		long int  ivalue;
 		TiObj*    objptr;
+		TiVector* vetptr;
 	};
 
-	TiAttr();
-	TiAttr(string name);
+	TiVar();
+	TiVar(string name);
 
 	int getType();
 	bool isNull();
@@ -41,29 +42,34 @@ class TiAttr {
 	bool isObject();
 	bool isVector();	
 
-	int    getInt();
-	double getFloat();
-	string getString();
 
-	void set(string value);
-	void set(int value);
-	void set(double value);
-	void set(TiAttr& attr);
-	void set(TiVector* vector);
+	string    Str();
+	int       Int();
+	double    Dbl();
+	TiObj&    Obj();
+	TiVector& Vet();
+
+	void operator=(string value);
+	void operator=(int value);
+	void operator=(double value);
+	void operator=(TiObj& obj);
+	void operator=(TiVector& vector);
+	void operator=(TiVar& attr);
 
 	string toString();
-	string encode(int tab);
+	string encode(int tab=0);
+
+	static TiVar OBJNULL;
 };
 
 class TiObj {
   private:
-
-	TiAttr* last_ptr;
+	TiVar* last_ptr;
 	string  last_name;
 
   public:
 	string classe;
-	map<string,TiAttr*> attrs;
+	map<string,TiVar*> attrs;
 	vector<TiObj*> box;
 
 	TiObj();
@@ -74,49 +80,26 @@ class TiObj {
 	int  loadStream(FILE* fd);
 	int  loadStream(string filename);
 
-	TiAttr* getAttr(string name);
+	TiVar& at(string name);
 	void set(string name, string value);
 	void set(string name, int value);
 	void set(string name, double value);
-	void set(string name, TiVector* value);
-	void set(string name, TiObj* value);
+	void set(string name, TiVector& value);
+	void set(string name, TiObj& value);
 	void setObject(string name, string text);
 	void setVector(string name, string text);
-	void set(TiAttr& attr);
+	void set(TiVar& attr);
 	
 	void addObject(TiObj* obj);
 	void addObject(string text);
 	void select(TiObj& out, string classe, string where="");
 	void sort();
 
-	template<typename _Tp> _Tp& at(string name){
-		if ( name == "class" ){
-			return (_Tp&) this->classe;
-		}
 
-		map<string,TiAttr*>::iterator it;
-		it = this->attrs.find(name);
-		string tptype = typeid(_Tp).name();
-		if ( it == this->attrs.end() ){
-			cout << "Error{msg='Field " << name << " not found'};\n";
-		}
-
-		TiAttr* attr = it->second;
-		if ( tptype == "i"){
-			return (_Tp&) attr->ivalue;	
-		} else if ( tptype == "d" ){
-			return (_Tp&) attr->fvalue;
-		} else if ( tptype == "Ss" ){
-			return (_Tp&) attr->svalue;
-		} else if ( attr->type == TYPE_OBJECT || attr->type == TYPE_VECTOR ){
-			return (_Tp&) attr->objptr;
-		}
-	}
-
-	string atStr(string name, string _default="");
-	int    atInt(string name, int _default=0);
-	double atFloat(string name, double _default=0.0);
-	bool atObj (string name, TiObj& out);
+	string atStr (string name, string _default="");
+	int    atInt (string name, int _default=0);
+	double atDbl (string name, double _default=0.0);
+	TiObj& atObj (string name);
 
 	string toString(string name);
 
@@ -125,11 +108,17 @@ class TiObj {
 
 	string encode(int tab=0, bool indent=true, bool jmpline=true);
 	static int decode(TiObj& out, string text);	
+
+
+	TiVar& operator[](string name);
+	TiObj& operator[](int id);
+
+	static TiObj ObjNull; 
 };
 
 
 class TiVector {
-	vector<TiAttr*> itens;
+	vector<TiVar*> itens;
 
 public:
 	int  load(string text);
@@ -138,7 +127,7 @@ public:
 	void add(string value);
 	void add(   int value);
 	void add(double value);
-	void add(TiAttr* item);
+	void add(TiVar& item);
 	void addObject(TiObj* object);
 	void addObject(string text);
 
@@ -148,7 +137,7 @@ public:
 			cout << "Error{msg='Index " << pos << " is not valid'};\n";
 		}
 
-		TiAttr* attr = this->itens[pos];
+		TiVar* attr = this->itens[pos];
 		if ( tptype == "i"){
 			return (_Tp&) attr->ivalue;
 		} else if ( tptype == "Ss" ){
@@ -179,7 +168,7 @@ class TiStream {
 };
 
 
-ostream& operator<<(ostream& os, TiObj& aaa);
-
+ostream& operator<<(ostream& os, TiObj& obj);
+ostream& operator<<(ostream& os, TiVar& var);
 
 #endif
