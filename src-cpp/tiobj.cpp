@@ -32,11 +32,19 @@ TiVar::TiVar(string name){
 	this->name = name;
 }
 
-int   TiVar::getType() {return this->type;}
-bool   TiVar::isNull() {return this->type == TYPE_NULL;}
+TiVar::~TiVar(){
+	if ( this->type == TYPE_OBJECT )
+		delete this->objptr;
+	if ( this->type == TYPE_VECTOR )
+		delete this->vetptr;
+}
+
+
+int  TiVar::getType()  {return this->type;}
+bool TiVar::isNull()   {return this->type == TYPE_NULL;}
 bool TiVar::isString() {return this->type == TYPE_STRING;}
-bool  TiVar::isFloat() {return this->type == TYPE_FLOAT;}
-bool    TiVar::isInt() {return this->type == TYPE_INT;}
+bool TiVar::isFloat()  {return this->type == TYPE_FLOAT;}
+bool TiVar::isInt()    {return this->type == TYPE_INT;}
 bool TiVar::isObject() {return this->type == TYPE_OBJECT;}
 bool TiVar::isVector() {return this->type == TYPE_VECTOR;}
 
@@ -172,6 +180,14 @@ TiObj::TiObj(string text){
 	TiParser parser;
 	parser.loadText(text);
 	parser.parse(*this);
+}
+
+TiObj::~TiObj(){
+	for (auto& item: this->attrs) {
+		delete item.second;
+	}
+	for (int i=0; i<this->box.size(); i++)
+		delete this->box[i];
 }
 
 void TiObj::clear(){
@@ -448,20 +464,6 @@ TiObj& TiObj::atObj (string name){
 	return *var.objptr;
 }
 
-/*template<typename _Tp> _Tp& TiObj::at(string index){
-	int i = this->find(index);
-	assert(i != -1);
-	string tptype = typeid(_Tp).name();
-
-	TiVar* attr = this->attrs[i];
-	if ( tptype == "i"){
-		return (_Tp&) attr->ivalue;
-	} else if ( tptype == "Ss" ){
-		return (_Tp&) attr->svalue;
-	} else if ( attr->type == TYPE_OBJECT || attr->type == TYPE_VECTOR ){
-		return (_Tp&) attr->objptr;
-	}
-}*/
 
 string TiObj::toString(string name){
 	map<string,TiVar*>::iterator it;

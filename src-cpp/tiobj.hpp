@@ -33,28 +33,29 @@ class TiVar {
 
 	TiVar();
 	TiVar(string name);
+	~TiVar();
 
 	int getType();
-	bool isNull();
-	bool isString();
-	bool isFloat();
-	bool isInt();
-	bool isObject();
-	bool isVector();	
+	inline  bool isNull();
+	inline  bool isString();
+	inline  bool isFloat();
+	inline  bool isInt();
+	inline  bool isObject();
+	inline  bool isVector();	
 
 
-	string    Str();
-	int       Int();
-	double    Dbl();
-	TiObj&    Obj();
-	TiVector& Vet();
+	inline  string    Str();
+	inline  int       Int();
+	inline  double    Dbl();
+	inline  TiObj&    Obj();
+	inline  TiVector& Vet();
 
-	void operator=(string value);
-	void operator=(int value);
-	void operator=(double value);
-	void operator=(TiObj& obj);
-	void operator=(TiVector& vector);
-	void operator=(TiVar& attr);
+	inline  void operator=(string value);
+	inline  void operator=(int value);
+	inline  void operator=(double value);
+	inline  void operator=(TiObj& obj);
+	inline  void operator=(TiVector& vector);
+	inline  void operator=(TiVar& attr);
 
 	string toString();
 	string encode(int tab=0);
@@ -64,7 +65,7 @@ class TiVar {
 
 class TiObj {
   private:
-	TiVar* last_ptr;
+	TiVar*  last_ptr;
 	string  last_name;
 
   public:
@@ -74,6 +75,8 @@ class TiObj {
 
 	TiObj();
 	TiObj(string text);
+	~TiObj();
+
 	void clear();
 	int  loadFile(FILE*  fd);
 	int  loadFile(string filename);

@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 2.6) 
 project (TiObj) 
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -O2")
 
 add_library (tiobj src-cpp/tiobj.cpp)
 add_executable (tiobj-read src-bin/tiobj-read.cpp) 
