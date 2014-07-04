@@ -11,6 +11,7 @@ using namespace std;
 
 class TiObj;
 class TiVector;
+class TiCursor;
 
 #define TYPE_NULL   0
 #define TYPE_STRING 1
@@ -50,28 +51,37 @@ class TiVar {
 	inline  TiObj&    Obj();
 	inline  TiVector& Vet();
 
-	inline  void operator=(string value);
-	inline  void operator=(int value);
-	inline  void operator=(double value);
-	inline  void operator=(TiObj& obj);
-	inline  void operator=(TiVector& vector);
-	inline  void operator=(TiVar& attr);
+	void operator=(string value);
+	void operator=(int value);
+	void operator=(double value);
+	void operator=(TiObj& obj);
+	void operator=(TiVector& vector);
+	void operator=(TiVar& attr);
 
 	string toString();
 	string encode(int tab=0);
 
-	static TiVar OBJNULL;
+	static TiVar ObjNull;
+};
+
+
+class TiBox : public vector<TiObj*> {
+	int i;
+
+  public:
+	TiObj& next();
+	void   operator+=(TiObj& obj);
 };
 
 class TiObj {
   private:
-	TiVar*  last_ptr;
+	int     last_id;
 	string  last_name;
 
   public:
 	string classe;
-	map<string,TiVar*> attrs;
-	vector<TiObj*> box;
+	vector<TiVar>  varpkg;
+	TiBox box;
 
 	TiObj();
 	TiObj(string text);
@@ -95,7 +105,7 @@ class TiObj {
 	
 	void addObject(TiObj* obj);
 	void addObject(string text);
-	void select(TiObj& out, string classe, string where="");
+	void select(TiBox& out, string classe, string where="");
 	void sort();
 
 
@@ -117,6 +127,7 @@ class TiObj {
 	TiObj& operator[](int id);
 
 	static TiObj ObjNull; 
+
 };
 
 
@@ -134,25 +145,6 @@ public:
 	void addObject(TiObj* object);
 	void addObject(string text);
 
-	template<typename _Tp> _Tp& at(unsigned int pos){
-		string tptype = typeid(_Tp).name();
-		if ( pos > this->itens.size() ){
-			cout << "Error{msg='Index " << pos << " is not valid'};\n";
-		}
-
-		TiVar* attr = this->itens[pos];
-		if ( tptype == "i"){
-			return (_Tp&) attr->ivalue;
-		} else if ( tptype == "Ss" ){
-			return (_Tp&) attr->svalue;
-		} else if ( tptype == "d" ){
-			return (_Tp&) attr->fvalue;
-		} else if ( attr->type == TYPE_OBJECT ){
-			return (_Tp&) (attr->objptr);
-		} else if ( attr->type == TYPE_VECTOR ){
-			return (_Tp&) (attr->objptr);
-		}
-	}
 
 	TiObj*  find(std::string value);
 
@@ -161,17 +153,12 @@ public:
 
 
 
-class TiStream {
-	void* tiparser;
 
-  public:
-	TiStream();
-	void open(FILE* fd);
-	bool next(TiObj& obj);
-};
 
 
 ostream& operator<<(ostream& os, TiObj& obj);
 ostream& operator<<(ostream& os, TiVar& var);
+ostream& operator<<(ostream& os, TiBox& box);
+
 
 #endif

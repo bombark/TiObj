@@ -335,7 +335,8 @@ class TiParser {
 			$fout  = $this->lex->next();
 			$token = $fout["token"];
 			$type  = $fout["type"];
-
+			if ( $type == TiLex::L_NONE )
+				continue;
 
 			// Next state
 			$csy = $type;

@@ -13,7 +13,7 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
-	TiObj obj, aux;
+	TiObj obj;
 	string field = argv[1];
 	if ( argc == 2 ){
 		obj.loadFile(stdin);
@@ -21,6 +21,7 @@ int main(int argc, char **argv){
 		obj.loadFile(argv[2]);
 	}
 
+	TiBox res;
 	char token[1024];
 	int i, cursor;
 	if ( field.size() > 1024 ){
@@ -31,10 +32,10 @@ int main(int argc, char **argv){
 		if ( c == ','){
 			token[cursor] = '\0';
 			if ( strcmp(token, "@") == 0 ){
-				cout << obj.encode();
+				cout << obj.box;
 			} else {
-				obj.select(aux, token);
-				cout << aux << endl;
+				obj.select(res, token);
+				cout << res;
 			}
 			cursor = 0;
 		} else {
@@ -44,10 +45,10 @@ int main(int argc, char **argv){
 	if ( token > 0 ){
 		token[cursor] = '\0';
 		if ( strcmp(token, "@") == 0 ){
-			cout << obj.encode();
+			cout << obj.box;
 		} else {
-			obj.select(aux, token);
-			cout << aux << endl;
+			obj.select(res, token);
+			cout << res;
 		}
 	}
 	return 0;

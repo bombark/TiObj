@@ -36,7 +36,7 @@ class TiObj {
 				continue;
 			$res .= "$name=";
 			if ( is_string($this->$name) ){
-				$res .= "'$value';";
+				$res .= "'".addslashes($value)."';";
 			} else if ( is_int($this->$name) ){
 				$res .= "$value;";
 			} else if ( is_float($this->$name) ){
@@ -84,13 +84,13 @@ class TiObj {
 	}
 
 	function select($classes, $where=""){
-		$out = new TiObj();
+		$out = array();
 		$vetclass = explode(",",$classes);
 
 		foreach ( $this->box as $item ){
 			foreach ( $vetclass as $class ){
-				if ( $item->isA($class) ){
-					$out->box[] = $item;
+				if ( $item->is($class) ){
+					$out[] = $item;
 				}
 			}
 		}

@@ -8,6 +8,7 @@ using namespace std;
 
 
 int main(int argc, char **argv){
+
 	if ( argc < 2 ){
 		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";
 		return 1;
