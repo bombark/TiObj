@@ -70,6 +70,7 @@ class TiBox : public vector<TiObj*> {
 
   public:
 	TiObj& next();
+	TiObj& operator[](int id);
 	void   operator+=(TiObj& obj);
 };
 

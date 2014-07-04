@@ -185,7 +185,7 @@ TiObj::TiObj(string text){
 
 TiObj::~TiObj(){
 	for (int i=0; i<this->box.size(); i++)
-		delete this->box[i];
+		delete &this->box[i];
 }
 
 void TiObj::clear(){
@@ -336,10 +336,10 @@ void TiObj::select(TiBox& out, string classes, string where){
 	if ( where == "" ){
 		// Executa a busca linear
 		for (int i=0; i<this->box.size(); i++){
-			TiObj* obj = this->box[i];
+			TiObj& obj = this->box[i];
 			for (int j=0; j<vetclasse.size(); j++){
-				if ( obj->is(vetclasse[j]) ){
-					out.push_back(obj);
+				if ( obj.is(vetclasse[j]) ){
+					out.push_back(&obj);
 				}
 			}
 		}
@@ -362,15 +362,15 @@ void TiObj::select(TiBox& out, string classes, string where){
 		
 		// Executa a busca linear
 		for (int i=0; i<this->box.size(); i++){
-			TiObj* obj = this->box[i];
+			TiObj& obj = this->box[i];
 			for (int j=0; j<vetclasse.size(); j++){
-				if ( obj->is(vetclasse[j]) && obj->has(predicate.name ) ){
-					if ( type == TiLex::L_CHAR && predicate.svalue == obj->atStr(predicate.name) )
-						out.push_back(obj);
-					else if ( type == TiLex::L_INT && predicate.ivalue == obj->atInt(predicate.name) )
-						out.push_back(obj);
-					else if ( type == TiLex::L_FLOAT && predicate.fvalue == obj->atDbl(predicate.name) )
-						out.push_back(obj);
+				if ( obj.is(vetclasse[j]) && obj.has(predicate.name ) ){
+					if ( type == TiLex::L_CHAR && predicate.svalue == obj.atStr(predicate.name) )
+						out.push_back(&obj);
+					else if ( type == TiLex::L_INT && predicate.ivalue == obj.atInt(predicate.name) )
+						out.push_back(&obj);
+					else if ( type == TiLex::L_FLOAT && predicate.fvalue == obj.atDbl(predicate.name) )
+						out.push_back(&obj);
 				}
 			}
 		}
@@ -385,8 +385,16 @@ void TiObj::sort(){
 
 
 int TiObj::has(std::string name){
-	TiVar& var = this->at(name);
-	return !var.isNull();
+	//TiVar& var = this->at(name);
+	//return !var.isNull();
+	for (int i=0; i<varpkg.size(); i++){
+		if ( name == varpkg[i].name ){
+			this->last_id   = i;
+			this->last_name = name;
+			return true;
+		}
+	}
+	return false;
 }
 
 int TiObj::is(string name){
@@ -480,7 +488,7 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 	}
 
 	for (int i=0; i<this->box.size(); i++){
-		res += this->box[i]->encode(tab+1);
+		res += this->box[i].encode(tab+1);
 	}
 
 	if ( tab == 0 ){
@@ -506,7 +514,7 @@ TiVar& TiObj::operator[](string name){
 }
 
 TiObj& TiObj::operator[](int id){
-	return *this->box[id];
+	return this->box[id];
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -613,6 +621,10 @@ string TiVector::encode(int tab, bool indent, bool jmpline){
 TiObj& TiBox::next(){
 }
 
+TiObj& TiBox::operator[](int id){
+	return *this->at(id);
+}
+
 void TiBox::operator+=(TiObj& obj){
 	this->push_back(&obj);
 }
@@ -645,7 +657,7 @@ ostream& operator<<(ostream& os, TiVar& var){
 
 ostream& operator<<(ostream& os, TiBox& box){
 	for (int i=0; i<box.size(); i++){
-		os << box[i]->encode(1);
+		os << box[i].encode(1);
 	}
 }
 
