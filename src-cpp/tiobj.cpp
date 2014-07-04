@@ -176,6 +176,7 @@ TiObj::TiObj(){
 }
 
 TiObj::TiObj(string text){
+	this->varpkg.reserve(16);
 	this->classe = text;
 	TiParser parser;
 	parser.loadText(text);

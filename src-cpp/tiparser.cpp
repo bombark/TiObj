@@ -40,6 +40,11 @@ class TiBuffer {
 		this->loadFile(filename, buffersize);
 	}
 
+	~TiBuffer(){
+		if ( text )
+			free(text);
+	}
+
 	void loadFile(string filename, uint buffersize=1024){
 		FILE* fd = fopen(filename.c_str(), "r");
 		this->size   = 0;
