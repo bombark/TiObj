@@ -8,6 +8,11 @@ using namespace std;
 
 
 int main(int argc, char **argv){
+	TiObj tmp("Felipe{name='fernando';}");
+	cout << tmp;
+return 0;
+	
+
 
 	if ( argc < 2 ){
 		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";

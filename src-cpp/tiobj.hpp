@@ -45,8 +45,8 @@ class TiVar {
 	inline  bool isVector();	
 
 
-	inline  string    Str();
-	inline  int       Int();
+	string  Str();
+	int     Int();
 	inline  double    Dbl();
 	inline  TiObj&    Obj();
 	inline  TiVector& Vet();
