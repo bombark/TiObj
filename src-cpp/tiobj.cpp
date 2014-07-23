@@ -50,15 +50,15 @@ bool TiVar::isVector() {return this->type == TYPE_VECTOR;}
 
 
 string TiVar::Str(){
-	return this->svalue;
+	return this->str;
 }
 
 int TiVar::Int(){
-	return this->ivalue;
+	return this->num;
 }
 
 double TiVar::Dbl(){
-	return this->fvalue;
+	return this->dbl;
 }
 
 TiObj& TiVar::Obj(){
@@ -81,18 +81,18 @@ void TiVar::operator=(string value){
 		this->objptr = &obj;
 		this->type   = TYPE_OBJECT;
 	} else {
-		this->svalue = value;
+		this->str = value;
 		this->type   = TYPE_STRING;
 	}
 }
 
 void TiVar::operator=(int value){
-	this->ivalue = value;
+	this->num = value;
 	this->type   = TYPE_INT;
 }
 
 void TiVar::operator=(double value){
-	this->fvalue = value;
+	this->dbl = value;
 	this->type   = TYPE_FLOAT;
 }
 
@@ -108,19 +108,19 @@ void TiVar::operator=(TiVector& vector){
 
 void TiVar::operator=(TiVar& attr){
 	if ( attr.type == TYPE_STRING )
-		this->svalue = attr.svalue;
+		this->str = attr.str;
 	this->objptr = attr.objptr;
 	this->type   = attr.type;
 }
 
 string TiVar::toString(){
 	if (this->type == TYPE_STRING){
-		string res = "\"" + this->svalue + "\"";
+		string res = "\"" + this->str + "\"";
 		return res;
 	} else if (this->type == TYPE_INT){
-		return std::to_string(this->ivalue); 
+		return std::to_string(this->num); 
 	} else if (this->type == TYPE_FLOAT){
-		return std::to_string(this->fvalue); 
+		return std::to_string(this->dbl); 
 	} else if (this->type == TYPE_OBJECT ){
 		return this->objptr->encode(0,true);
 	} else if (this->type == TYPE_VECTOR ){
@@ -134,20 +134,20 @@ string TiVar::encode(int tab){
 	if (this->type == TYPE_STRING){
 		for (int i=1; i<tab; i++)
 			res += '\t';
-		res += this->name + " = \"" + this->svalue + "\";\n";
+		res += this->name + " = \"" + this->str + "\";\n";
 	} else if (this->type == TYPE_INT){
 		for (int i=1; i<tab; i++)
 			res += '\t';
 		res += this->name; 
 		res += " = "; 
-		res += std::to_string(this->ivalue); 
+		res += std::to_string(this->num); 
 		res += ";\n";
 	} else if (this->type == TYPE_FLOAT){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
 		res += this->name; 
 		res += " = ";
-		res += std::to_string(this->fvalue); 
+		res += std::to_string(this->dbl); 
 		res += ";\n";
 	} else if (this->type == TYPE_OBJECT ){
 		for (int i=1; i<tab; i++)
@@ -364,11 +364,11 @@ void TiObj::select(TiBox& out, string classes, string where){
 			TiObj& obj = this->box[i];
 			for (int j=0; j<vetclasse.size(); j++){
 				if ( obj.is(vetclasse[j]) && obj.has(predicate.name ) ){
-					if ( type == TiLex::L_CHAR && predicate.svalue == obj.atStr(predicate.name) )
+					if ( type == TiLex::L_CHAR && predicate.str == obj.atStr(predicate.name) )
 						out.push_back(&obj);
-					else if ( type == TiLex::L_INT && predicate.ivalue == obj.atInt(predicate.name) )
+					else if ( type == TiLex::L_INT && predicate.num == obj.atInt(predicate.name) )
 						out.push_back(&obj);
-					else if ( type == TiLex::L_FLOAT && predicate.fvalue == obj.atDbl(predicate.name) )
+					else if ( type == TiLex::L_FLOAT && predicate.dbl == obj.atDbl(predicate.name) )
 						out.push_back(&obj);
 				}
 			}
@@ -422,7 +422,7 @@ string TiObj::atStr(string name, string _default){
 	if ( var.isNull() ){
 		return _default;
 	}
-	return var.svalue;
+	return var.str;
 }
 
 int TiObj::atInt(string name, int _default){
@@ -430,7 +430,7 @@ int TiObj::atInt(string name, int _default){
 	if ( var.isNull() ){
 		return _default;
 	}
-	return var.ivalue;
+	return var.num;
 }
 
 double TiObj::atDbl (string name, double _default){
@@ -438,7 +438,7 @@ double TiObj::atDbl (string name, double _default){
 	if ( var.isNull() ){
 		return _default;
 	}
-	return var.fvalue;
+	return var.dbl;
 }
 
 TiObj& TiObj::atObj (string name){
@@ -453,11 +453,11 @@ TiObj& TiObj::atObj (string name){
 string TiObj::toString(string name){
 	TiVar& attr = this->at(name);
 	if ( attr.isString() ){
-		return attr.svalue;
+		return attr.str;
 	} else if ( attr.isInt() ){
-		return std::to_string(attr.ivalue);
+		return std::to_string(attr.num);
 	} else if ( attr.isFloat() ){
-		return std::to_string(attr.fvalue);
+		return std::to_string(attr.dbl);
 	} else if ( attr.isObject() ){
 		return attr.objptr->encode(0);
 	} else if ( attr.isVector() ){
@@ -642,11 +642,11 @@ ostream& operator<<(ostream& os, TiVar& var){
 	if ( var.isNull() )
 		return os << "[NULL]";
 	if ( var.isFloat() )
-		return os << var.fvalue;
+		return os << var.dbl;
 	if ( var.isString() )
-		return os << var.svalue;
+		return os << var.str;
 	if ( var.isInt() )
-		return os << var.ivalue;
+		return os << var.num;
 	else if ( var.isVector() )
 		return os << var.vetptr->encode();
 	else if ( var.isObject() )

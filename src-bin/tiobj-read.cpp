@@ -8,9 +8,6 @@ using namespace std;
 
 
 int main(int argc, char **argv){
-	TiObj tmp("Felipe{name='fernando';}");
-	cout << tmp;
-return 0;
 	
 
 

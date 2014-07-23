@@ -24,10 +24,10 @@ class TiVar {
   public:
 	int       type;
 	string    name;
-	string    svalue;
+	string    str;
 	union {
-		double    fvalue;
-		long int  ivalue;
+		double    dbl;
+		long int  num;
 		TiObj*    objptr;
 		TiVector* vetptr;
 	};
@@ -45,11 +45,11 @@ class TiVar {
 	inline  bool isVector();	
 
 
-	string  Str();
-	int     Int();
-	inline  double    Dbl();
-	inline  TiObj&    Obj();
-	inline  TiVector& Vet();
+	string    Str();
+	int       Int();
+	double    Dbl();
+	TiObj&    Obj();
+	TiVector& Vet();
 
 	void operator=(string value);
 	void operator=(int value);
