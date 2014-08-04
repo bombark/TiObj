@@ -19,6 +19,7 @@ class TiCursor;
 #define TYPE_FLOAT  3
 #define TYPE_OBJECT 4
 #define TYPE_VECTOR 5
+#define TYPE_TEXT   6
 
 class TiVar {
   public:
@@ -31,7 +32,8 @@ class TiVar {
 		TiObj*    objptr;
 		TiVector* vetptr;
 	};
-
+	char strtype[64];
+	
 	TiVar();
 	TiVar(string name);
 	~TiVar();

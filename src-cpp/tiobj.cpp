@@ -161,6 +161,10 @@ string TiVar::encode(int tab){
 		res += this->name+" = ";
 		res += ptr->encode(tab,false);
 		res += "\n";
+	} else if ( this->type == TYPE_TEXT ){
+		for (int i=1; i<tab; i++)
+			res += '\t';
+		res += this->name + " = " +this->strtype+ "("+this->str+")\n";
 	}
 	return res;
 }
@@ -344,6 +348,8 @@ void TiObj::select(TiBox& out, string classes, string where){
 		}
 	} else {
 		// Constroi a lista de predicados
+		/* DEIXAR COMENTADO ENQUANTO ARRUMA O TILEX
+		
 		int type;
 		TiLex lex;
 		TiVar predicate;
@@ -373,6 +379,10 @@ void TiObj::select(TiBox& out, string classes, string where){
 				}
 			}
 		}
+		
+		*/
+		
+		
 	}
 }
 

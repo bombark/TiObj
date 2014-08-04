@@ -8,15 +8,12 @@ using namespace std;
 
 
 int main(int argc, char **argv){
-	
-
-
+	TiObj obj;
 	if ( argc < 2 ){
 		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";
 		return 1;
 	}
 
-	TiObj obj;
 	string field = argv[1];
 
 	if ( argc == 2 ){
