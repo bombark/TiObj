@@ -8,6 +8,10 @@ using namespace std;
 
 
 int main(int argc, char **argv){
+	/*TiObj obj("name='felipe';Pessoa{campo='aaa'}Pessoa{name='felipe';tmp=10teste=20}");
+	cout << obj;
+	return 0;*/
+	
 	TiObj obj;
 	if ( argc < 2 ){
 		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";

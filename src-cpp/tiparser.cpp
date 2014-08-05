@@ -47,8 +47,8 @@ class TiBuffer {
 	}
 
 	~TiBuffer(){
-		if ( this->text )
-			free(text);
+		if ( this->max > 0 && this->text != NULL)
+			free(this->text);
 		if ( this->isClose )
 			fclose(fd);
 	}
@@ -75,11 +75,11 @@ class TiBuffer {
 		if ( this->text ){
 			if (buffersize > this->max){
 				free(this->text);
-				this->text = new char[buffersize];
+				this->text = (char*) malloc(buffersize);
 				this->max  = buffersize;
 			}
 		} else {
-			this->text = new char[buffersize];
+			this->text = (char*) malloc(buffersize);
 			this->max  = buffersize;
 		}
 		this->fd = fd;
@@ -89,20 +89,26 @@ class TiBuffer {
 
 	void loadText(string text){
 		this->isClose = false;
-		this->isEof  = false;
 		this->fd     = NULL;
 		this->cursor = 0;
-		uint size = text.size()+1;
+		if ( text.size() == 0 ){
+			this->isEof  = true;
+			this->size   = 0;
+			return;
+		}
+		this->isEof  = false;
+		uint size = text.size();
 		if ( this->text ){
 			if (size > this->max){
 				free(this->text);
-				this->text = new char[size];
+				this->text = (char*) malloc(size);
 			}
-		} else 
-			this->text = new char[size];
+		} else {
+			this->text = (char*) malloc(size);
+		}
 		this->size = size;
-		this->max  = max;
-		strcpy(this->text, text.c_str());
+		this->max  = size;
+		strncpy(this->text, text.c_str(), size);
 		this->line = 1;
 	}
 
@@ -159,7 +165,7 @@ private:
 /*=====================================================================================*/
 
 
-void addslashes(string& out, string src){
+void addslashes(string& out, string& src){
 	out = "";
 	for (int i=0;i<src.size(); i++){
 		if ( src[i] == '\n' ){
@@ -321,7 +327,7 @@ class TiLex {
 			type = this->symbols[c];
 			if ( type != L_DEL ){
 				break;
-			}      
+			}
 		}
 		return runpkg[type](*this, out, c);
 	}
@@ -543,8 +549,10 @@ char PARSER_REDUCE[7][10] = {
 class TiParser {
 	TiLex lex;
 	char translate[256];
-	vector<TiObj*> objs;
-
+	vector<TiObj*> objstack;
+	TiToken memory[2];
+	int mem_i, state;
+	
   public:
 	TiParser(){
 		for (int i=0; i<256; i++){
@@ -584,112 +592,137 @@ class TiParser {
 	
 	
 	bool parse(TiObj& obj){
-		this->objs.clear();
-		this->objs.push_back(&obj);
+		this->objstack.clear();
+		this->objstack.push_back(&obj);
 		parsep();
 	}
 	
 
 private:
 	bool parsep(){
-		TiObj* cur;
 		TiToken token;
-		cur = objs[0];
-		TiToken memory[2];
-		int mem_i=0;
-		bool isAttr = false;
-		int opp = 0;   // 0=None; 1=Attr_String;
+		this->mem_i = this->state = 0;
+		bool (*run[4])(TiParser& obj, TiToken& token);
+		run[0] = run_pass_0;
+		run[1] = run_pass_1;
+		run[2] = run_pass_2;
+		run[3] = run_pass_3;
+		
 		while ( lex.next(token) ){	
-			if ( token.type == TiToken::UNKNOWN ){
-				run_unknown(*this, *cur);
-				break;
-			} else if ( token.type == TiToken::STRING ){
-				if ( isAttr == false )
-					memory[0] = token;
-				else{
-					memory[1] = token;
-					opp = 2;
-				}
-				mem_i += 1;
-			} else if ( token.type == TiToken::INT ){
-				cur->set(memory[0].text, atoi( token.text.c_str()));
-			} else if ( token.type == TiToken::DOUBLE ){
-				cur->set(memory[0].text, atof( token.text.c_str()));
-			} else if ( token.type == TiToken::TEXT ){
-				cur->set(memory[0].text, "");
-				TiVar& var = cur->at(memory[0].text);
-				var.type = TYPE_TEXT;
-				var.strtype[0] = '\0';
-				if ( mem_i == 2 ){
-					var.str = token.text;
-					strcpy(var.strtype, memory[1].text.c_str());
-				} else if ( mem_i == 1 ){
-					var.str = token.text;
-				}
-				mem_i = opp = 0;
-				isAttr = false;
-			} else if ( token.type == TiToken::TEOF ){
-				break;
-			} else if ( token.type == TiToken::SYMBOL ){
-				if ( token.text == "{" ){
-					TiObj* aux = new TiObj();
-					objs.push_back(aux);
-					if ( isAttr ){
-						cur->set(memory[0].text, *aux);
-						isAttr = false;
-						if ( mem_i == 2 )
-							aux->classe = memory[1].text;
-					} else {
-						cur->addObject(aux);
-						if ( mem_i == 1 )
-							aux->classe = memory[0].text;
-					}
-					mem_i = opp = 0;
-					isAttr = false;
-					cur = aux;
-				} else if ( token.text == "}" ){
-					if ( opp == 2 ){
-						cur->set(memory[0].text, memory[1].text);
-					}
-					mem_i = opp = 0;
-					isAttr = false;
-					objs.pop_back();
-					cur = objs[ objs.size()-1 ];
-				} else if ( token.text == "\n" || token.text == ";" ){
-					if ( opp == 2 ){
-						cur->set(memory[0].text, memory[1].text);
-					}
-					mem_i = opp = 0;
-					isAttr = false;
-				} else if ( token.text == "=" ){
-					isAttr = true;
-				} else if ( token.text == "[" ){
-				} else if ( token.text == "]" ){
-				}
-			}
-			if ( mem_i > 2 ){
-				cur->clear();
-				cur->classe = "!Error";
-				cur->set("msg", "Esperado um ';' ou '\\n' na linha tal");
-				cur->set("line", (int)this->lex.getLine());
-				break;
-			}
-			
-			//token.write();
+			run[this->state](*this, token);
+			//DEBUG:
+			//cout << this->state << endl; token.write();
 		}
-	
+		if ( state > 0 ){
+			token.text = ";";
+			run[this->state](*this, token);
+		}
 		return true;
 	}
 
 
-	static bool run_unknown(TiParser& obj, TiObj& out){
-		out.clear();
+	static bool run_unknown(TiParser& obj){
+		/*out.clear();
 		out.classe = "!ERROR";
 		out["msg"] = "Caracter Desconhecido";
-		out["line"] = (int)obj.lex.getLine();
+		out["line"] = (int)obj.lex.getLine();*/
 	}
 
+	
+	static bool run_pass_0(TiParser& parser, TiToken& token){
+		if ( parser.mem_i > 0 )
+			return false;
+		if ( token.type == TiToken::STRING ){
+			parser.memory[0] = token;
+			parser.mem_i += 1;
+			parser.state  = 1;
+			return true;
+		} else if ( token.text[0] == '\n' || token.text[0] == ';' ){
+			return true;
+		} else if ( token.text[0] == '{' ){
+			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+			TiObj* aux = new TiObj();
+			cur->addObject(aux);
+			parser.objstack.push_back(aux);
+			parser.state = parser.mem_i = 0;
+		} else {
+			return false;
+		}
+	}
 
+	static bool run_pass_1(TiParser& parser, TiToken& token){
+		char c = token.text[0];
+		if ( c == '=' ){
+			parser.state  = 2;
+		} else if ( c == '{' ){
+			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+			TiObj* aux = new TiObj();
+			cur->addObject(aux);
+			parser.objstack.push_back(aux);
+			aux->classe = parser.memory[0].text;
+			parser.state = parser.mem_i = 0;
+		} else if ( c == '}'){
+			parser.objstack.pop_back();
+			if ( parser.objstack.size() == 0 ){
+				return false;
+			}
+		} else {
+			return false;
+		}
+		return true;
+	}
+	
+	static bool run_pass_2(TiParser& parser, TiToken& token){
+		TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+		if ( token.type == TiToken::INT ){
+			cur->set(parser.memory[0].text, atoi(token.text.c_str()) );
+			parser.state = parser.mem_i = 0;
+		} else if ( token.type == TiToken::DOUBLE ){
+			cur->set(parser.memory[0].text, atof(token.text.c_str()) );
+			parser.state = parser.mem_i = 0;
+		} else if ( token.type == TiToken::STRING ){
+			parser.memory[1] = token;
+			parser.state = 3;
+		} else if ( token.type == TiToken::TEXT ){
+			cur->set(parser.memory[0].text, token.text );
+			parser.state = parser.mem_i = 0;
+		} else if ( token.text[0] == '{' ){
+			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+			TiObj* aux = new TiObj();
+			parser.objstack.push_back(aux);
+			cur->set(parser.memory[0].text, *aux);
+			parser.state = parser.mem_i = 0;
+		} else {
+			return false;
+		}
+		return true;
+	}
+	
+	static bool run_pass_3(TiParser& parser, TiToken& token){
+		TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+		if ( token.text[0] == ';' || token.text[0] == '\n' ){
+			cur->set(parser.memory[0].text, parser.memory[1].text );
+			parser.state = parser.mem_i = 0;
+		} else if ( token.text[0] == '{' ){
+			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+			TiObj* aux = new TiObj();
+			parser.objstack.push_back(aux);
+			cur->set(parser.memory[0].text, *aux);
+			aux->classe = parser.memory[1].text;
+			parser.state = parser.mem_i = 0;
+		} else if ( token.text[0] == '}' ){
+			cur->set(parser.memory[0].text, parser.memory[1].text );
+			parser.state = parser.mem_i = 0;
+			parser.objstack.pop_back();
+			if ( parser.objstack.size() == 0 ){
+				return false;
+			}
+		} else if ( token.type == TiToken::TEXT ){
+		} else {
+			return false;
+		}
+		return true;
+	}
 
 	TiVector* parseVector(){
 		/*TiToken token;
