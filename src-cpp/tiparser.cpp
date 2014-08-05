@@ -637,14 +637,23 @@ private:
 			parser.mem_i += 1;
 			parser.state  = 1;
 			return true;
-		} else if ( token.text[0] == '\n' || token.text[0] == ';' ){
-			return true;
-		} else if ( token.text[0] == '{' ){
-			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
-			TiObj* aux = new TiObj();
-			cur->addObject(aux);
-			parser.objstack.push_back(aux);
-			parser.state = parser.mem_i = 0;
+		} else if ( token.type==TiToken::SYMBOL ){
+			char symbol = token.text[0];
+			if ( symbol == '\n' || symbol == ';' ){
+				return true;
+			} else if ( symbol == '{' ){
+				TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+				TiObj* aux = new TiObj();
+				cur->addObject(aux);
+				parser.objstack.push_back(aux);
+				parser.state = parser.mem_i = 0;
+			} else if ( symbol == '}' ){
+				parser.objstack.pop_back();
+				if ( parser.objstack.size() == 0 ){
+					return false;
+				}
+			} else
+				return false;
 		} else {
 			return false;
 		}
@@ -662,10 +671,12 @@ private:
 			aux->classe = parser.memory[0].text;
 			parser.state = parser.mem_i = 0;
 		} else if ( c == '}'){
+			parser.state = parser.mem_i = 0;
 			parser.objstack.pop_back();
 			if ( parser.objstack.size() == 0 ){
 				return false;
-			}
+			} else 
+				return false;
 		} else {
 			return false;
 		}
@@ -686,7 +697,7 @@ private:
 		} else if ( token.type == TiToken::TEXT ){
 			cur->set(parser.memory[0].text, token.text );
 			parser.state = parser.mem_i = 0;
-		} else if ( token.text[0] == '{' ){
+		} else if ( token.type==TiToken::SYMBOL && token.text[0] == '{' ){
 			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
 			TiObj* aux = new TiObj();
 			parser.objstack.push_back(aux);
@@ -700,24 +711,29 @@ private:
 	
 	static bool run_pass_3(TiParser& parser, TiToken& token){
 		TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
-		if ( token.text[0] == ';' || token.text[0] == '\n' ){
-			cur->set(parser.memory[0].text, parser.memory[1].text );
-			parser.state = parser.mem_i = 0;
-		} else if ( token.text[0] == '{' ){
-			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
-			TiObj* aux = new TiObj();
-			parser.objstack.push_back(aux);
-			cur->set(parser.memory[0].text, *aux);
-			aux->classe = parser.memory[1].text;
-			parser.state = parser.mem_i = 0;
-		} else if ( token.text[0] == '}' ){
-			cur->set(parser.memory[0].text, parser.memory[1].text );
-			parser.state = parser.mem_i = 0;
-			parser.objstack.pop_back();
-			if ( parser.objstack.size() == 0 ){
-				return false;
+		
+		if ( token.type == TiToken::SYMBOL ){
+			if ( token.text[0] == ';' || token.text[0] == '\n' ){
+				cur->set(parser.memory[0].text, parser.memory[1].text );
+				parser.state = parser.mem_i = 0;
+			} else if ( token.text[0] == '{' ){
+				TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
+				TiObj* aux = new TiObj();
+				parser.objstack.push_back(aux);
+				cur->set(parser.memory[0].text, *aux);
+				aux->classe = parser.memory[1].text;
+				parser.state = parser.mem_i = 0;
+			} else if ( token.text[0] == '}' ){
+				cur->set(parser.memory[0].text, parser.memory[1].text );
+				parser.state = parser.mem_i = 0;
+				parser.objstack.pop_back();
+				if ( parser.objstack.size() == 0 ){
+					return false;
+				}
 			}
 		} else if ( token.type == TiToken::TEXT ){
+			cur->setText(parser.memory[0].text, parser.memory[1].text, token.text );
+			parser.state = parser.mem_i = 0;
 		} else {
 			return false;
 		}

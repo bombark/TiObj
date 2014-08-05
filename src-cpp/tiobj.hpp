@@ -105,6 +105,7 @@ class TiObj {
 	void setObject(string name, string text);
 	void setVector(string name, string text);
 	void set(TiVar& attr);
+	void setText(string name, string strtype, string text);
 	
 	void addObject(TiObj* obj);
 	void addObject(string text);

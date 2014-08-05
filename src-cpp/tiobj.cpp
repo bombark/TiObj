@@ -292,6 +292,18 @@ void TiObj::set(TiVar& in_var){
 	var = var;
 }
 
+
+void TiObj::setText(string name, string strtype, string text){
+	TiVar& var = this->at(name);
+	var = text;
+	var.type = TYPE_TEXT;
+	if ( strtype.size() >= sizeof(TiVar::strtype) ){
+		strncpy(var.strtype, strtype.c_str(), sizeof(TiVar::strtype)-1 );
+		var.strtype[ sizeof(TiVar::strtype) ] = '\0';
+	} else
+		strcpy(var.strtype, strtype.c_str());
+}
+
 void TiObj::setObject(string name, string text){
 	/*TiVar& var = this->at(name);
 	if ( var.isNull() ){
