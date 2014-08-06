@@ -263,33 +263,59 @@ TiVar& TiObj::at(string name){
 }
 
 void TiObj::set(string name, string value){
-	TiVar& var = this->at(name);
-	var = value;
+	if ( name == "class" ){
+		this->classe = value;
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
 }
 
 void TiObj::set(string name, int value){
-	TiVar& var = this->at(name);
-	var = value;
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
 }
 
 void TiObj::set(string name, double value){
-	TiVar& var = this->at(name);
-	var = value;
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
 }
 
 void TiObj::set(string name, TiVector& value){
-	TiVar& var = this->at(name);
-	var = value;
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
 }
 
 void TiObj::set(string name, TiObj& value){
-	TiVar& var = this->at(name);
-	var = value;
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
 }
 
 void TiObj::set(TiVar& in_var){
-	TiVar& var = this->at(in_var.name);
-	var = var;
+	if ( in_var.name == "class" ){
+		this->classe = "";
+		if ( in_var.isString() )
+			this->classe = in_var.str;
+	} else {
+		TiVar& var = this->at(in_var.name);
+		var = var;
+	}
 }
 
 
