@@ -33,10 +33,8 @@ TiVar::TiVar(string name){
 }
 
 TiVar::~TiVar(){
-	if ( this->type == TYPE_OBJECT )
-		delete this->objptr;
-	if ( this->type == TYPE_VECTOR )
-		delete this->vetptr;
+	// Nao colocar para deletar o objeto e vetor aqui, pois essa
+	// rotina eh chamada pelo std::vector, quando realoca o vetor
 }
 
 
@@ -130,6 +128,7 @@ string TiVar::toString(){
 }
 
 string TiVar::encode(int tab){
+
 	string res = "";
 	if (this->type == TYPE_STRING){
 		for (int i=1; i<tab; i++)
@@ -187,6 +186,15 @@ TiObj::TiObj(string text){
 }
 
 TiObj::~TiObj(){
+	this->classe = "!DEL";
+	for (int i=0; i<this->varpkg.size(); i++){
+		TiVar& var = this->varpkg[i];
+		if ( var.type == TYPE_OBJECT )
+			delete var.objptr;
+		else if ( var.type == TYPE_VECTOR )
+			delete var.vetptr;
+	}
+	this->varpkg.clear();
 	for (int i=0; i<this->box.size(); i++)
 		delete &this->box[i];
 }
@@ -249,6 +257,8 @@ TiVar& TiObj::at(string name){
 	if ( name == this->last_name )
 		return varpkg[last_id];
 
+
+	// Search if already exists the field
 	for (int i=0; i<varpkg.size(); i++){
 		if ( name == varpkg[i].name ){
 			this->last_id   = i;
@@ -257,12 +267,17 @@ TiVar& TiObj::at(string name){
 		}
 	}
 
+
+	// Create a new field, case dont exist
 	int id = this->varpkg.size();
 	this->varpkg.push_back( TiVar(name) );
+	this->last_id   = id;
+	this->last_name = name;
 	return this->varpkg[id];
 }
 
 void TiObj::set(string name, string value){
+
 	if ( name == "class" ){
 		this->classe = value;
 	} else {
@@ -521,6 +536,7 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 		for (int i=1; i<tab; i++)
 			res += '\t';
 	}
+
 	if ( tab == 0 ){
 		if ( this->classe != "" )
 			res += "class = \""+this->classe+"\";\n";
@@ -529,7 +545,6 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 			res += this->classe + " ";
 		res += "{\n";
 	}
-
 	for (int i=0; i<this->varpkg.size(); i++) {
 		res += varpkg[i].encode(tab+1);
 	}

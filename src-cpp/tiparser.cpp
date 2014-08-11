@@ -498,7 +498,7 @@ private:
  * 
  * 0 = ERROR;
  */
-
+/*
 char PARSER_ACTION[7][10] = {
 	//   U  S I D  Y E  T X  C R
 		{0, 0,0,0, 0,0, 0,0, 0,0},
@@ -510,7 +510,7 @@ char PARSER_ACTION[7][10] = {
 		{0, 0,0,0, 0,0, 0,0, 0,0}
 };
 
-/*
+
 char PARSER_ACTION[7][10] = {
 	//   U  S I D  Y E  T { }  [ ]  = ;
 		{0, 0,0,0, 0,0, 0,0, 0,0},
@@ -552,6 +552,7 @@ class TiParser {
 	vector<TiObj*> objstack;
 	TiToken memory[2];
 	int mem_i, state;
+	TiObj* base;
 	
   public:
 	TiParser(){
@@ -581,25 +582,11 @@ class TiParser {
 		lex.loadText(text);
 	}
 
-	int getAction(int state, int type, string token){
-		int csy = type;
-		if ( csy == TiLex::L_SYMB ){
-			csy = this->translate[token[0]];
-		}
-		return PARSER_ACTION[state][csy];
-	}
-	
-	
-	
 	bool parse(TiObj& obj){
+		// Init function array and other variables
+		this->base = &obj;
 		this->objstack.clear();
-		this->objstack.push_back(&obj);
-		parsep();
-	}
-	
-
-private:
-	bool parsep(){
+		this->objstack.push_back(base);
 		TiToken token;
 		this->mem_i = this->state = 0;
 		bool (*run[4])(TiParser& obj, TiToken& token);
@@ -607,27 +594,49 @@ private:
 		run[1] = run_pass_1;
 		run[2] = run_pass_2;
 		run[3] = run_pass_3;
-		
-		while ( lex.next(token) ){	
-			run[this->state](*this, token);
+	
+		// Run the parser
+		while ( lex.next(token) ){
+			if ( token.type == TiToken::COMMENT)
+				continue;
+			
+			bool ok = run[this->state](*this, token);
 			//DEBUG:
 			//cout << this->state << endl; token.write();
+			//printf("%p\n", objstack[ objstack.size()-1 ]);
+			if ( !ok )
+				return false;
 		}
-		if ( state > 0 ){
-			token.text = ";";
-			run[this->state](*this, token);
+		
+		// Execute the strings in the buffer
+		if ( this->state > 0 ){
+			token.text = "\n";
+			token.type = TiToken::SYMBOL;
+			bool ok = run[this->state](*this, token);
+			if ( !ok )
+				return false;
 		}
+		
+		if ( this->objstack.size() != 1 ){
+			this->error("Expected a '}'");
+			return false;
+		}
+		
 		return true;
+		
 	}
+	
 
-
-	static bool run_unknown(TiParser& obj){
-		/*out.clear();
-		out.classe = "!ERROR";
-		out["msg"] = "Caracter Desconhecido";
-		out["line"] = (int)obj.lex.getLine();*/
+	
+	
+	
+private:
+	void error(string msg){
+		this->base->clear();
+		this->base->classe="!ERROR";
+		this->base->set("msg", msg);
+		this->base->set("line", (int)this->lex.getLine());
 	}
-
 	
 	static bool run_pass_0(TiParser& parser, TiToken& token){
 		if ( parser.mem_i > 0 )
@@ -650,16 +659,24 @@ private:
 			} else if ( symbol == '}' ){
 				parser.objstack.pop_back();
 				if ( parser.objstack.size() == 0 ){
+					parser.error("Objects stack is corrupted, there is a '}' without a '{'");
 					return false;
 				}
-			} else
+			} else {
+				parser.error("Symbol not expected:"+token.text);
 				return false;
+			}
 		} else {
+			parser.error("Symbol not expected:"+token.text);
 			return false;
 		}
 	}
 
 	static bool run_pass_1(TiParser& parser, TiToken& token){
+		if ( token.type != TiToken::SYMBOL ){
+			parser.error("Expected a Symbol like '=' or '{', and not "+token.text);
+			return false;
+		}
 		char c = token.text[0];
 		if ( c == '=' ){
 			parser.state  = 2;
@@ -670,14 +687,8 @@ private:
 			parser.objstack.push_back(aux);
 			aux->classe = parser.memory[0].text;
 			parser.state = parser.mem_i = 0;
-		} else if ( c == '}'){
-			parser.state = parser.mem_i = 0;
-			parser.objstack.pop_back();
-			if ( parser.objstack.size() == 0 ){
-				return false;
-			} else 
-				return false;
 		} else {
+			parser.error("Expected a Symbol like '=' or '{', and not '"+token.text+"'");
 			return false;
 		}
 		return true;
@@ -692,10 +703,11 @@ private:
 			cur->set(parser.memory[0].text, atof(token.text.c_str()) );
 			parser.state = parser.mem_i = 0;
 		} else if ( token.type == TiToken::STRING ){
+
 			parser.memory[1] = token;
 			parser.state = 3;
 		} else if ( token.type == TiToken::TEXT ){
-			cur->set(parser.memory[0].text, token.text );
+			cur->setText(parser.memory[0].text, "", token.text );
 			parser.state = parser.mem_i = 0;
 		} else if ( token.type==TiToken::SYMBOL && token.text[0] == '{' ){
 			TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
@@ -704,6 +716,7 @@ private:
 			cur->set(parser.memory[0].text, *aux);
 			parser.state = parser.mem_i = 0;
 		} else {
+			parser.error("ERROR");
 			return false;
 		}
 		return true;
@@ -711,9 +724,9 @@ private:
 	
 	static bool run_pass_3(TiParser& parser, TiToken& token){
 		TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
-		
+
 		if ( token.type == TiToken::SYMBOL ){
-			if ( token.text[0] == ';' || token.text[0] == '\n' ){
+			if ( token.text[0] == ';' || token.text[0] == '\n' ){			
 				cur->set(parser.memory[0].text, parser.memory[1].text );
 				parser.state = parser.mem_i = 0;
 			} else if ( token.text[0] == '{' ){
@@ -728,6 +741,7 @@ private:
 				parser.state = parser.mem_i = 0;
 				parser.objstack.pop_back();
 				if ( parser.objstack.size() == 0 ){
+					parser.error("Objects stack is corrupted, there is a '}' without a '{'");
 					return false;
 				}
 			}
@@ -735,6 +749,7 @@ private:
 			cur->setText(parser.memory[0].text, parser.memory[1].text, token.text );
 			parser.state = parser.mem_i = 0;
 		} else {
+			parser.error("Expected a Text or a Symbol like ';','{','}', and not a '"+token.text+"'");
 			return false;
 		}
 		return true;

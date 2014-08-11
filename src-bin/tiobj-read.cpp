@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string>
 #include <string.h>
+#include <tiarg.hpp>
 #include "tiobj.hpp"
+
 
 using namespace std;
 
@@ -12,20 +14,17 @@ int main(int argc, char **argv){
 	cout << obj;
 	return 0;*/
 	
-	TiObj obj;
-	if ( argc < 2 ){
-		cerr << "Syntax: " << argv[0] << " FieldName1,FieldName2,...  [from File]\n";
-		return 1;
-	}
-
-	string field = argv[1];
-
-	if ( argc == 2 ){
+	TiObj args, obj;
+	getArgs(args, argc, argv);
+	string field = args.atStr("_Akk");
+	string from  = args.atStr("from");
+	
+	
+	if ( from == "" ){
 		obj.loadFile(stdin);
 	} else {
-		obj.loadFile(argv[2]);
+		obj.loadFile(from);
 	}
-
 	
 	char token[1024];
 	int i, cursor;
