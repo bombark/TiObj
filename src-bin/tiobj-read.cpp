@@ -10,9 +10,6 @@ using namespace std;
 
 
 int main(int argc, char **argv){
-	/*TiObj obj("name='felipe';Pessoa{campo='aaa'}Pessoa{name='felipe';tmp=10teste=20}");
-	cout << obj;
-	return 0;*/
 	
 	TiObj args, obj;
 	getArgs(args, argc, argv);

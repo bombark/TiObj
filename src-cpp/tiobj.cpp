@@ -17,7 +17,16 @@ TiObj TiObj::ObjNull;
 /*-------------------------------------------------------------------------------------*/
 
 
-
+/* OBSERVACAO
+ * Existe um mecanismo para liberacao dos objetos
+ * Se objeto nao estiver mais sendo refenciado por nenhum objeto, seja em 
+ * atributo ou seja no Box, entao ele eh destruido quando for chamado a funcao
+ * clear ou delete
+ * 
+ * Entretanto existe um caso particular, que vai dar erro, se atribuir o 
+ * objeto em algum lugar e depois manualmente dar um delete
+ * 
+ * EVITAR usar o delete manualmente
 
 
 
@@ -35,6 +44,8 @@ TiVar::TiVar(string name){
 TiVar::~TiVar(){
 	// Nao colocar para deletar o objeto e vetor aqui, pois essa
 	// rotina eh chamada pelo std::vector, quando realoca o vetor
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 }
 
 
@@ -70,6 +81,8 @@ TiVector& TiVar::Vet(){
 
 
 void TiVar::operator=(string value){
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 	if ( value[0] == '$' ){
 		char* ptr = &value[1];
 		TiParser parser;
@@ -85,21 +98,32 @@ void TiVar::operator=(string value){
 }
 
 void TiVar::operator=(int value){
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 	this->num = value;
 	this->type   = TYPE_INT;
 }
 
 void TiVar::operator=(double value){
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 	this->dbl = value;
 	this->type   = TYPE_FLOAT;
 }
 
 void TiVar::operator=(TiObj& obj){
+	if ( &obj == this->objptr )
+		return;
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 	this->type   = TYPE_OBJECT;
 	this->objptr = &obj;
+	obj.count_ref += 1;
 }
 
 void TiVar::operator=(TiVector& vector){
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
 	this->type   = TYPE_VECTOR;
 	this->vetptr = &vector;
 }
@@ -107,6 +131,8 @@ void TiVar::operator=(TiVector& vector){
 void TiVar::operator=(TiVar& attr){
 	if ( attr.type == TYPE_STRING )
 		this->str = attr.str;
+	if ( attr.type == TYPE_OBJECT )
+		attr.objptr->count_ref += 1;
 	this->objptr = attr.objptr;
 	this->type   = attr.type;
 }
@@ -168,35 +194,40 @@ string TiVar::encode(int tab){
 	return res;
 }
 
+
+void TiVar::removeObject(){
+	if ( this->objptr->count_ref <= 0 ){
+		delete this->objptr;
+		this->objptr = NULL;
+	} else 
+		this->objptr->count_ref -= 1;
+}
+
 /*-------------------------------------------------------------------------------------*/
 
 
 /*=====================================================================================*/
 
 TiObj::TiObj(){
+	this->count_ref = 0;
 	this->classe = "";
 	this->last_name = "";
+	this->varpkg.reserve(16);
 }
 
 TiObj::TiObj(string text){
+	this->count_ref = 0;
 	this->varpkg.reserve(16);
 	TiParser parser;
 	parser.loadText(text);
-	parser.parse(*this);
+	if ( parser.parse(*this) == false )
+		cout << "ERROR no parser!!\n";
 }
 
 TiObj::~TiObj(){
 	this->classe = "!DEL";
-	for (int i=0; i<this->varpkg.size(); i++){
-		TiVar& var = this->varpkg[i];
-		if ( var.type == TYPE_OBJECT )
-			delete var.objptr;
-		else if ( var.type == TYPE_VECTOR )
-			delete var.vetptr;
-	}
 	this->varpkg.clear();
-	for (int i=0; i<this->box.size(); i++)
-		delete &this->box[i];
+	this->box.clear();
 }
 
 void TiObj::clear(){
@@ -225,7 +256,7 @@ int TiObj::loadStream(FILE* fd){
 	do {
 		TiObj* item = new TiObj();
 		if ( parser.parse(*item) ){
-			this->addObject(item);
+			this->box += item;
 		} else {
 			// EM CASO DE ERRO DEVE FAZER ALGO
 			break;
@@ -241,7 +272,7 @@ int TiObj::loadStream(string filename){
 	do {
 		TiObj* item = new TiObj();
 		if ( parser.parse(*item) ){
-			this->addObject(item);
+			this->box += item;
 		} else {
 			// EM CASO DE ERRO DEVE FAZER ALGO
 			break;
@@ -257,7 +288,6 @@ TiVar& TiObj::at(string name){
 	if ( name == this->last_name )
 		return varpkg[last_id];
 
-
 	// Search if already exists the field
 	for (int i=0; i<varpkg.size(); i++){
 		if ( name == varpkg[i].name ){
@@ -266,7 +296,6 @@ TiVar& TiObj::at(string name){
 			return varpkg[i];
 		}
 	}
-
 
 	// Create a new field, case dont exist
 	int id = this->varpkg.size();
@@ -367,17 +396,6 @@ void TiObj::setVector(string name, string value){
 	var = *novo;
 }
 
-
-
-void TiObj::addObject(TiObj* obj){
-	this->box.push_back(obj);
-}
-
-
-void TiObj::addObject(string text){
-	TiObj* obj = new TiObj(text);
-	this->box.push_back(obj);
-}
 
 
 void TiObj::select(TiBox& out, string classes, string where){
@@ -545,6 +563,7 @@ string TiObj::encode(int tab, bool indent, bool jmpline){
 			res += this->classe + " ";
 		res += "{\n";
 	}
+	
 	for (int i=0; i<this->varpkg.size(); i++) {
 		res += varpkg[i].encode(tab+1);
 	}
@@ -680,6 +699,16 @@ string TiVector::encode(int tab, bool indent, bool jmpline){
 /*=====================================================================================*/
 
 
+void   TiBox::clear(){
+	for (int i=0; i<this->size(); i++){
+		TiObj* obj = this->at(i);
+		if ( obj->count_ref <= 0 )
+			delete obj;
+		else
+			obj->count_ref -= 1;
+	}
+}
+
 TiObj& TiBox::next(){
 }
 
@@ -689,6 +718,16 @@ TiObj& TiBox::operator[](int id){
 
 void TiBox::operator+=(TiObj& obj){
 	this->push_back(&obj);
+	obj.count_ref += 1;
+}
+
+void TiBox::operator+=(TiObj* obj){
+	this->push_back(obj);
+	obj->count_ref += 1;
+}
+
+void TiBox::operator+=(string objstr){
+	this->push_back( new TiObj(objstr) );
 }
 
 /*-------------------------------------------------------------------------------------*/

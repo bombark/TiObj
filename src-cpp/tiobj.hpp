@@ -25,6 +25,7 @@ class TiVar {
   public:
 	int       type;
 	string    name;
+	int       count_ref;
 	string    str;
 	union {
 		double    dbl;
@@ -64,6 +65,9 @@ class TiVar {
 	string encode(int tab=0);
 
 	static TiVar ObjNull;
+	
+  private:
+	inline void removeObject();
 };
 
 
@@ -71,9 +75,12 @@ class TiBox : public vector<TiObj*> {
 	int i;
 
   public:
+	void   clear();
 	TiObj& next();
 	TiObj& operator[](int id);
 	void   operator+=(TiObj& obj);
+	void   operator+=(TiObj* obj);
+	void   operator+=(string objstr);
 };
 
 class TiObj {
@@ -82,6 +89,7 @@ class TiObj {
 	string  last_name;
 
   public:
+	int    count_ref;	  
 	string classe;
 	vector<TiVar>  varpkg;
 	TiBox box;
@@ -107,8 +115,6 @@ class TiObj {
 	void set(TiVar& attr);
 	void setText(string name, string strtype, string text);
 	
-	void addObject(TiObj* obj);
-	void addObject(string text);
 	void select(TiBox& out, string classe, string where="");
 	void sort();
 
