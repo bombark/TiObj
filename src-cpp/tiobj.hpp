@@ -101,6 +101,8 @@ class TiObj {
 	void clear();
 	int  loadFile(FILE*  fd);
 	int  loadFile(string filename);
+	int  saveFile(string filename);
+
 	int  loadStream(FILE* fd);
 	int  loadStream(string filename);
 
@@ -126,8 +128,9 @@ class TiObj {
 
 	string toString(string name);
 
-	int is(string name);
-	int has(string name);
+	bool is(string name);
+	bool isOnly(string name);
+	bool has(string name);
 
 	string encode(int tab=0, bool indent=true, bool jmpline=true);
 	static int decode(TiObj& out, string text);	

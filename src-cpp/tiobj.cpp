@@ -220,8 +220,6 @@ TiObj::TiObj(string text){
 	this->varpkg.reserve(16);
 	TiParser parser;
 	parser.loadText(text);
-	if ( parser.parse(*this) == false )
-		cout << "ERROR no parser!!\n";
 }
 
 TiObj::~TiObj(){
@@ -247,6 +245,17 @@ int TiObj::loadFile(string filename){
 	TiParser parser;
 	parser.loadFile(filename);
 	parser.parse(*this);
+}
+
+int  TiObj::saveFile(string filename){
+	string aux;
+	aux = this->encode();
+	FILE* fd = fopen(filename.c_str(), "w");
+	if ( !fd )
+		return 1;
+	fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
+	fclose(fd);
+	return 0;
 }
 
 int TiObj::loadStream(FILE* fd){
@@ -464,7 +473,7 @@ void TiObj::sort(){
 }
 
 
-int TiObj::has(std::string name){
+bool TiObj::has(std::string name){
 	//TiVar& var = this->at(name);
 	//return !var.isNull();
 	for (int i=0; i<varpkg.size(); i++){
@@ -477,7 +486,7 @@ int TiObj::has(std::string name){
 	return false;
 }
 
-int TiObj::is(string name){
+bool TiObj::is(string name){
 	char token[1024];
 	int cursor, i;
 	for (i=0, cursor=0; i<this->classe.size(); i++){
@@ -497,6 +506,13 @@ int TiObj::is(string name){
 		return true;
 	return false;
 }
+
+bool TiObj::isOnly(string name){
+	if ( name == this->classe )
+		return true;
+	return false;
+}
+
 
 string TiObj::atStr(string name, string _default){
 	TiVar& var = this->at(name);

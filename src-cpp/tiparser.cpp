@@ -387,6 +387,9 @@ private:
 				special = false;
 			} else if ( c == '\\' ){
 				special = true;
+			} else if ( c == '\n' ){
+				out.type = TiToken::ERROR;
+				return true;
 			} else if ( c == aspa ){
 				obj.buffer.accept();
 				break;
@@ -545,8 +548,12 @@ class TiParser {
 			//DEBUG:
 			//cout << this->state << endl; token.write();
 			//printf("%p\n", objstack[ objstack.size()-1 ]);
-			if ( !ok )
+			if ( !ok ){
+				if ( token.type == TiToken::ERROR ){
+					this->error("AQUI AA");
+				}
 				return false;
+			}
 		}
 		
 		// Execute the strings in the buffer
@@ -554,8 +561,12 @@ class TiParser {
 			token.text = "\n";
 			token.type = TiToken::SYMBOL;
 			bool ok = run[this->state](*this, token);
-			if ( !ok )
+			if ( !ok ){
+				if ( token.type == TiToken::ERROR ){
+					this->error("AQUI AA");
+				}
 				return false;
+			}
 		}
 		
 		if ( this->objstack.size() != 1 ){
@@ -574,7 +585,7 @@ class TiParser {
 private:
 	void error(string msg){
 		this->base->clear();
-		this->base->classe="!ERROR";
+		this->base->classe="ERROR";
 		this->base->set("msg", msg);
 		this->base->set("line", (int)this->lex.getLine());
 	}
@@ -672,6 +683,9 @@ private:
 			cur->set(parser.memory[0].text, *aux);
 			parser.state = parser.mem_i = 0;
 			return true;
+		} else if ( token.type==TiToken::ERROR ){
+			parser.error("Expected a ' or \" in the final of the : "+token.text);
+			return false;
 		}
 		
 		parser.error("Nao deveria chegar aqui 2: "+token.text);
@@ -753,46 +767,6 @@ private:
 
 
 
-
-
-
-
-
-
-
-
-
-
-//int main(){
-	/*TiObj obj, tmp;
-	TiParser parser;
-	parser.loadFile("teste1.ti");
-
-	parser.parse(obj);
-	cout << obj.encode() << endl;*/
-
-	//obj.select(tmp, "Noun", "");
-	//cout << tmp.encode();
-
-	/*parser.addExpr("var", "[A-Za-z][A-Za-z0-9]*");
-	parser.addExpr("var", "[A-Za-z][A-Za-z0-9]*o");
-	parser.addExpr("int", "[0-9]*");
-	parser.addExpr("float", "[0-9]+.[0-9]*");*/
-
-	/*char c;
-	Buffer buffer("texto.txt", 32);
-
-	while ( buffer.next(c) ){
-		cout << c;
-	}
-	cout << endl;
-
-	buffer.loadText("Opaaa Felipe\n");
-	while ( buffer.next(c) ){
-		cout << c;
-	}*/
-
-//}
 
 
 
