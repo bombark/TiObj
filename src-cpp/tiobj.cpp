@@ -7,6 +7,7 @@
 #include <typeinfo>
 #include <sstream>
 #include <algorithm>
+#include <errno.h>
 
 // Temporario
 #include "tiparser.cpp"
@@ -62,7 +63,7 @@ string TiVar::Str(){
 	return this->str;
 }
 
-int TiVar::Int(){
+long int TiVar::Int(){
 	return this->num;
 }
 
@@ -97,7 +98,7 @@ void TiVar::operator=(string value){
 	}
 }
 
-void TiVar::operator=(int value){
+void TiVar::operator=(long int value){
 	if ( this->type == TYPE_OBJECT )
 		this->removeObject();
 	this->num = value;
@@ -233,6 +234,14 @@ void TiObj::clear(){
 	this->box.clear();
 }
 
+
+int TiObj::loadText(std::string text){
+	this->clear();
+	TiParser parser;
+	parser.loadText(text);
+	parser.parse(*this);
+}
+
 int TiObj::loadFile(FILE* fd){
 	this->clear();
 	TiParser parser;
@@ -241,10 +250,16 @@ int TiObj::loadFile(FILE* fd){
 }
 
 int TiObj::loadFile(string filename){
-	this->clear();
-	TiParser parser;
-	parser.loadFile(filename);
-	parser.parse(*this);
+	FILE* fd = fopen(filename.c_str(), "r");
+	if ( !fd ){
+		this->clear();
+		this->classe="ERROR";
+		this->set("msg", strerror(errno));
+		this->set("file", filename);
+		return 0;
+	}
+	this->loadFile(fd);
+	fclose(fd);
 }
 
 int  TiObj::saveFile(string filename){
@@ -275,7 +290,7 @@ int TiObj::loadStream(FILE* fd){
 }
 
 int TiObj::loadStream(string filename){
-	this->clear();
+	/*this->clear();
 	TiParser parser;
 	parser.loadFile(filename);
 	do {
@@ -287,7 +302,7 @@ int TiObj::loadStream(string filename){
 			break;
 		}
 	} while(true);
-	return true;
+	return true;*/
 }
 
 
@@ -325,6 +340,15 @@ void TiObj::set(string name, string value){
 }
 
 void TiObj::set(string name, int value){
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = (long int)value;
+	}
+}
+
+void TiObj::set(string name, long int value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
@@ -515,14 +539,21 @@ bool TiObj::isOnly(string name){
 
 
 string TiObj::atStr(string name, string _default){
+	if ( name == "class" )
+		return this->classe;
 	TiVar& var = this->at(name);
 	if ( var.isNull() ){
 		return _default;
 	}
-	return var.str;
+	if ( var.isInt() )
+		return std::to_string(var.num);
+	if ( var.isFloat() )
+		return std::to_string(var.dbl);
+	else
+		return var.str;
 }
 
-int TiObj::atInt(string name, int _default){
+long int TiObj::atInt(string name, long int _default){
 	TiVar& var = this->at(name);
 	if ( var.isNull() ){
 		return _default;
@@ -633,7 +664,7 @@ void TiVector::add(string value){
 	this->itens.push_back(&attr);
 }
 
-void TiVector::add(   int value){
+void TiVector::add(long int value){
 	TiVar& attr = *( new TiVar("") );
 	attr = value;
 	this->itens.push_back(&attr);

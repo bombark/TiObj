@@ -49,13 +49,13 @@ class TiVar {
 
 
 	string    Str();
-	int       Int();
+	long int  Int();
 	double    Dbl();
 	TiObj&    Obj();
 	TiVector& Vet();
 
 	void operator=(string value);
-	void operator=(int value);
+	void operator=(long int value);
 	void operator=(double value);
 	void operator=(TiObj& obj);
 	void operator=(TiVector& vector);
@@ -89,7 +89,7 @@ class TiObj {
 	string  last_name;
 
   public:
-	int    count_ref;	  
+	int    count_ref;
 	string classe;
 	vector<TiVar>  varpkg;
 	TiBox box;
@@ -99,6 +99,7 @@ class TiObj {
 	~TiObj();
 
 	void clear();
+	int  loadText(string text);
 	int  loadFile(FILE*  fd);
 	int  loadFile(string filename);
 	int  saveFile(string filename);
@@ -109,6 +110,7 @@ class TiObj {
 	TiVar& at(string name);
 	void set(string name, string value);
 	void set(string name, int value);
+	void set(string name, long int value);
 	void set(string name, double value);
 	void set(string name, TiVector& value);
 	void set(string name, TiObj& value);
@@ -121,8 +123,8 @@ class TiObj {
 	void sort();
 
 
-	string atStr (string name, string _default="");
-	int    atInt (string name, int _default=0);
+	string   atStr (string name, string _default="");
+	long int atInt (string name, long int _default=0);
 	double atDbl (string name, double _default=0.0);
 	TiObj& atObj (string name);
 
@@ -131,6 +133,10 @@ class TiObj {
 	bool is(string name);
 	bool isOnly(string name);
 	bool has(string name);
+	inline bool isEmpty(){return this->varpkg.size()==0 && this->box.size()==0;}
+
+	inline unsigned size(){return this->varpkg.size();}
+
 
 	string encode(int tab=0, bool indent=true, bool jmpline=true);
 	static int decode(TiObj& out, string text);	
@@ -152,7 +158,7 @@ public:
 	int  size();
 
 	void add(string value);
-	void add(   int value);
+	void add(long int value);
 	void add(double value);
 	void add(TiVar& item);
 	void addObject(TiObj* object);
