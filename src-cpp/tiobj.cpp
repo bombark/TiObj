@@ -190,7 +190,7 @@ string TiVar::encode(int tab){
 	} else if ( this->type == TYPE_TEXT ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
-		res += this->name + " = " +this->strtype+ "("+this->str+")\n";
+		res += this->name + " = " +this->strtype+ "<|"+this->str+"|>\n";
 	}
 	return res;
 }

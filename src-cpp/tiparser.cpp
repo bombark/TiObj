@@ -2,7 +2,7 @@
 
 PARA FAZER
 	BUGS:
-		segmentation fault quando existe uma string com ", como  (cidade de "sao" paulo)
+		segmentation fault quando existe uma string com " sem fechar
 */
 
 
@@ -177,7 +177,7 @@ public:
 	static const int  COMMENT = 9;	
 	static const int    ERROR = 10;
 	
-	string text, aux;
+	string text, error;
 	int    type;
 	
 	inline void operator=(TiToken token){
@@ -185,29 +185,30 @@ public:
 		this->type = token.type;
 	}
 	
-	void write(){
+	std::string write(){
+		string res, aux;
 		if ( type == TiToken::UNKNOWN )
-			cout << "UNKNOWN";
+			res = "UNKNOWN";
 		else if ( type == TiToken::STRING )
-			cout << "STRING";
+			res = "STRING ";
 		else if ( type == TiToken::INT )
-			cout << "INT";
+			res = "INT    ";
 		else if ( type == TiToken::DOUBLE )
-			cout << "DOUBLE";
+			res = "DOUBLE ";
 		else if ( type == TiToken::SYMBOL )
-			cout << "SYMBOL";
+			res = "SYMBOL ";
 		else if ( type == TiToken::TEOF ){
-			cout << "EOF\n";
-			return;
+			return "EOF\n";
 		} else if ( type == TiToken::TEXT ){
-			cout << "TEXT";
+			res = "TEXT   ";
 		} else if ( type == TiToken::COMMENT ){
-			cout << "COMMENT";
+			res = "COMMENT";
 		} else if ( type == TiToken::ERROR ){
-			cout << "ERROR";
+			res = "ERROR  ";
 		} 
 		addslashes(aux, this->text);
-		cout << ":" << aux << endl;
+		res += ": " + aux;
+		return res;
 	}
 };
 
@@ -220,9 +221,8 @@ class TiLex {
 	char lastsymbol;
 	char symbols[256];
 	TiBuffer buffer;
-	bool (*runpkg[8])(TiLex& obj, TiToken& out, unsigned char ini);
+	bool (*runpkg[9])(TiLex& obj, TiToken& out, unsigned char ini);
 
-	
   public:
 	static const int  L_UNKNOWN = 0;
 	static const int     L_CHAR = 1;
@@ -255,7 +255,7 @@ class TiLex {
 		symbols[';']  = L_SYMB;
 		symbols['.']  = L_SYMB;
 		symbols[',']  = L_SYMB;
-		symbols['(']  = L_TEXT;
+		symbols['(']  = L_SYMB;
 		symbols[')']  = L_SYMB;
 		symbols['{']  = L_SYMB;
 		symbols['}']  = L_SYMB;
@@ -288,18 +288,18 @@ class TiLex {
 		runpkg[L_EOF]     = run_none;
 	}
 
-	inline void loadFile(FILE* fd){
+	void loadFile(FILE* fd){
 		buffer.loadFile(fd);
 	}
 
-	inline void loadText(string text){
+	void loadText(string text){
 		buffer.loadText(text);
 	}
 
 	bool next(TiToken& out){
 		out.text = "";
 		out.type = TiToken::EMPTY;
-		unsigned char c;
+		unsigned char c, c1;
 		int type;
 
 		if ( this->buffer.isEof ){
@@ -312,7 +312,14 @@ class TiLex {
 				break;
 			}
 		}
-		return runpkg[type](*this, out, c);
+
+		// alteração para deixar o texto iniciar com <| e terminar com |>
+		buffer.read(c1);
+		if ( c=='<' && c1 == '|' ){
+			buffer.accept();
+			return runpkg[L_TEXT](*this, out, c);
+		} else
+			return runpkg[type](*this, out, c);
 	}
 	
 	inline unsigned int getLine(){
@@ -371,6 +378,7 @@ private:
 			} else if ( c == '\\' ){
 				special = true;
 			} else if ( c == '\n' ){
+				out.error = "Expected a \" to close the string";
 				out.type = TiToken::ERROR;
 				return true;
 			} else if ( c == aspa ){
@@ -395,7 +403,7 @@ private:
 				out.text += '.';
 			} else if ( c == 'e' || c == 'E' ){
 				out.type   = TiToken::DOUBLE;
-				out.text += 'e';					
+				out.text += 'e';
 			} else if ( type != L_INT ){
 				break;
 			} else
@@ -414,7 +422,7 @@ private:
 		out.text = "";
 		out.type = TiToken::TEXT;
 		bool special = false;
-		unsigned char c, aspa = ini;
+		unsigned char c, c1;
 		while ( obj.buffer.read(c) ){
 			if ( special ){
 				if ( c == 'n' )
@@ -430,23 +438,41 @@ private:
 				else
 					out.text += c;
 				special = false;
+				obj.buffer.accept();
 			} else if ( c == '\\' ){
 				special = true;
-			} else if ( c == '(' ){
+				obj.buffer.accept();
+			} else if ( c == '<' ){
+				obj.buffer.accept();
+				obj.buffer.read(c1);
+				if ( c1 == '|' ){
+					out.text += "<|";
+					level += 1;
+					obj.buffer.accept();
+				} else {
+					out.text += c;
+				}
+			} else if ( c == '|' ){
+				obj.buffer.accept();
+				obj.buffer.read(c1);
+				if ( c1 == '>' ){
+					obj.buffer.accept();
+					level -= 1;
+					if ( level == 0 )
+						break;
+					out.text += "|>";
+				} else {
+					out.text += c;
+				}
+			} else {
 				out.text += c;
-				level += 1;
-			} else if ( c == ')' ){
-				level -= 1;
-				if ( level == 0 )
-					break;
-				out.text += c;
-			} else
-				out.text += c;
-			obj.buffer.accept();
+				obj.buffer.accept();
+			}
 		}
 		obj.buffer.accept();
 		if ( level > 0 ){
-			out.type = TiToken::ERROR;
+			out.error = "Expected a |> to close the text";
+			out.type  = TiToken::ERROR;
 		}
 		
 		return true;
@@ -524,17 +550,15 @@ class TiParser {
 		while ( lex.next(token) ){
 			if ( token.type == TiToken::COMMENT)
 				continue;
-			
+			if ( token.type == TiToken::ERROR ){
+				//DEBUG: cout << this->state << " : " << token.write() << endl;
+				this->error( token.error );
+				return false;
+			}
 
 			bool ok = run[this->state](*this, token);
-
-			//DEBUG:
-			//cout << this->state << endl; token.write();
-			//printf("%p\n", objstack[ objstack.size()-1 ]);
+			//DEBUG: cout << this->state << " : " << token.write() << endl;
 			if ( !ok ){
-				if ( token.type == TiToken::ERROR ){
-					this->error("AQUI AA");
-				}
 				return false;
 			}
 		}
@@ -546,7 +570,7 @@ class TiParser {
 			bool ok = run[this->state](*this, token);
 			if ( !ok ){
 				if ( token.type == TiToken::ERROR ){
-					this->error("AQUI AA");
+					this->error("AQUI BB");
 				}
 				return false;
 			}
@@ -656,7 +680,7 @@ private:
 			cur->set(parser.memory[0].text, *aux);
 			parser.state = parser.mem_i = 0;
 		} else if ( token.type==TiToken::ERROR ){
-			parser.error("Expected a ' or \" in the final of the : "+token.text);
+			// Mensagem de erro estah no LEX;
 			return false;
 		} else {
 			parser.error("Error(run_pass_2) : "+token.text);
