@@ -449,8 +449,6 @@ private:
 					out.text += "<|";
 					level += 1;
 					obj.buffer.accept();
-				} else {
-					out.text += c;
 				}
 			} else if ( c == '|' ){
 				obj.buffer.accept();
@@ -461,15 +459,12 @@ private:
 					if ( level == 0 )
 						break;
 					out.text += "|>";
-				} else {
-					out.text += c;
 				}
 			} else {
 				out.text += c;
 				obj.buffer.accept();
 			}
 		}
-		obj.buffer.accept();
 		if ( level > 0 ){
 			out.error = "Expected a |> to close the text";
 			out.type  = TiToken::ERROR;
@@ -551,13 +546,13 @@ class TiParser {
 			if ( token.type == TiToken::COMMENT)
 				continue;
 			if ( token.type == TiToken::ERROR ){
-				//DEBUG: cout << this->state << " : " << token.write() << endl;
+				//cout << this->state << " : " << token.write() << endl;
 				this->error( token.error );
 				return false;
 			}
 
 			bool ok = run[this->state](*this, token);
-			//DEBUG: cout << this->state << " : " << token.write() << endl;
+			//cout << this->state << " : " << token.write() << endl;
 			if ( !ok ){
 				return false;
 			}
