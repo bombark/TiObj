@@ -449,7 +449,8 @@ private:
 					out.text += "<|";
 					level += 1;
 					obj.buffer.accept();
-				}
+				} else
+					out.text += c;
 			} else if ( c == '|' ){
 				obj.buffer.accept();
 				obj.buffer.read(c1);
@@ -459,7 +460,8 @@ private:
 					if ( level == 0 )
 						break;
 					out.text += "|>";
-				}
+				} else
+					out.text += c;
 			} else {
 				out.text += c;
 				obj.buffer.accept();
