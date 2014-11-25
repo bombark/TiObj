@@ -55,6 +55,7 @@ class TiVar {
 	TiVector& Vet();
 
 	void operator=(string value);
+//	void operator=(int value);
 	void operator=(long int value);
 	void operator=(double value);
 	void operator=(TiObj& obj);

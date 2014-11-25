@@ -98,6 +98,13 @@ void TiVar::operator=(string value){
 	}
 }
 
+/*void TiVar::operator=(int value){
+	if ( this->type == TYPE_OBJECT )
+		this->removeObject();
+	this->num = value;
+	this->type   = TYPE_INT;
+}*/
+
 void TiVar::operator=(long int value){
 	if ( this->type == TYPE_OBJECT )
 		this->removeObject();
