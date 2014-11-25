@@ -578,6 +578,27 @@ TiObj& TiObj::atObj (string name){
 }
 
 
+string TiObj::toString(){
+	string res;
+	res += this->classe+"{";
+	for (int i=0; i<this->varpkg.size(); i++){
+		res += varpkg[i].name+"="+varpkg[i].toString()+";";
+	}
+
+
+	/*
+
+		FALTA MOSTRAR OS OBJETOS DO BOX --------------------------------------------------------------------------------
+
+
+	 */
+
+
+	res += "}";
+	return res;
+}
+
+
 string TiObj::toString(string name){
 	TiVar& attr = this->at(name);
 	if ( attr.isString() ){

@@ -128,6 +128,7 @@ class TiObj {
 	double atDbl (string name, double _default=0.0);
 	TiObj& atObj (string name);
 
+	string toString();
 	string toString(string name);
 
 	bool is(string name);
@@ -137,7 +138,7 @@ class TiObj {
 
 	inline unsigned size(){return this->varpkg.size();}
 
-
+	
 	string encode(int tab=0, bool indent=true, bool jmpline=true);
 	static int decode(TiObj& out, string text);	
 
