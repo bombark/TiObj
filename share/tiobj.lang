@@ -2,146 +2,182 @@
 <!--
  This file is part of GtkSourceView
 
- Author: Sapphire Becker <guess@logicplace.com>
- Copyright (C) 2011 by Sapphire Becker <guess@logicplace.com>
+ Author: Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
 
- GtkSourceView is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation; either
- version 2.1 of the License, or (at your option) any later version.
+ This library is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
 
- GtkSourceView is distributed in the hope that it will be useful,
+ This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, write to the Free Software
- Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
-<!--
- TODO:
-  If once-only or end-parent is ever supported for context-reference and
-  context-to-be-included elements this can be updated to allow only one
-  value in the doc, after a key, and between each comma in an array. Also
-  I'd be able to add support for displaying an error for trailing commas.
--->
-<language id="tiobj" name="TiObj" version="2.0" _section="Others">
+
+
+<language id="tiobj" _name="TiObj" version="2.0" _section="Scripts">
   <metadata>
-    <property name="globs">*.json</property>
+    <property name="globs">*.ti</property>
+    <property name="line-comment-start">#</property>
+    <property name="block-comment-start">/*</property>
+    <property name="block-comment-end">*/</property>
   </metadata>
 
   <styles>
-    <style id="keyname"       _name="Key"                   map-to="def:type"/>
-    <style id="object-class"  _name="Object Class"          map-to="def:keyword"/>
-    <style id="special-char"  _name="Escaped Character"     map-to="js:escape"/>
-    <style id="string"        _name="String"                map-to="def:string"/>
-    <style id="null-value"    _name="Null Value"            map-to="js:null-value"/>
-    <style id="boolean"       _name="Boolean Value"         map-to="js:boolean"/>
-    <style id="error"         _name="Error"                 map-to="def:error"/>
-    <style id="decimal"       _name="Decimal"               map-to="def:decimal"/>
-    <style id="float"         _name="Floating point number" map-to="def:floating-point"/>
+    <style id="comment"         _name="Comment"  map-to="def:comment"/>
+    <style id="error"           _name="Error"    map-to="def:error"/>
+    <style id="variable"        _name="Variable" map-to="def:identifier"/>
+    <style id="identifier"      _name="Identifier"/> <!-- map to nothing -->
+    <style id="escape"          _name="Escaped Character" map-to="def:special-char"/>
+    <style id="string"          _name="String"   map-to="def:string"/>
+    <style id="here-doc"        _name="Heredoc"  map-to="def:string"/>
+    <style id="here-doc-bound"  _name="Heredoc Bound" map-to="def:keyword"/>
+    <style id="keyword"         _name="Keyword" map-to="def:keyword"/>
+    <style id="common-function" _name="Common Function" map-to="def:keyword"/>
+    <style id="operator"        _name="Operator" map-to="def:operator"/>
+    <style id="type"            _name="Data Type" map-to="def:type"/>
+    <style id="null-value"      _name="Null Value" map-to="def:special-constant"/>
+    <style id="boolean"         _name="Boolean value" map-to="def:boolean"/>
+    <style id="floating-point"  _name="Floating point number" map-to="def:floating-point"/>
+    <style id="decimal"         _name="Decimal number" map-to="def:decimal"/>
+    <style id="octal"           _name="Octal number" map-to="def:base-n-integer"/>
+    <style id="hexadecimal"     _name="Hexadecimal number" map-to="def:base-n-integer"/>
   </styles>
 
+
   <definitions>
-	
-    <context id="array">
-      <start>\[</start>
-      <end>\]</end>
+
+
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" extend-parent="false" class="comment" class-disabled="no-spell-check">
+      <start>#</start>
       <include>
-        <context>
-          <start></start>
-          <end>;|\s*(?=\&#93;)</end>
-            <include>
-            <context ref="value"/>
-          </include>
-        </context>
+        <context ref="def:in-line-comment"/>
       </include>
     </context>
 
 
-    
-    <context id="object">
-      <include>
-        <context ref="object-class"/>
-        <context>
-          <start>{</start>
-          <end>}</end>
-		  <include>
-			<context ref="object-list"/>
-		  </include>
-        </context>
-        <context ref="catchall"/>
-      </include>
+
+
+
+
+    <context id="escape" style-ref="escape">
+      <match>\\((\\|"|n|t|\$|r)|[0-7]{1,3}|x[0-9a-fA-F]{1,2})</match>
     </context>
 
-    <context id="object-list">
-      <include>
-        <context ref="keyname"/>
-        <context>
-          <start>=</start>
-          <end>;|$</end>
-          <include>
-            <context sub-pattern="0" where="start" style-ref="string"/>
-            <context ref="value"/>
-          </include>
-        </context>
-        <context ref="catchall"/>
-      </include>
-    </context>
-    
-    <context id="string" style-ref="string" end-at-line-end="true">
+    <context id="double-quoted-string" style-ref="string" class="string" class-disabled="no-spell-check">
       <start>"</start>
       <end>"</end>
       <include>
-        <context id="valid-escape" style-ref="special-char">
-          <match>\\(?:[ntrfb"\\/]|u[0-9a-fA-F]{4})</match>
-        </context>
-        <context id="invalid-escape" style-ref="error">
-          <match>\\(?:x[0-9a-fA-F]{2}|[0-3]?[0-7]{1,2}|.)</match>
-        </context>
-        <context id="line-continue" style-ref="error">
-          <start>\\$</start>
-          <end>^</end>
-        </context>
+        <context ref="def:line-continue"/>
+        <context ref="escape"/>
       </include>
     </context>
 
-    <context id="keyname" style-ref="keyname">
-      <match>[a-zA-Z_][a-zA-Z0-9_]*</match>
-    </context>
-    
-    <context id="object-class" style-ref="object-class">
-      <match>[a-zA-Z_][a-zA-Z0-9_:]*</match>
-    </context>
-    
-    <context id="decimal" style-ref="decimal">
-      <match>-?(?:[1-9][0-9]*|0)(?![.eE])</match>
-    </context>
-
-    <context id="float" style-ref="float">
-      <match>-?(?:[1-9][0-9]*|0)(?:\.[0-9]+)?(?:[eE][+\-]?[0-9]+)?</match>
+    <context id="single-quoted-string" style-ref="string" class="string" class-disabled="no-spell-check">
+      <start>'</start>
+      <end>'</end>
+      <include>
+        <context style-ref="def:special-char">
+          <match>\\['\\]</match>
+        </context>
+        <context ref="def:line-continue"/>
+      </include>
     </context>
 
-    <context id="catchall" style-ref="error" extend-parent="false">
-      <match>\S</match>
+
+
+    <context id="keywords" style-ref="keyword">
+      <keyword>class</keyword>
+      <keyword>include</keyword>
     </context>
 
-    <context id="value"><include>
-      <context ref="string"/>
-      <context ref="array"/>
-      <context ref="decimal"/>
-      <context ref="float"/>
-      <context ref="js:null-value" style-ref="null-value"/>
-      <context ref="js:boolean" style-ref="boolean"/>
-      <context ref="object"/>
-      <context ref="catchall"/>
-    </include></context>
+
+    <context id="html-block">
+      <start>&lt;\|html</start>
+      <end>\|&gt;</end>
+      <include>
+          <context sub-pattern="0" where="start" style-ref="keyword"/>
+          <context sub-pattern="0" where="end" style-ref="keyword"/>
+          <context ref="html:html"/>
+      </include>
+    </context>
+
+    <context id="c-block">
+      <start>&lt;\|c</start>
+      <end>\|&gt;</end>
+      <include>
+          <context sub-pattern="0" where="start" style-ref="keyword"/>
+          <context sub-pattern="0" where="end" style-ref="keyword"/>
+          <context ref="c:c"/>
+      </include>
+    </context>
+
+    <context id="java-block">
+      <start>&lt;\|java</start>
+      <end>\|&gt;</end>
+      <include>
+          <context sub-pattern="0" where="start" style-ref="keyword"/>
+          <context sub-pattern="0" where="end" style-ref="keyword"/>
+          <context ref="java:java"/>
+      </include>
+    </context>
+
+    <context id="float" style-ref="floating-point">
+      <match extended="true">
+        (?&lt;![\w\.])
+        ([0-9]+[Ee][+-]?[0-9]+ |
+         ([0-9]*\.[0-9]+ | [0-9]+\.[0-9]*)([Ee][+-]?[0-9]+)?)
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="decimal-number" style-ref="decimal">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [+-]?([1-9][0-9]*|0)
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="octal-number" style-ref="octal">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [+-]?0[0-7]+
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="hexadecimal-number" style-ref="hexadecimal">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [+-]?0x[0-9a-fA-F]+
+        (?![\w\.])
+      </match>
+    </context>
+
 
     <context id="tiobj" class="no-spell-check">
       <include>
-        <context ref="value"/>
+          <context ref="line-comment"/>
+          <context ref="double-quoted-string"/>
+          <context ref="single-quoted-string"/>
+          <context ref="keywords"/>
+          <context ref="decimal-number"/>
+          <context ref="octal-number"/>
+          <context ref="hexadecimal-number"/>
+          <context ref="float"/>
+
+
+          <context ref="html-block"/>
+          <context ref="c-block"/>
+          <context ref="java-block"/>
       </include>
     </context>
+
   </definitions>
 </language>
