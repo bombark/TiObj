@@ -1,4 +1,4 @@
-[submodule "Spika-iOS"]
-	path = Spika-iOS
-	url = https://github.com/cloverstudio/Spika-iOS.git
+[submodule "TiObj-bin"]
+	path = TiObj-bin
+	url = https://github.com/bombark/TiObj-bin
 
