@@ -185,10 +185,11 @@ public:
 	static const int    EMPTY = 6;
 	static const int     TEOF = 7;
 	static const int     TEXT = 8;
-	static const int  COMMENT = 9;	
+	static const int  COMMENT = 9;
 	static const int    ERROR = 10;
 	
 	string text, error;
+	string aux;
 	int    type;
 	
 	inline void operator=(TiToken token){
@@ -434,6 +435,17 @@ private:
 		out.type = TiToken::TEXT;
 		bool special = false;
 		unsigned char c, c1;
+
+		// Get the Text type;
+		out.aux = "";
+		while ( obj.buffer.read(c) ){
+			if ( c >= 'a' && c <= 'z' ){
+				out.aux += c;
+				obj.buffer.accept();
+			} else
+				break;
+		}
+
 		while ( obj.buffer.read(c) ){
 			if ( special ){
 				if ( c == 'n' )
@@ -701,7 +713,7 @@ private:
 		TiObj* cur = parser.objstack[ parser.objstack.size()-1 ];
 
 		if ( token.type == TiToken::SYMBOL ){
-			if ( token.text[0] == ';' || token.text[0] == '\n' ){			
+			if ( token.text[0] == ';' || token.text[0] == '\n' ){
 				cur->set(parser.memory[0].text, parser.memory[1].text );
 				parser.state = parser.mem_i = 0;
 			} else if ( token.text[0] == '{' ){
@@ -733,14 +745,14 @@ private:
 		return true;
 	}
 
-	TiVector* parseVector(){
+	TiVet* parseVector(){
 		/*TiToken token;
-		TiVector* vetor = new TiVector();
+		TiVet* vetor = new TiVet();
 		while ( lex.next(token) ){
 			if ( token.text == "]" ){
 				return vetor;
 			} else if ( token.text == "[" ){
-				/*TiVector* novo = this->parseVector();
+				/*TiVet* novo = this->parseVector();
 				if ( novo == NULL ){
 					// Mensagem de ERRO
 				}

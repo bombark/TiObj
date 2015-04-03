@@ -54,55 +54,37 @@ TiObj TiObj::ObjNull;
 /*=====================================================================================*/
 
 TiVar::TiVar(){
-	this->type = TYPE_NULL;
+	this->type = TiVar::EMPTY;
+}
+
+TiVar::TiVar(int isReadOnly){
+	this->type = TiVar::NULO;
 }
 
 TiVar::TiVar(string name){
-	this->type = TYPE_NULL;
+	this->type = TiVar::EMPTY;
 	this->name = name;
 }
 
 TiVar::~TiVar(){
 	// Nao colocar para deletar o objeto e vetor aqui, pois essa
 	// rotina eh chamada pelo std::vector, quando realoca o vetor
-	if ( this->type == TYPE_OBJECT )
+	if ( this->isObj() )
 		this->removeObject();
 }
 
-
-int  TiVar::getType()  {return this->type;}
-bool TiVar::isNull()   {return this->type == TYPE_NULL;}
-bool TiVar::isString() {return this->type == TYPE_STRING;}
-bool TiVar::isFloat()  {return this->type == TYPE_FLOAT;}
-bool TiVar::isInt()    {return this->type == TYPE_INT;}
-bool TiVar::isObject() {return this->type == TYPE_OBJECT;}
-bool TiVar::isVector() {return this->type == TYPE_VECTOR;}
-
-
-string TiVar::Str(){
-	return this->str;
+string TiVar::atStr(){
+	if ( this->isInt() )
+		return std::to_string(this->num);
+	if ( this->isDbl() )
+		return std::to_string(this->dbl);
+	else
+		return this->str;
 }
-
-long int TiVar::Int(){
-	return this->num;
-}
-
-double TiVar::Dbl(){
-	return this->dbl;
-}
-
-TiObj& TiVar::Obj(){
-	return *this->objptr;
-}
-
-TiVector& TiVar::Vet(){
-	return *this->vetptr;
-}
-
 
 
 void TiVar::operator=(string value){
-	if ( this->type == TYPE_OBJECT )
+	if ( this->isObj() )
 		this->removeObject();
 	if ( value[0] == '$' ){
 		char* ptr = &value[1];
@@ -111,10 +93,10 @@ void TiVar::operator=(string value){
 		parser.loadText(ptr);
 		parser.parse(obj);
 		this->objptr = &obj;
-		this->type   = TYPE_OBJECT;
+		this->type   = TiVar::OBJ;
 	} else {
-		this->str = value;
-		this->type   = TYPE_STRING;
+		this->str  = value;
+		this->type = TiVar::STR;
 	}
 }
 
@@ -126,57 +108,60 @@ void TiVar::operator=(string value){
 }*/
 
 void TiVar::operator=(long int value){
-	if ( this->type == TYPE_OBJECT )
+	if ( this->isObj() )
 		this->removeObject();
 	this->num = value;
-	this->type   = TYPE_INT;
+	this->type   = TiVar::INT;
 }
 
 void TiVar::operator=(double value){
-	if ( this->type == TYPE_OBJECT )
+	if ( this->isObj() )
 		this->removeObject();
-	this->dbl = value;
-	this->type   = TYPE_FLOAT;
+	this->dbl  = value;
+	this->type = TiVar::DBL;
 }
 
 void TiVar::operator=(TiObj& obj){
 	if ( &obj == this->objptr )
 		return;
-	if ( this->type == TYPE_OBJECT )
+	if ( this->isObj() )
 		this->removeObject();
-	this->type   = TYPE_OBJECT;
+	this->type   = TiVar::OBJ;
 	this->objptr = &obj;
 	obj.count_ref += 1;
 }
 
-void TiVar::operator=(TiVector& vector){
-	if ( this->type == TYPE_OBJECT )
+void TiVar::operator=(TiVet& vector){
+	if ( this->isObj() )
 		this->removeObject();
-	this->type   = TYPE_VECTOR;
+	this->type   = TiVar::VET;
 	this->vetptr = &vector;
 }
 
 void TiVar::operator=(TiVar& attr){
-	if ( attr.type == TYPE_STRING )
+	if ( attr.isStr() )
 		this->str = attr.str;
-	if ( attr.type == TYPE_OBJECT )
+	if ( attr.isObj() )
 		attr.objptr->count_ref += 1;
 	this->objptr = attr.objptr;
 	this->type   = attr.type;
 }
 
 string TiVar::toString(){
-	if (this->type == TYPE_STRING){
-		string res = "\"" + this->str + "\"";
-		return res;
-	} else if (this->type == TYPE_INT){
+	if ( this->isStr() ){
+		size_t hasline = this->str.find ('\n');
+		if ( hasline == string::npos )
+			return "\"" + this->str + "\"";
+		else
+			return "<|" + this->str + "|>";
+	} else if (this->isInt() ){
 		return std::to_string(this->num); 
-	} else if (this->type == TYPE_FLOAT){
+	} else if (this->isDbl() ){
 		return std::to_string(this->dbl); 
-	} else if (this->type == TYPE_OBJECT ){
+	} else if (this->isObj() ){
 		return this->objptr->encode(0,true);
-	} else if (this->type == TYPE_VECTOR ){
-		TiVector* vetor = (TiVector*) this->objptr;
+	} else if (this->isVet() ){
+		TiVet* vetor = (TiVet*) this->objptr;
 		vetor->encode(0);
 	}
 }
@@ -184,41 +169,42 @@ string TiVar::toString(){
 string TiVar::encode(int tab){
 
 	string res = "";
-	if (this->type == TYPE_STRING){
+	if (this->isStr() ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
-		res += this->name + " = \"" + this->str + "\";\n";
-	} else if (this->type == TYPE_INT){
+		res += this->name + " = " + this->toString() + ";\n";
+
+	} else if (this->isInt() ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
 		res += this->name; 
 		res += " = "; 
 		res += std::to_string(this->num); 
 		res += ";\n";
-	} else if (this->type == TYPE_FLOAT){
+	} else if (this->isDbl()){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
 		res += this->name; 
 		res += " = ";
 		res += std::to_string(this->dbl); 
 		res += ";\n";
-	} else if (this->type == TYPE_OBJECT ){
+	} else if ( this->isObj() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
 		res += this->name+" = ";
 		res += this->objptr->encode(tab,false);
-	} else if (this->type == TYPE_VECTOR ){
+	} else if (this->isVet() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
-		TiVector* ptr = (TiVector*) this->objptr;
+		TiVet* ptr = (TiVet*) this->objptr;
 		res += this->name+" = ";
 		res += ptr->encode(tab,false);
 		res += "\n";
-	} else if ( this->type == TYPE_TEXT ){
+	} /********* else if ( this->type == TYPE_TEXT ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
 		res += this->name + " = " +this->strtype+ "<|"+this->str+"|>\n";
-	}
+	}*/
 	return res;
 }
 
@@ -393,7 +379,7 @@ void TiObj::set(string name, double value){
 	}
 }
 
-void TiObj::set(string name, TiVector& value){
+void TiObj::set(string name, TiVet& value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
@@ -414,7 +400,7 @@ void TiObj::set(string name, TiObj& value){
 void TiObj::set(TiVar& in_var){
 	if ( in_var.name == "class" ){
 		this->classe = "";
-		if ( in_var.isString() )
+		if ( in_var.isStr() )
 			this->classe = in_var.str;
 	} else {
 		TiVar& var = this->at(in_var.name);
@@ -426,7 +412,10 @@ void TiObj::set(TiVar& in_var){
 void TiObj::setText(string name, string strtype, string text){
 	TiVar& var = this->at(name);
 	var = text;
-	var.type = TYPE_TEXT;
+
+	//var.type = TYPE_TEXT;
+	var.type = TiVar::STR;
+
 	if ( strtype.size() >= sizeof(TiVar::strtype) ){
 		strncpy(var.strtype, strtype.c_str(), sizeof(TiVar::strtype)-1 );
 		var.strtype[ sizeof(TiVar::strtype) ] = '\0';
@@ -451,77 +440,107 @@ void TiObj::setVector(string name, string value){
 		this->varpkg.push_back( TiVar(name) );
 		var = this->varpkg[id];
 	}
-	TiVector* novo = new TiVector();
+	TiVet* novo = new TiVet();
 	novo->load(value);
 	var = *novo;
 }
 
 
 
-void TiObj::select(TiBox& out, string classes, string where){
+TiObj& TiObj:: select(TiObj& out, std::string classes){
 	string token;
 	std::vector<std::string> vetclasse;
-    std::istringstream iss(classes);
-    while ( std::getline(iss, token, ',') ){
-        vetclasse.push_back(std::move(token));
-    }
+	std::istringstream iss(classes);
+	while ( std::getline(iss, token, ',') ){
+		vetclasse.push_back(std::move(token));
+	}
 
-	out.clear();
-	if ( where == "" ){
-		// Executa a busca linear
+	if ( this != &out ){
+		out.clear();
 		for (int i=0; i<this->box.size(); i++){
 			TiObj& obj = this->box[i];
 			for (int j=0; j<vetclasse.size(); j++){
 				if ( obj.is(vetclasse[j]) ){
-					out.push_back(&obj);
+					out.box += &obj;
 				}
 			}
 		}
 	} else {
-		// Constroi a lista de predicados
-		/* DEIXAR COMENTADO ENQUANTO ARRUMA O TILEX
-		
-		int type;
-		TiLex lex;
-		TiVar predicate;
-		lex.loadText(where);
-		lex.next(token, type);
-		predicate.name = token;
-		lex.next(token, type);
-		lex.next(token, type);
-		if ( type == TiLex::L_CHAR )
-			predicate = token;
-		else if ( type == TiLex::L_INT )
-			predicate = atoi(token.c_str());
-		else if ( type == TiLex::L_FLOAT )
-			predicate = atof(token.c_str());
-		
-		// Executa a busca linear
-		for (int i=0; i<this->box.size(); i++){
+		for (int i=0; i<this->box.size(); ){
+			bool erased = false;
 			TiObj& obj = this->box[i];
 			for (int j=0; j<vetclasse.size(); j++){
-				if ( obj.is(vetclasse[j]) && obj.has(predicate.name ) ){
-					if ( type == TiLex::L_CHAR && predicate.str == obj.atStr(predicate.name) )
-						out.push_back(&obj);
-					else if ( type == TiLex::L_INT && predicate.num == obj.atInt(predicate.name) )
-						out.push_back(&obj);
-					else if ( type == TiLex::L_FLOAT && predicate.dbl == obj.atDbl(predicate.name) )
-						out.push_back(&obj);
+				if ( !obj.is(vetclasse[j]) ){
+					out.box.erase( out.box.begin()+i );
+					erased = true;
+					break;
 				}
 			}
+			if ( !erased )
+				i += 1;
 		}
-		
-		*/
-		
-		
+	}
+
+	return out;
+}
+
+
+
+
+
+
+
+
+int partition(TiBox& box, uint p, uint q, std::string& field){
+cout << p << " " << q << endl;
+	string j_value;
+	string x = box[p].atStr(field);
+	TiObj *aux, *i_ptr, *j_ptr, *p_ptr;
+
+	uint i = p;
+	uint j;
+	for(j=p+1; j<q; j++){
+		j_value = box[j].atStr(field);
+		if( j_value <= x  ){
+			i=i+1;
+			// swap(box[i],box[j];
+			aux   = &box[i];
+			i_ptr = &box[i];
+			j_ptr = &box[j];
+			i_ptr = j_ptr;
+			j_ptr = aux;
+		}
+	}
+	//swap(box[i],box[p]);
+	aux   = &box[i];
+	i_ptr = &box[i];
+	p_ptr = &box[p];
+	i_ptr = p_ptr;
+	p_ptr = aux;
+	return i;
+}
+
+
+void quickSort(TiBox& box, uint p, uint q, std::string& field){
+	uint r;
+	if(p<q){
+		r = partition(box,p,q,field);
+		quickSort(box,p,r,field);
+		quickSort(box,r+1,q,field);
 	}
 }
 
 
-bool box_sort_function (TiObj* a,TiObj* b) { return (a->classe < b->classe);}
-void TiObj::sort(){
-	std::sort (this->box.begin(), this->box.end(), box_sort_function);
+TiObj& TiObj::orderby(TiObj& out, std::string field){
+	quickSort (this->box, 0, this->box.size(), field);
 }
+
+
+
+
+
+
+
 
 
 bool TiObj::has(std::string name){
@@ -572,12 +591,8 @@ string TiObj::atStr(string name, string _default){
 	if ( var.isNull() ){
 		return _default;
 	}
-	if ( var.isInt() )
-		return std::to_string(var.num);
-	if ( var.isFloat() )
-		return std::to_string(var.dbl);
-	else
-		return var.str;
+	
+	return var.atStr();
 }
 
 long int TiObj::atInt(string name, long int _default){
@@ -628,16 +643,16 @@ string TiObj::toString(){
 
 string TiObj::toString(string name){
 	TiVar& attr = this->at(name);
-	if ( attr.isString() ){
+	if ( attr.isStr() ){
 		return attr.str;
 	} else if ( attr.isInt() ){
 		return std::to_string(attr.num);
-	} else if ( attr.isFloat() ){
+	} else if ( attr.isDbl() ){
 		return std::to_string(attr.dbl);
-	} else if ( attr.isObject() ){
+	} else if ( attr.isObj() ){
 		return attr.objptr->encode(0);
-	} else if ( attr.isVector() ){
-		TiVector* tmp = (TiVector*) attr.objptr;
+	} else if ( attr.isVet() ){
+		TiVet* tmp = (TiVet*) attr.objptr;
 		return tmp->encode(0);
 	}
 	return "";
@@ -698,56 +713,56 @@ TiObj& TiObj::operator[](int id){
 
 /*=====================================================================================*/
 
-int TiVector::load(string text){
+int TiVet::load(string text){
 	return true;
 }
 
-int TiVector::size(){
+int TiVet::size(){
 	return this->itens.size();
 }
 
-void TiVector::add(string value){
+void TiVet::add(string value){
 	TiVar& attr = *( new TiVar("") );
 	attr = value;
 	this->itens.push_back(&attr);
 }
 
-void TiVector::add(long int value){
+void TiVet::add(long int value){
 	TiVar& attr = *( new TiVar("") );
 	attr = value;
 	this->itens.push_back(&attr);
 }
 
-void TiVector::add(double value){
+void TiVet::add(double value){
 	TiVar& attr = *( new TiVar("") );
 	attr = value;
 	this->itens.push_back(&attr);
 }
 
-void TiVector::add(TiVar& item){
+void TiVet::add(TiVar& item){
 	TiVar& attr = *( new TiVar("") );
 	attr = item;
 	this->itens.push_back(&attr);
 }
 
-void TiVector::addObject(TiObj* object){
-	TiVar* attr = new TiVar("");
+void TiVet::addObject(TiObj* object){
+	TiVar* attr  = new TiVar("");
 	attr->objptr = object;
-	attr->type   = TYPE_OBJECT;
+	attr->type   = TiVar::OBJ;
 	this->itens.push_back(attr);
 }
 
-void TiVector::addObject(string text){
-	TiVar* attr = new TiVar("");
-	attr->type   = TYPE_OBJECT;
+void TiVet::addObject(string text){
+	TiVar* attr  = new TiVar("");
+	attr->type   = TiVar::OBJ;
 	attr->objptr = new TiObj(text);
 	this->itens.push_back(attr);
 }
 
-TiObj* TiVector::find(std::string value){
+TiObj* TiVet::find(std::string value){
 	for (int i=0; i<this->size(); i++){
 		TiVar* item = this->itens[i];
-		if ( item->isObject() ){
+		if ( item->isObj() ){
 			TiObj* obj = item->objptr;
 			if ( obj->atStr("name") == value ){
 				return obj;
@@ -759,7 +774,7 @@ TiObj* TiVector::find(std::string value){
 
 
 
-string TiVector::encode(int tab, bool indent, bool jmpline){
+string TiVet::encode(int tab, bool indent, bool jmpline){
 	if (this == NULL)
 		return "[]";
 
@@ -770,17 +785,17 @@ string TiVector::encode(int tab, bool indent, bool jmpline){
 	}
 	res += "[";
 	for (int i=0; i<this->itens.size(); i++){
-		int type = this->itens[i]->type;
+		/*int type = this->itens[i]->type;
 		if ( type == TYPE_OBJECT ){
 			TiObj* tmp = this->itens[i]->objptr; 
 			res += tmp->encode(tab+1, true, false);
 		} else if ( type == TYPE_VECTOR ){
-			TiVector* vetor = (TiVector*) this->itens[i]->objptr;
+			TiVet* vetor = (TiVet*) this->itens[i]->objptr;
 			res += vetor->encode(tab+1, true, false);
 		} else {
 			res += this->itens[i]->toString();
 			res += ";";
-		}				
+		}*/
 	}
 	res += "]";
 	//if (jmpline == true)
@@ -838,15 +853,15 @@ ostream& operator<<(ostream& os, TiVar& var){
 
 	if ( var.isNull() )
 		return os << "[NULL]";
-	if ( var.isFloat() )
+	if ( var.isDbl() )
 		return os << var.dbl;
-	if ( var.isString() )
+	if ( var.isStr() )
 		return os << var.str;
 	if ( var.isInt() )
 		return os << var.num;
-	else if ( var.isVector() )
+	else if ( var.isVet() )
 		return os << var.vetptr->encode();
-	else if ( var.isObject() )
+	else if ( var.isObj() )
 		return os << var.objptr->encode();
 	return os << "[UNKNOWN]";
 }
@@ -872,12 +887,12 @@ ostream& operator<<(ostream& os, TiBox& box){
 	var1.setVector("imagens","['felipe';'fernando';'joao']");
 	cout << var1.encode();
 	*/
-	/*TiVector vetor = var1.at<TiVector>("imagens");
+	/*TiVet vetor = var1.at<TiVet>("imagens");
 	for (int i=0; i<vetor.size(); i++){
 		cout << vetor.at<string>(i) << endl;
 	}*/
 
-	/*TiVector vetor;
+	/*TiVet vetor;
 	vetor.addObject("{name='felipe'}");
 	vetor.addObject("{name='fernando'}");
 	vetor.addObject("{name='diogo'}");
