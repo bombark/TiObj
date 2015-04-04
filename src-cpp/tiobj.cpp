@@ -28,6 +28,7 @@
 #include <sstream>
 #include <algorithm>
 #include <errno.h>
+#include <string.h>
 
 // Temporario
 #include "tiparser.cpp"
@@ -486,53 +487,60 @@ TiObj& TiObj:: select(TiObj& out, std::string classes){
 
 
 
+int partition(TiBox& box, uint left, uint right, std::string& field){
+	TiObj*  aux;
+	TiObj** boxdata = &box.at(0);
+	if ( !box[left].has(field) ){
+		aux = boxdata[right-1];
+		boxdata[right-1] = boxdata[left];
+		boxdata[left] = aux;
+		return right-1;
+	}
 
-
-
-
-
-int partition(TiBox& box, uint p, uint q, std::string& field){
-cout << p << " " << q << endl;
-	string j_value;
-	string x = box[p].atStr(field);
-	TiObj *aux, *i_ptr, *j_ptr, *p_ptr;
-
-	uint i = p;
+	uint i = left;
 	uint j;
-	for(j=p+1; j<q; j++){
+	string j_value;
+	string value = box[left].atStr(field);
+	for(j=left+1; j<right; j++){
+		if ( !box[j].has(field) )
+			continue;
+
 		j_value = box[j].atStr(field);
-		if( j_value <= x  ){
+		if( strcasecmp(j_value.c_str(), value.c_str()) < 0  ){
 			i=i+1;
-			// swap(box[i],box[j];
-			aux   = &box[i];
-			i_ptr = &box[i];
-			j_ptr = &box[j];
-			i_ptr = j_ptr;
-			j_ptr = aux;
+			aux = boxdata[i];
+			boxdata[i] = boxdata[j];
+			boxdata[j] = aux;
 		}
 	}
-	//swap(box[i],box[p]);
-	aux   = &box[i];
-	i_ptr = &box[i];
-	p_ptr = &box[p];
-	i_ptr = p_ptr;
-	p_ptr = aux;
+	aux = boxdata[i];
+	boxdata[i] = boxdata[left];
+	boxdata[left] = aux;
+
 	return i;
 }
 
 
-void quickSort(TiBox& box, uint p, uint q, std::string& field){
-	uint r;
-	if(p<q){
-		r = partition(box,p,q,field);
-		quickSort(box,p,r,field);
-		quickSort(box,r+1,q,field);
+void quickSort(TiBox& box, uint left, uint right, std::string& field){
+	uint pivot;
+	if(left<right){
+		pivot = partition(box,left,right,field);
+		quickSort(box,left,pivot,field);
+		quickSort(box,pivot+1,right,field);
 	}
 }
 
-
 TiObj& TiObj::orderby(TiObj& out, std::string field){
+	for (int i=0; i<this->box.size(); i++){
+		out.box += this->box[i];
+	}
+	quickSort (out.box, 0, this->box.size(), field);
+	return out;
+}
+
+TiObj& TiObj::orderby(std::string field){
 	quickSort (this->box, 0, this->box.size(), field);
+	return *this;
 }
 
 
@@ -544,8 +552,8 @@ TiObj& TiObj::orderby(TiObj& out, std::string field){
 
 
 bool TiObj::has(std::string name){
-	//TiVar& var = this->at(name);
-	//return !var.isNull();
+	if ( name=="class" )
+		return true;
 	for (int i=0; i<varpkg.size(); i++){
 		if ( name == varpkg[i].name ){
 			this->last_id   = i;

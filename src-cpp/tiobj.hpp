@@ -181,8 +181,8 @@ class TiObj {
 	       TiObj& select(TiObj& out, std::string classes);
 	inline TiObj& select(std::string classes){return this->select(*this, classes);}
 
-	       TiObj& orderby(TiObj& out, std::string field);
-	inline TiObj& orderby(std::string field){return this->orderby(*this, field);}
+	TiObj& orderby(TiObj& out, std::string field);
+	TiObj& orderby(std::string field);
 
 
 
