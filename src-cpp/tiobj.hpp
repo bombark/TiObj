@@ -85,6 +85,7 @@ class TiVar {
 	void operator=(long int value);
 	void operator=(double value);
 	void operator=(TiObj& obj);
+	void operator=(TiObj* obj);
 	void operator=(TiVet& vector);
 	void operator=(TiVar& attr);
 
@@ -148,6 +149,7 @@ class TiObj {
 	void set(std::string name, double value);
 	void set(std::string name, TiVet& value);
 	void set(std::string name, TiObj& value);
+	void set(std::string name, TiObj* value);
 	void setObject(std::string name, std::string text);
 	void setVector(std::string name, std::string text);
 	void set(TiVar& attr);
@@ -155,9 +157,9 @@ class TiObj {
 
 
 
-	std::string atStr (std::string name, string _default="");
+	std::string atStr (std::string name, string   _default="");
 	long int    atInt (std::string name, long int _default=0);
-	double      atDbl (std::string name, double _default=0.0);
+	double      atDbl (std::string name, double   _default=0.0);
 	TiObj&      atObj (std::string name);
 
 	std::string toString();
@@ -184,15 +186,18 @@ class TiObj {
 	TiObj& orderby(TiObj& out, std::string field);
 	TiObj& orderby(std::string field);
 
+	//TiObj& where(TiObj& out, std::string condpkg);
+	//TiObj& where(std::string condpkg);
 
+	void groupby(TiObj& out, std::string field);
 
 
 	std::string encode(int tab=0, bool indent=true, bool jmpline=true);
 	static int  decode(TiObj& out, string text);
 
 
-	TiVar& operator[](std::string name);
-	TiObj& operator[](int id);
+	inline TiVar& operator[](std::string name){return this->at(name);}
+	inline TiVar& operator[](int i){return this->varpkg[i];}
 
 	static TiObj ObjNull; 
 

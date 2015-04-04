@@ -132,6 +132,17 @@ void TiVar::operator=(TiObj& obj){
 	obj.count_ref += 1;
 }
 
+void TiVar::operator=(TiObj* obj){
+	if ( obj == this->objptr )
+		return;
+	if ( this->isObj() )
+		this->removeObject();
+	this->type   = TiVar::OBJ;
+	this->objptr = obj;
+	obj->count_ref += 1;
+}
+
+
 void TiVar::operator=(TiVet& vector){
 	if ( this->isObj() )
 		this->removeObject();
@@ -398,6 +409,15 @@ void TiObj::set(string name, TiObj& value){
 	}
 }
 
+void TiObj::set(std::string name, TiObj* value){
+	if ( name == "class" ){
+		this->classe = "";
+	} else {
+		TiVar& var = this->at(name);
+		var = value;
+	}
+}
+
 void TiObj::set(TiVar& in_var){
 	if ( in_var.name == "class" ){
 		this->classe = "";
@@ -544,7 +564,26 @@ TiObj& TiObj::orderby(std::string field){
 }
 
 
+void TiObj::groupby(TiObj& out, std::string field){
+	out.clear();
+	for (int i=0; i<this->box.size(); i++){
+		TiObj& node = this->box[i];
+		if ( !node.has(field) ){
+			out.box += node;
+			continue;
+		}
 
+		TiObj* cur;
+		string key = node.atStr(field);
+		if ( out.has(key) ){
+			cur = &out.atObj(key);
+		} else {
+			cur = new TiObj();
+			out.set(key, cur);
+		}
+		cur->box += node;
+	}
+}
 
 
 
@@ -708,13 +747,7 @@ int TiObj::decode(TiObj& out, string text){
 }
 
 
-TiVar& TiObj::operator[](string name){
-	return this->at(name);
-}
 
-TiObj& TiObj::operator[](int id){
-	return this->box[id];
-}
 
 /*-------------------------------------------------------------------------------------*/
 
