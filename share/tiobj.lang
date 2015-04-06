@@ -107,6 +107,8 @@
       </include>
     </context>
 
+
+
     <context id="c-block">
       <start>&lt;\|c</start>
       <end>\|&gt;</end>
@@ -174,6 +176,7 @@
 
 
           <context ref="html-block"/>
+          
           <context ref="c-block"/>
           <context ref="java-block"/>
       </include>

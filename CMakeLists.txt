@@ -9,5 +9,10 @@ project (TiObj)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -O2")
 
 add_library (tiobj SHARED src-cpp/tiobj.cpp)
+
+add_executable (ex-set1 examples-cpp/set1.cpp) 
+target_link_libraries (ex-set1 tiobj)
+
+
 install(TARGETS tiobj DESTINATION lib)
 install(FILES   src-cpp/tiobj.hpp DESTINATION include)

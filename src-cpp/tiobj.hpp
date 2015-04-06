@@ -81,13 +81,13 @@ class TiVar {
 	inline TiVet&    atVet(){return *this->vetptr;}
 
 	void operator=(string value);
-//	void operator=(int value);
+	inline void operator=(int value){*this = (long int) value;}
 	void operator=(long int value);
 	void operator=(double value);
 	void operator=(TiObj& obj);
 	void operator=(TiObj* obj);
 	void operator=(TiVet& vector);
-	void operator=(TiVar& attr);
+	//void operator=(TiVar& attr);
 
 	string toString();
 	string encode(int tab=0);
@@ -96,7 +96,6 @@ class TiVar {
 
 
   private:
-
 	inline void removeObject();
 };
 
@@ -142,7 +141,7 @@ class TiObj {
 	int  loadStream(FILE* fd);
 	int  loadStream(std::string filename);
 
-	TiVar& at(string name);
+
 	void set(std::string name, std::string value);
 	void set(std::string name, int value);
 	void set(std::string name, long int value);
@@ -156,7 +155,7 @@ class TiObj {
 	void setText(std::string name, std::string strtype, std::string text);
 
 
-
+	TiVar&      at    (std::string name, bool      create=false);
 	std::string atStr (std::string name, string   _default="");
 	long int    atInt (std::string name, long int _default=0);
 	double      atDbl (std::string name, double   _default=0.0);
@@ -169,7 +168,8 @@ class TiObj {
 
 
 	       bool   has(std::string name);
-	inline bool isset(std::string name){this->has(name);}
+	inline bool isset(std::string name){return this->has(name);}
+	inline bool hasnt(std::string name){return !this->has(name);}
 	//FAZER: unset(std::string name);
 
 
@@ -196,11 +196,13 @@ class TiObj {
 	static int  decode(TiObj& out, string text);
 
 
-	inline TiVar& operator[](std::string name){return this->at(name);}
+	inline TiVar& operator[](std::string name){return this->at(name,true);}
 	inline TiVar& operator[](int i){return this->varpkg[i];}
 
 	static TiObj ObjNull; 
 
+  private:
+	TiVar& createVar(std::string name);
 };
 
 /*-------------------------------------------------------------------------------------*/

@@ -33,7 +33,7 @@
 // Temporario
 #include "tiparser.cpp"
 
-TiVar TiVar::ObjNull; 
+TiVar TiVar::ObjNull(0); 
 TiObj TiObj::ObjNull;
 
 /*-------------------------------------------------------------------------------------*/
@@ -85,20 +85,13 @@ string TiVar::atStr(){
 
 
 void TiVar::operator=(string value){
+	if ( this->isNull() )
+		return;
 	if ( this->isObj() )
 		this->removeObject();
-	if ( value[0] == '$' ){
-		char* ptr = &value[1];
-		TiParser parser;
-		TiObj& obj = *( new TiObj() );
-		parser.loadText(ptr);
-		parser.parse(obj);
-		this->objptr = &obj;
-		this->type   = TiVar::OBJ;
-	} else {
-		this->str  = value;
-		this->type = TiVar::STR;
-	}
+
+	this->str  = value;
+	this->type = TiVar::STR;
 }
 
 /*void TiVar::operator=(int value){
@@ -109,13 +102,17 @@ void TiVar::operator=(string value){
 }*/
 
 void TiVar::operator=(long int value){
+	if ( this->isNull() )
+		return;
 	if ( this->isObj() )
 		this->removeObject();
-	this->num = value;
-	this->type   = TiVar::INT;
+	this->num  = value;
+	this->type = TiVar::INT;
 }
 
 void TiVar::operator=(double value){
+	if ( this->isNull() )
+		return;
 	if ( this->isObj() )
 		this->removeObject();
 	this->dbl  = value;
@@ -123,6 +120,8 @@ void TiVar::operator=(double value){
 }
 
 void TiVar::operator=(TiObj& obj){
+	if ( this->isNull() )
+		return;
 	if ( &obj == this->objptr )
 		return;
 	if ( this->isObj() )
@@ -133,6 +132,8 @@ void TiVar::operator=(TiObj& obj){
 }
 
 void TiVar::operator=(TiObj* obj){
+	if ( this->isNull() )
+		return;
 	if ( obj == this->objptr )
 		return;
 	if ( this->isObj() )
@@ -144,23 +145,31 @@ void TiVar::operator=(TiObj* obj){
 
 
 void TiVar::operator=(TiVet& vector){
+	if ( this->isNull() )
+		return;
 	if ( this->isObj() )
 		this->removeObject();
 	this->type   = TiVar::VET;
 	this->vetptr = &vector;
 }
 
-void TiVar::operator=(TiVar& attr){
+/*void TiVar::operator=(TiVar& attr){
+	if ( this->isNull() )
+		return;
+	if ( this->isObj() )
+		this->removeObject();
 	if ( attr.isStr() )
 		this->str = attr.str;
 	if ( attr.isObj() )
 		attr.objptr->count_ref += 1;
 	this->objptr = attr.objptr;
 	this->type   = attr.type;
-}
+}*/
 
 string TiVar::toString(){
-	if ( this->isStr() ){
+	if ( this->isNull() ){
+		return "\"(NULL)\"";
+	} else if ( this->isStr() ){
 		size_t hasline = this->str.find ('\n');
 		if ( hasline == string::npos )
 			return "\"" + this->str + "\"";
@@ -330,9 +339,18 @@ int TiObj::loadStream(string filename){
 	return true;*/
 }
 
+TiVar& TiObj::createVar(std::string name){
+	int id = this->varpkg.size();
+	this->varpkg.push_back( TiVar(name) );
+	this->last_id   = id;
+	this->last_name = name;
 
-TiVar& TiObj::at(string name){
-	if ( name == "" )				// -- DEVE COLOCAR O OBJNULL como somente leitura!!!
+	return this->varpkg[id];
+}
+
+
+TiVar& TiObj::at(string name, bool create){
+	if ( name == "" )
 		return TiVar::ObjNull;
 	if ( name == this->last_name )
 		return varpkg[last_id];
@@ -346,12 +364,10 @@ TiVar& TiObj::at(string name){
 		}
 	}
 
-	// Create a new field, case dont exist
-	int id = this->varpkg.size();
-	this->varpkg.push_back( TiVar(name) );
-	this->last_id   = id;
-	this->last_name = name;
-	return this->varpkg[id];
+	if ( create ){
+		return this->createVar(name);
+	} else
+		return TiVar::ObjNull;
 }
 
 void TiObj::set(string name, string value){
@@ -359,8 +375,10 @@ void TiObj::set(string name, string value){
 	if ( name == "class" ){
 		this->classe = value;
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -368,8 +386,10 @@ void TiObj::set(string name, int value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = (long int)value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = (long int)value;
 	}
 }
 
@@ -377,8 +397,10 @@ void TiObj::set(string name, long int value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -386,8 +408,10 @@ void TiObj::set(string name, double value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -395,8 +419,10 @@ void TiObj::set(string name, TiVet& value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -404,8 +430,10 @@ void TiObj::set(string name, TiObj& value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -413,8 +441,10 @@ void TiObj::set(std::string name, TiObj* value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
-		TiVar& var = this->at(name);
-		var = value;
+		TiVar* var = &this->at(name);
+		if ( var->isNull() )
+			var = &this->createVar(name);
+		*var = value;
 	}
 }
 
@@ -424,24 +454,31 @@ void TiObj::set(TiVar& in_var){
 		if ( in_var.isStr() )
 			this->classe = in_var.str;
 	} else {
-		TiVar& var = this->at(in_var.name);
-		var = var;
+		TiVar* var = &this->at(in_var.name);
+		if ( var->isNull() )
+			var = &this->createVar(in_var.name);
+
+		var->type = in_var.type;
+		var->name = in_var.name;
 	}
 }
 
 
 void TiObj::setText(string name, string strtype, string text){
-	TiVar& var = this->at(name);
-	var = text;
+	TiVar* var = &this->at(name);
+	if ( var->isNull() )
+		var = &this->createVar(name);
+
+	*var = text;
 
 	//var.type = TYPE_TEXT;
-	var.type = TiVar::STR;
+	var->type = TiVar::STR;
 
 	if ( strtype.size() >= sizeof(TiVar::strtype) ){
-		strncpy(var.strtype, strtype.c_str(), sizeof(TiVar::strtype)-1 );
-		var.strtype[ sizeof(TiVar::strtype) ] = '\0';
+		strncpy(var->strtype, strtype.c_str(), sizeof(TiVar::strtype)-1 );
+		var->strtype[ sizeof(TiVar::strtype) ] = '\0';
 	} else
-		strcpy(var.strtype, strtype.c_str());
+		strcpy(var->strtype, strtype.c_str());
 }
 
 void TiObj::setObject(string name, string text){
@@ -455,7 +492,7 @@ void TiObj::setObject(string name, string text){
 }
 
 void TiObj::setVector(string name, string value){
-	TiVar& var = this->at(name);
+	/*TiVar& var = this->at(name);
 	if ( var.isNull() ){
 		int id = this->varpkg.size();
 		this->varpkg.push_back( TiVar(name) );
@@ -463,12 +500,12 @@ void TiObj::setVector(string name, string value){
 	}
 	TiVet* novo = new TiVet();
 	novo->load(value);
-	var = *novo;
+	var = *novo;*/
 }
 
 
 
-TiObj& TiObj:: select(TiObj& out, std::string classes){
+TiObj& TiObj::select(TiObj& out, std::string classes){
 	string token;
 	std::vector<std::string> vetclasse;
 	std::istringstream iss(classes);
@@ -894,6 +931,8 @@ ostream& operator<<(ostream& os, TiVar& var){
 
 	if ( var.isNull() )
 		return os << "[NULL]";
+	if ( var.isEmpty() )
+		return os << "[EMPTY]";
 	if ( var.isDbl() )
 		return os << var.dbl;
 	if ( var.isStr() )
