@@ -119,6 +119,7 @@ class TiBox : public std::vector<TiObj*> {
 
 class TiObj {
   private:
+	int          magic;
 	int          last_id;
 	std::string  last_name;
 

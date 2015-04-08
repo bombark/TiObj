@@ -70,8 +70,8 @@ TiVar::TiVar(string name){
 TiVar::~TiVar(){
 	// Nao colocar para deletar o objeto e vetor aqui, pois essa
 	// rotina eh chamada pelo std::vector, quando realoca o vetor
-	if ( this->isObj() )
-		this->removeObject();
+	//if ( this->isObj() )
+	//	this->removeObject();
 }
 
 string TiVar::atStr(){
@@ -231,11 +231,12 @@ string TiVar::encode(int tab){
 
 
 void TiVar::removeObject(){
+	/* VOLTAR ASSIM QUE ARRUMAR ===================================================================
 	if ( this->objptr->count_ref <= 0 ){
 		delete this->objptr;
 		this->objptr = NULL;
 	} else 
-		this->objptr->count_ref -= 1;
+		this->objptr->count_ref -= 1;*/
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -244,6 +245,7 @@ void TiVar::removeObject(){
 /*=====================================================================================*/
 
 TiObj::TiObj(){
+	this->magic = 0xCAFECAFE;
 	this->count_ref = 0;
 	this->classe = "";
 	this->last_name = "";
@@ -251,6 +253,7 @@ TiObj::TiObj(){
 }
 
 TiObj::TiObj(string text){
+	this->magic = 0xCAFECAFE;
 	this->count_ref = 0;
 	this->varpkg.reserve(16);
 	TiParser parser;
@@ -258,9 +261,11 @@ TiObj::TiObj(string text){
 }
 
 TiObj::~TiObj(){
-	this->classe = "!DEL";
-	this->varpkg.clear();
-	this->box.clear();
+	if ( this->magic == 0xCAFECAFE ){
+		this->magic = 0;
+		this->varpkg.clear();
+		this->box.clear();
+	}
 }
 
 void TiObj::clear(){

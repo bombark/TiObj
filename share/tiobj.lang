@@ -107,7 +107,15 @@
       </include>
     </context>
 
-
+    <context id="js-block">
+      <start>&lt;\|js</start>
+      <end>\|&gt;</end>
+      <include>
+          <context sub-pattern="0" where="start" style-ref="keyword"/>
+          <context sub-pattern="0" where="end" style-ref="keyword"/>
+          <context ref="js:js"/>
+      </include>
+    </context>
 
     <context id="c-block">
       <start>&lt;\|c</start>
@@ -176,7 +184,7 @@
 
 
           <context ref="html-block"/>
-          
+          <context ref="js-block"/>
           <context ref="c-block"/>
           <context ref="java-block"/>
       </include>
