@@ -1,6 +1,8 @@
 #include <iostream>
 #include "../src-cpp/tiobj.hpp"
 
+using namespace std;
+
 
 int main(){
 	TiObj obj;

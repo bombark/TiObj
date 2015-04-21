@@ -74,7 +74,7 @@ TiVar::~TiVar(){
 	//	this->removeObject();
 }
 
-string TiVar::atStr(){
+std::string TiVar::atStr(){
 	if ( this->isInt() )
 		return std::to_string(this->num);
 	if ( this->isDbl() )

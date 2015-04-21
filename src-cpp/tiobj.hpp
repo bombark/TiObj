@@ -31,8 +31,6 @@
 #include <map>
 #include <typeinfo>
 
-using namespace std;
-
 class TiObj;
 class TiVet;
 
@@ -62,7 +60,7 @@ class TiVar {
 	
 	TiVar();
 	TiVar(int isReadOnly);
-	TiVar(string name);
+	TiVar(std::string name);
 	~TiVar();
 
 	inline bool isNull() {return this->type == TiVar::NULO;}
@@ -80,7 +78,7 @@ class TiVar {
 	inline TiObj&    atObj(){return *this->objptr;}
 	inline TiVet&    atVet(){return *this->vetptr;}
 
-	void operator=(string value);
+	void operator=(std::string value);
 	inline void operator=(int value){*this = (long int) value;}
 	void operator=(long int value);
 	void operator=(double value);
@@ -89,8 +87,8 @@ class TiVar {
 	void operator=(TiVet& vector);
 	//void operator=(TiVar& attr);
 
-	string toString();
-	string encode(int tab=0);
+	std::string toString();
+	std::string encode(int tab=0);
 
 	static TiVar ObjNull;
 
@@ -114,7 +112,7 @@ class TiBox : public std::vector<TiObj*> {
 	TiObj& operator[](int id);
 	void   operator+=(TiObj& obj);
 	void   operator+=(TiObj* obj);
-	void   operator+=(string objstr);
+	void   operator+=(std::string objstr);
 };
 
 class TiObj {
@@ -126,7 +124,7 @@ class TiObj {
   public:
 	int  count_ref;
 	std::string classe;
-	vector<TiVar>  varpkg;
+	std::vector<TiVar>  varpkg;
 	TiBox box;
 
 	TiObj();
@@ -156,10 +154,10 @@ class TiObj {
 	void setText(std::string name, std::string strtype, std::string text);
 
 
-	TiVar&      at    (std::string name, bool      create=false);
-	std::string atStr (std::string name, string   _default="");
-	long int    atInt (std::string name, long int _default=0);
-	double      atDbl (std::string name, double   _default=0.0);
+	TiVar&      at    (std::string name, bool         create=false);
+	std::string atStr (std::string name, std::string  _default="");
+	long int    atInt (std::string name, long int     _default=0);
+	double      atDbl (std::string name, double       _default=0.0);
 	TiObj&      atObj (std::string name);
 
 	std::string toString();
@@ -176,6 +174,8 @@ class TiObj {
 
 	inline bool isEmpty(){return this->varpkg.size()==0 && this->box.size()==0;}
 	inline unsigned length(){return this->varpkg.size();}
+	inline unsigned size(){return this->box.size();}
+
 	bool is(std::string name);
 	bool isOnly(std::string name);
 
@@ -194,7 +194,7 @@ class TiObj {
 
 
 	std::string encode(int tab=0, bool indent=true, bool jmpline=true);
-	static int  decode(TiObj& out, string text);
+	static int  decode(TiObj& out, std::string text);
 
 
 	inline TiVar& operator[](std::string name){return this->at(name,true);}
@@ -213,23 +213,23 @@ class TiObj {
 /*======================================- TiVet -======================================*/
 
 class TiVet {
-	vector<TiVar*> itens;
+	std::vector<TiVar*> itens;
 
 public:
-	int  load(string text);
+	int  load(std::string text);
 	int  size();
 
-	void add(string value);
+	void add(std::string value);
 	void add(long int value);
 	void add(double value);
 	void add(TiVar& item);
 	void addObject(TiObj* object);
-	void addObject(string text);
+	void addObject(std::string text);
 
 
 	TiObj*  find(std::string value);
 
-	string encode(int tab=0, bool indent=true, bool jmpline=true);
+	std::string encode(int tab=0, bool indent=true, bool jmpline=true);
 };
 
 /*-------------------------------------------------------------------------------------*/
@@ -238,9 +238,9 @@ public:
 
 /*=====================================- Others -======================================*/
 
-ostream& operator<<(ostream& os, TiObj& obj);
-ostream& operator<<(ostream& os, TiVar& var);
-ostream& operator<<(ostream& os, TiBox& box);
+std::ostream& operator<<(std::ostream& os, TiObj& obj);
+std::ostream& operator<<(std::ostream& os, TiVar& var);
+std::ostream& operator<<(std::ostream& os, TiBox& box);
 
 /*-------------------------------------------------------------------------------------*/
 
