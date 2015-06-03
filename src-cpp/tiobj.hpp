@@ -5,7 +5,7 @@
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,6 +37,28 @@ class TiVet;
 /*-------------------------------------------------------------------------------------*/
 
 
+/*======================================- Join -=======================================*/
+
+class Join {
+  public:
+	std::string* format;
+	std::string buffer;
+	unsigned int pi, size;
+
+	Join(std::string format);
+
+	Join& at(std::string var);
+	Join& at(int var);
+	Join& at(double var);
+
+	inline std::string ok(){
+		return this->buffer;
+	}
+};
+
+
+/*-------------------------------------------------------------------------------------*/
+
 
 
 /*======================================- TiVar -======================================*/
@@ -57,7 +79,7 @@ class TiVar {
 		TiVet*    vetptr;
 	};
 	char strtype[64];
-	
+
 	TiVar();
 	TiVar(int isReadOnly);
 	TiVar(std::string name);
@@ -200,7 +222,7 @@ class TiObj {
 	inline TiVar& operator[](std::string name){return this->at(name,true);}
 	inline TiVar& operator[](int i){return this->varpkg[i];}
 
-	static TiObj ObjNull; 
+	static TiObj ObjNull;
 
   private:
 	TiVar& createVar(std::string name);
