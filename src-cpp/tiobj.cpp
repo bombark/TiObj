@@ -170,11 +170,22 @@ string TiVar::toString(){
 	if ( this->isNull() ){
 		return "\"(NULL)\"";
 	} else if ( this->isStr() ){
+		string aux;
 		size_t hasline = this->str.find ('\n');
-		if ( hasline == string::npos )
-			return "\"" + this->str + "\"";
-		else
-			return "<|" + this->str + "|>";
+		if ( hasline == string::npos ){
+			aux += "\"";
+			for (int i=0; i<this->str.size(); i++){
+				char c = this->str[i];
+				if ( c == '"' )
+					aux += "\\\"";
+				else
+					aux += c;
+			}
+			aux += "\"";
+			return aux;
+		} else {
+			return Join("<|%s|>").at(this->str).ok();
+		}
 	} else if (this->isInt() ){
 		return std::to_string(this->num); 
 	} else if (this->isDbl() ){
@@ -193,34 +204,27 @@ string TiVar::encode(int tab){
 	if (this->isStr() ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
-		res += this->name + " = " + this->toString() + ";\n";
+		res += Join("\"%s\" = %s;\n").at(this->name).at(this->toString()).ok();
 
 	} else if (this->isInt() ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
-		res += this->name; 
-		res += " = "; 
-		res += std::to_string(this->num); 
-		res += ";\n";
+		res += Join("\"%s\" = %s;\n").at(this->name).at(std::to_string(this->num)).ok();
 	} else if (this->isDbl()){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
-		res += this->name; 
-		res += " = ";
-		res += std::to_string(this->dbl); 
-		res += ";\n";
+		res += Join("\"%s\" = %s;\n").at(this->name).at(std::to_string(this->dbl)).ok();
 	} else if ( this->isObj() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
-		res += this->name+" = ";
-		res += this->objptr->encode(tab,false);
+		res += res += Join("\"%s\" = %s;\n").at(this->name).at(this->objptr->encode(tab,false)).ok();
 	} else if (this->isVet() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
-		TiVet* ptr = (TiVet*) this->objptr;
+		/*TiVet* ptr = (TiVet*) this->objptr;
 		res += this->name+" = ";
 		res += ptr->encode(tab,false);
-		res += "\n";
+		res += "\n";*/
 	} /********* else if ( this->type == TYPE_TEXT ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
@@ -713,7 +717,7 @@ string TiObj::toString(){
 	string res;
 	res += this->classe+"{";
 	for (int i=0; i<this->varpkg.size(); i++){
-		res += varpkg[i].name+"="+varpkg[i].toString()+";";
+		res += Join("\"%s\"=%s;").at(varpkg[i].name).at(varpkg[i].toString()).ok();
 	}
 
 
@@ -960,6 +964,16 @@ ostream& operator<<(ostream& os, TiBox& box){
 
 
 /*-------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
 
 //int main(){
 	/*TiObj var1("Pessoa");

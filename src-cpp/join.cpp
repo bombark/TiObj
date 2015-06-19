@@ -19,10 +19,21 @@ Join::Join(std::string format){
 }
 
 Join& Join::at(std::string var){
-	buffer += var;
 	const char* text = format->c_str();
+	char c = text[pi-1];
+	if ( c == 'v' ){
+		for (int i=0; i<var.size(); i++){
+			c = var[i];
+			if ( c == '"' )
+				buffer += "\\\"";
+			else
+				buffer += c;
+		}
+	} else
+		buffer += var;
+
 	for (; pi<size; pi++){
-		char c = text[pi];
+		c = text[pi];
 		if ( c == '%' ){
 			pi += 2;
 			break;
