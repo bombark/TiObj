@@ -217,7 +217,7 @@ string TiVar::encode(int tab){
 	} else if ( this->isObj() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
-		res += res += Join("\"%s\" = %s;\n").at(this->name).at(this->objptr->encode(tab,false)).ok();
+		res += Join("\"%s\" = %s").at(this->name).at(this->objptr->encode(tab,false)).ok();
 	} else if (this->isVet() ){
 		for (int i=1; i<tab; i++)
 			 res += '\t';
@@ -439,6 +439,7 @@ void TiObj::set(string name, TiObj& value){
 	if ( name == "class" ){
 		this->classe = "";
 	} else {
+
 		TiVar* var = &this->at(name);
 		if ( var->isNull() )
 			var = &this->createVar(name);
