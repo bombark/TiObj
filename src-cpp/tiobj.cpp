@@ -74,7 +74,7 @@ TiVar::~TiVar(){
 	//	this->removeObject();
 }
 
-std::string TiVar::atStr(){
+std::string TiVar::Str(){
 	if ( this->isInt() )
 		return std::to_string(this->num);
 	if ( this->isDbl() )
@@ -650,14 +650,15 @@ bool TiObj::has(std::string name){
 	return false;
 }
 
-bool TiObj::is(string name){
+
+bool TiObj::is(std::string objclasse, std::string classe){
 	char token[1024];
 	int cursor, i;
-	for (i=0, cursor=0; i<this->classe.size(); i++){
-		char c = this->classe[i];
+	for (i=0, cursor=0; i<objclasse.size(); i++){
+		char c = objclasse[i];
 		if (c == ':'){
 			token[cursor] = '\0';
-			if (name == token){
+			if (classe == token){
 				return true;
 			}
 			cursor = 0;
@@ -666,7 +667,7 @@ bool TiObj::is(string name){
 		}
 	}
 	token[cursor] = '\0';
-	if ( name == token )
+	if ( classe == token )
 		return true;
 	return false;
 }
@@ -686,7 +687,7 @@ string TiObj::atStr(string name, string _default){
 		return _default;
 	}
 	
-	return var.atStr();
+	return var.Str();
 }
 
 long int TiObj::atInt(string name, long int _default){

@@ -94,11 +94,11 @@ class TiVar {
 	inline bool isVet()  {return this->type == TiVar::VET;}
 
 
-	std::string      atStr();
-	inline long int  atInt(){return this->num;}
-	inline double    atDbl(){return this->dbl;}
-	inline TiObj&    atObj(){return *this->objptr;}
-	inline TiVet&    atVet(){return *this->vetptr;}
+	std::string      Str();
+	inline long int  Int(){return this->num;}
+	inline double    Dbl(){return this->dbl;}
+	inline TiObj&    Obj(){return *this->objptr;}
+	inline TiVet&    Vet(){return *this->vetptr;}
 
 	void operator=(std::string value);
 	inline void operator=(int value){*this = (long int) value;}
@@ -176,11 +176,12 @@ class TiObj {
 	void setText(std::string name, std::string strtype, std::string text);
 
 
-	TiVar&      at    (std::string name, bool         create=false);
-	std::string atStr (std::string name, std::string  _default="");
-	long int    atInt (std::string name, long int     _default=0);
-	double      atDbl (std::string name, double       _default=0.0);
-	TiObj&      atObj (std::string name);
+	TiVar&       at    (std::string name, bool         create=false);
+	std::string  atStr (std::string name, std::string  _default="");
+	long int     atInt (std::string name, long int     _default=0);
+	double       atDbl (std::string name, double       _default=0.0);
+	TiObj&       atObj (std::string name);
+	inline char* atCtr (std::string name){this->atStr(name).c_str();}
 
 	std::string toString();
 	std::string toString(std::string name);
@@ -198,7 +199,10 @@ class TiObj {
 	inline unsigned length(){return this->varpkg.size();}
 	inline unsigned size(){return this->box.size();}
 
-	bool is(std::string name);
+
+
+	inline bool is(std::string name){TiObj::is(this->classe, name);}
+	static bool is(std::string objclasse, std::string classe);
 	bool isOnly(std::string name);
 
 
