@@ -201,7 +201,7 @@ class TiObj {
 
 
 
-	inline bool is(std::string name){TiObj::is(this->classe, name);}
+	inline bool is(std::string classe){return TiObj::is(this->classe, classe);}
 	static bool is(std::string objclasse, std::string classe);
 	bool isOnly(std::string name);
 
