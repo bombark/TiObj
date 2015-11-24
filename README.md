@@ -31,11 +31,12 @@
 ## Examples
 
 
-## Load File
+### Load File
 ```cpp
 #include <iostream>
-#include <string.h>
 #include <tiobj.hpp>
+
+// g++ load.cpp -o load -ltiobj
 
 using namespace std;
 
@@ -47,6 +48,46 @@ int main(){
 }
 ```
 
+
+### Save File
+```cpp
+#include <iostream>
+#include <tiobj.hpp>
+
+// g++ load.cpp -o load -ltiobj
+
+using namespace std;
+
+int main(){
+	TiObj obj;
+	obj.loadFile("teste.ti");
+	obj.saveFile("dest.ti");
+	return 0;
+}
+```
+
+
+### Setting Variables
+```cpp
+#include <iostream>
+#include <tiobj.hpp>
+
+// g++ load.cpp -o load -ltiobj
+
+using namespace std;
+
+int main(){
+	TiObj obj;
+	obj["name"] = "Name";
+	obj["old"] = 24;
+	obj["score"] = 12.333;
+	obj.setObj("subject", "name='Portugues'");
+	return 0;
+}
+```
+
+
+
 ## Contributing
-See the CONTRIBUTING file for how to help out.
+
 
