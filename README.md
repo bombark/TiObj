@@ -22,11 +22,30 @@
 ## Usage
 
 
-## Installation
+## Compiling
 
 
-## How it works
+## Syntax
 
+
+## Examples
+
+
+## Load File
+```cpp
+#include <iostream>
+#include <string.h>
+#include <tiobj.hpp>
+
+using namespace std;
+
+int main(){
+	TiObj obj;
+	obj.loadFile("teste.ti");
+	cout << obj;
+	return 0;
+}
+```
 
 ## Contributing
 See the CONTRIBUTING file for how to help out.
