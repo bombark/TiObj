@@ -1,0 +1,6 @@
+Package: TiObj
+Version: 0.0.1
+Architecture: amd64
+Maintainer: felipe
+Description:
+    Library to handle with filesystem

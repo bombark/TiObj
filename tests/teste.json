@@ -1,0 +1,11 @@
+{
+	"name":"felipe",
+	"idade":10,
+	"box":[
+		{"name":"fernando"},
+		{"class":"Agora","name":"fernando"}
+	],
+	"pai":{
+		"name":"clovis"
+	}
+}
