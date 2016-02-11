@@ -1,4 +1,4 @@
 class=proj:cpp:lib
-name="tiobj"
+name="libtiobj"
 description="    Library to handle the TiObj and parse the Ti Notation"
 section="extra"
