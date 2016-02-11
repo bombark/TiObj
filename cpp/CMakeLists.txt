@@ -23,5 +23,6 @@ target_link_libraries (examples_load tiobj)
 
 install(TARGETS tiobj    DESTINATION lib)
 #install(TARGETS tiparser DESTINATION bin)
-install(FILES   include/tiobj.hpp   DESTINATION include)
-install(FILES   include/tiasm.hpp   DESTINATION include)
+install(FILES   include/tiobj.hpp       DESTINATION include)
+install(FILES   include/tiasm.hpp       DESTINATION include)
+install(FILES   include/titextasm.hpp   DESTINATION include)
