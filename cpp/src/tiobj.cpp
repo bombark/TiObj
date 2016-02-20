@@ -398,18 +398,24 @@ string TiObj::atStr(string name, string _default){
 
 long int TiObj::atInt(string name, long int _default){
 	TiVar& var = this->at(name);
-	if ( var.isNull() ){
+	if ( var.isNull() )
 		return _default;
-	}
-	return var.num;
+	if ( var.isDbl() )
+		return var.dbl;
+	if ( var.isInt() )
+		return var.num;
+	return _default;
 }
 
 double TiObj::atDbl (string name, double _default){
 	TiVar& var = this->at(name);
-	if ( var.isNull() ){
+	if ( var.isNull() )
 		return _default;
-	}
-	return var.dbl;
+	if ( var.isDbl() )
+		return var.dbl;
+	if ( var.isInt() )
+		return var.num;
+	return _default;
 }
 
 TiObj& TiObj::atObj (string name){
