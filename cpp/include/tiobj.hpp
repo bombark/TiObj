@@ -202,11 +202,15 @@ class TiObj {
 
 
 	TiObj();
+	TiObj(const char* text);
 	TiObj(std::string text);
 	~TiObj();
 
 	void clear();
+
+	int  loadText(const char* text);
 	int  loadText(std::string text);
+
 	int  loadFile(FILE*  fd);
 	int  loadFile(std::string filename);
 	int  saveFile(std::string filename);

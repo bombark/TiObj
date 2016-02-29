@@ -75,6 +75,10 @@ std::string TiVar::atStr(){
 }
 
 
+
+
+
+
 void TiVar::operator=(string value){
 	if ( this->isNull() )
 		return;

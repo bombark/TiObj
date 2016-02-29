@@ -48,6 +48,12 @@ TiObj::TiObj(){
 	this->classe = "";
 }
 
+TiObj::TiObj(const char* text){
+	this->magic = 0xCAFECAFE;
+	this->count_ref = 0;
+	this->loadText(text);
+}
+
 TiObj::TiObj(string text){
 	this->magic = 0xCAFECAFE;
 	this->count_ref = 0;
@@ -65,11 +71,22 @@ void TiObj::clear(){
 }
 
 
+int TiObj::loadText(const char* text){
+	this->clear();
+	if ( text == NULL )
+		return 0;
+	string buffer;
+	parseText(buffer, text);
+	parseTiAsm(*this, buffer);
+	return 1;
+}
+
 int TiObj::loadText(std::string text){
 	string buffer;
 	this->clear();
 	parseText(buffer, text);
 	parseTiAsm(*this, buffer);
+	return 1;
 }
 
 int TiObj::loadFile(FILE* fd){
@@ -77,6 +94,7 @@ int TiObj::loadFile(FILE* fd){
 	this->clear();
 	parseFileFd(buffer, fd);
 	parseTiAsm(*this, buffer);
+	return 1;
 }
 
 int TiObj::loadFile(string filename){
@@ -90,6 +108,7 @@ int TiObj::loadFile(string filename){
 	}
 	this->loadFile(fd);
 	fclose(fd);
+	return 1;
 }
 
 int  TiObj::saveFile(string filename){
@@ -97,10 +116,10 @@ int  TiObj::saveFile(string filename){
 	aux = this->encode();
 	FILE* fd = fopen(filename.c_str(), "w");
 	if ( !fd )
-		return 1;
+		return 0;
 	fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
 	fclose(fd);
-	return 0;
+	return 1;
 }
 
 
@@ -392,7 +411,7 @@ string TiObj::atStr(string name, string _default){
 	if ( var.isNull() ){
 		return _default;
 	}
-	
+
 	return var.atStr();
 }
 
@@ -404,6 +423,8 @@ long int TiObj::atInt(string name, long int _default){
 		return var.dbl;
 	if ( var.isInt() )
 		return var.num;
+	if ( var.isStr() )
+		return atoi(var.str.c_str());
 	return _default;
 }
 
@@ -415,6 +436,8 @@ double TiObj::atDbl (string name, double _default){
 		return var.dbl;
 	if ( var.isInt() )
 		return var.num;
+	if ( var.isStr() )
+		return atof(var.str.c_str());
 	return _default;
 }
 
@@ -605,7 +628,14 @@ ostream& operator<<(ostream& os, TiBox& box){
 
 
 
+TiStream::TiStream(FILE* fd){
+	parser.loadFile(fd);
+}
 
+
+bool TiStream::next(TiObj& out){
+	parser.parseStream();
+}
 
 
 

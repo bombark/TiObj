@@ -247,7 +247,7 @@ TiLex::TiLex(){
 	symbols['}']  = L_SYMB;
 	symbols['[']  = L_SYMB;
 	symbols[']']  = L_SYMB;
-	symbols['<']  = L_SYMB;
+	symbols['<']  = L_TEXT;
 	symbols['>']  = L_SYMB;
 	symbols['#']  = L_LCMT;
 	symbols['\''] = L_ASPA;
@@ -260,7 +260,6 @@ TiLex::TiLex(){
 	symbols['&']  = L_CHAR;
 	symbols['!']  = L_CHAR;
 	symbols['*']  = L_SYMB;
-	symbols['$']  = L_SYMB;
 	symbols['\n'] = L_SYMB;
 	lastsymbol = 0;
 	runpkg[L_UNKNOWN] = run_unknown;
@@ -285,6 +284,8 @@ bool TiLex::next(TiToken& out){
 		out.type = TiToken::TEOF;
 		return false;
 	}
+
+	// Remove char without mean as ' ', '\t', ...
 	while ( buffer.next(c) ){
 		type = this->symbols[c];
 		if ( type != L_DEL ){
@@ -292,13 +293,7 @@ bool TiLex::next(TiToken& out){
 		}
 	}
 
-	// alteração para deixar o texto iniciar com <| e terminar com |>
-	buffer.read(c1);
-	if ( c=='<' && c1 == '|' ){
-		buffer.accept();
-		return runpkg[L_TEXT](*this, out, c);
-	} else
-		return runpkg[type](*this, out, c);
+	return runpkg[type](*this, out, c);
 }
 
 
@@ -394,68 +389,67 @@ bool TiLex::run_none(TiLex& obj, TiToken& out, unsigned char ini){
 
 bool TiLex::run_text(TiLex& obj, TiToken& out, unsigned char ini){
 	unsigned int level = 1;
+	out.aux  = "";
 	out.text = "";
 	out.type = TiToken::TEXT;
 	bool special = false;
 	unsigned char c, c1;
 
+
 	// Get the Text type;
 	out.aux = "";
-	while ( obj.buffer.read(c) ){
-		if ( c >= 'a' && c <= 'z' ){
-			out.aux += c;
-			obj.buffer.accept();
-		} else
+	while ( obj.buffer.next(c) ){
+		if ( c == '|' ){
 			break;
-	}
-
-	while ( obj.buffer.read(c) ){
-		if ( special ){
-			if ( c == 'n' )
-				out.text += '\n';
-			else if ( c == 't' )
-				out.text += '\t';
-			else if ( c == '\'' )
-				out.text += '\'';
-			else if ( c == '\"' )
-				out.text += '\"';
-			else if ( c == '\\' )
-				out.text += '\\';
-			else
-				out.text += c;
-			special = false;
-			obj.buffer.accept();
-		} else if ( c == '\\' ){
-			special = true;
-			obj.buffer.accept();
-		} else if ( c == '<' ){
-			obj.buffer.accept();
-			obj.buffer.read(c1);
-			if ( c1 == '|' ){
-				out.text += "<|";
-				level += 1;
-				obj.buffer.accept();
-			} else
-				out.text += c;
-		} else if ( c == '|' ){
-			obj.buffer.accept();
-			obj.buffer.read(c1);
-			if ( c1 == '>' ){
-				obj.buffer.accept();
-				level -= 1;
-				if ( level == 0 )
-					break;
-				out.text += "|>";
-			} else
-				out.text += c;
 		} else {
-			out.text += c;
-			obj.buffer.accept();
+			out.aux += c;
 		}
 	}
-	if ( level > 0 ){
-		out.error = "Expected a |> to close the text";
-		out.type  = TiToken::ERROR;
+
+	uint size = atoi(out.aux.c_str());
+	if ( size > 0 ){
+		for(uint i=0; i<size; i++){
+			obj.buffer.next(c);
+			out.text += c;
+		}
+
+	} else {
+		while ( obj.buffer.read(c) ){
+			if ( special ){
+				if ( c == 'n' )
+					out.text += '\n';
+				else if ( c == 't' )
+					out.text += '\t';
+				else if ( c == '\'' )
+					out.text += '\'';
+				else if ( c == '\"' )
+					out.text += '\"';
+				else if ( c == '\\' )
+					out.text += '\\';
+				else
+					out.text += c;
+				special = false;
+				obj.buffer.accept();
+			} else if ( c == '\\' ){
+				special = true;
+				obj.buffer.accept();
+
+			} else if ( c == '|' ){
+				obj.buffer.accept();
+				obj.buffer.read(c1);
+				if ( c1 == '>' ){
+					obj.buffer.accept();
+					level -= 1;
+					if ( level == 0 )
+						break;
+					out.text += "|>";
+				} else
+					out.text += c;
+			} else {
+				out.text += c;
+				obj.buffer.accept();
+			}
+		}
 	}
 
 	return true;
@@ -634,6 +628,7 @@ bool TiParser::parseStream(){
 
 
 void TiParser::error(std::string msg){
+	output.clear();
 	output.printStr("class","Error");
 	output.printInt("line",this->lex.getLine());
 	output.printStr("msg",msg);

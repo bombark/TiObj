@@ -59,7 +59,7 @@ bool parseTiAsm_vector(TiObj& out, std::vector<unsigned char>& data){
 bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 	uint size;
 	long int i_val;
-	float f_val;
+	double f_val;
 	const char* name;
 	const char* s_val;
 	const char* cname;
@@ -80,18 +80,18 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
 			i += 4 + ((size+1)&0xFFFFFFFE);
-			i_val = *((int*) &data[i]);
+			i_val = *((long int*) &data[i]);
 			cur->set(name, i_val);
-			i += 4;
+			i += 8;
 
 
 		} else if ( cmd == 'b' ){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
 			i += 4 + ((size+1)&0xFFFFFFFE);
-			f_val = *((float*) &data[i]);
+			f_val = *((double*) &data[i]);
 			cur->set(name, f_val);
-			i += 4;
+			i += 8;
 
 		} else if ( cmd == 'c' || cmd == 'd' ){
 			size = *((short*) &data[i+2]);
@@ -157,7 +157,7 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 
 		} else {
 
-			cout << ":error\n";
+			cerr << ":error\n";
 			break;
 		}
 	}
