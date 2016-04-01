@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <ctype.h>     // toupper()
 
 using namespace std;
 
@@ -262,6 +262,8 @@ TiLex::TiLex(){
 	symbols['*']  = L_SYMB;
 	symbols['\n'] = L_SYMB;
 	lastsymbol = 0;
+
+	 
 	runpkg[L_UNKNOWN] = run_unknown;
 	runpkg[L_CHAR]    = run_char;
 	runpkg[L_INT]     = run_int;
@@ -506,11 +508,12 @@ bool TiParser::parse(){
 	// Init function array and other variables
 	TiToken token;
 	this->mem_i = this->state = this->nivel = 0;
-	bool (*run[4])(TiParser& parser, TiToken& token);
-	run[0] = run_pass_0;
-	run[1] = run_pass_1;
-	run[2] = run_pass_2;
-	run[3] = run_pass_3;
+	std::function<bool(TiParser&, TiToken&)> run[] = {
+		run_pass_0,
+		run_pass_1,
+		run_pass_2,
+		run_pass_3
+	};
 
 	// Run the parser
 	while ( lex.next(token) ){
@@ -562,11 +565,14 @@ bool TiParser::parseStream(){
 	// Init function array and other variables
 	TiToken token;
 	this->mem_i = this->state = this->nivel = 0;
-	bool (*run[4])(TiParser& parser, TiToken& token);
-	run[0] = run_pass_0;
-	run[1] = run_pass_1;
-	run[2] = run_pass_2;
-	run[3] = run_pass_3;
+
+	std::function<bool(TiParser&, TiToken&)> run[] = {
+		run_pass_0,
+		run_pass_1,
+		run_pass_2,
+		run_pass_3
+	};
+
 	this->isEndObj = false;
 
 	// Run the parser
@@ -639,6 +645,7 @@ bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
 		parser.error("Objects stack is corrupted");
 		return false;
 	}
+
 	if ( token.type == TiToken::STRING ){
 		parser.memory[0] = token;
 		parser.mem_i += 1;
@@ -659,6 +666,12 @@ bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
 			parser.error("Symbol not expected:"+token.text);
 			return false;
 		}
+	} else if ( token.type==TiToken::TEXT ){
+		if ( token.aux.size() > 0 )
+			token.aux[0] = toupper(token.aux[0]);
+		parser.output.printObj(token.aux);
+		parser.output.printStr("text",token.text);
+		parser.output.printRet();
 	} else {
 		parser.error("Symbol not expected:"+token.text);
 		return false;
@@ -672,10 +685,11 @@ bool TiParser::run_pass_1(TiParser& parser, TiToken& token){
 		parser.error("Expected a Symbol like '=' or '{', and not "+token.text);
 		return false;
 	}
-	char c = token.text[0];
-	if ( c == '=' ){
+
+	char symbol = token.text[0];
+	if ( symbol == '=' ){
 		parser.state = 2;
-	} else if ( c == '{' ){
+	} else if ( symbol == '{' ){
 		parser.nivel += 1;
 		parser.output.printObj(parser.memory[0].text);
 		parser.state = parser.mem_i = 0;
