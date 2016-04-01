@@ -18,12 +18,9 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-#ifndef TITEXTASM_HPP
-#define TITEXTASM_HPP
-
-
-
 /*=====================================================================================*/
+
+#pragma once
 
 class TiTextAsm {
   public:
@@ -57,4 +54,3 @@ class TiTextAsm {
 
 
 
-#endif

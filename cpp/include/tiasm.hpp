@@ -20,9 +20,7 @@
 
 /*=====================================================================================*/
 
-#ifndef TIASM_HPP
-#define TIASM_HPP
-
+#pragma once
 
 #include <string>
 #include <sys/types.h>     // include type uint
@@ -185,11 +183,14 @@ class TiParser {
 	bool isEndObj;
 
   public:
-	TiTextAsm output;
+	TiTextAsm* output;
 
+
+   public: TiParser();
+  private: TiParser(TiParser& up_parser);
 
   public:
-	TiParser();
+	void parseFile(std::string filename);
 
 	inline void loadFile(FILE* fd){
 		lex.loadFile(fd);
@@ -203,6 +204,7 @@ class TiParser {
 	bool parseStream();
 
   private:
+	void init();
 	void error(std::string msg);
 	static bool run_pass_0(TiParser& parser, TiToken& token);
 	static bool run_pass_1(TiParser& parser, TiToken& token);
@@ -215,6 +217,3 @@ class TiParser {
 /*-------------------------------------------------------------------------------------*/
 
 
-
-
-#endif
