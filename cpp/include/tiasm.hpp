@@ -24,7 +24,6 @@
 
 #include <string>
 #include <sys/types.h>     // include type uint
-#include <functional>      // std::function
 #include "titextasm.hpp"
 
 extern "C" bool parseFile(std::string& out, std::string filename);
@@ -125,7 +124,7 @@ class TiLex {
 	unsigned int  line;
 	unsigned char lastsymbol;
 
-	std::function<bool(TiLex& obj, TiToken& out, unsigned char ini)> runpkg[9];
+	bool (*runpkg[9])(TiLex& obj, TiToken& out, unsigned char ini);
 
   public:
 	unsigned char symbols[256];
