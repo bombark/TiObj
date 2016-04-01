@@ -60,7 +60,7 @@ bool parseFileFd(std::string& out, FILE* fd){
 	TiParser parser;
 	parser.loadFile(fd);
 	parser.parse();
-	out = parser.output.text;
+	out = parser.output->text;
 	return true;
 }
 
@@ -68,7 +68,7 @@ bool parseText(string& out, string text){
 	TiParser parser;
 	parser.loadText(text);
 	parser.parse();
-	out = parser.output.text;
+	out = parser.output->text;
 	return true;
 }
 
@@ -410,12 +410,14 @@ bool TiLex::run_text(TiLex& obj, TiToken& out, unsigned char ini){
 
 	uint size = atoi(out.aux.c_str());
 	if ( size > 0 ){
+		// <int:size|binary:data
 		for(uint i=0; i<size; i++){
 			obj.buffer.next(c);
 			out.text += c;
 		}
 
 	} else {
+		// <string:type|string:text|>
 		while ( obj.buffer.read(c) ){
 			if ( special ){
 				if ( c == 'n' )
@@ -491,6 +493,16 @@ bool TiLex::run_lcmt(TiLex& obj, TiToken& out, unsigned char ini){
 
 
 TiParser::TiParser(){
+	this->init();
+	this->output = new TiTextAsm();
+}
+
+TiParser::TiParser(TiParser& up_parser){
+	this->init();
+	this->output = up_parser.output;
+}
+
+void TiParser::init(){
 	for (int i=0; i<256; i++){
 		translate[i] = 0;
 	}
@@ -501,6 +513,21 @@ TiParser::TiParser(){
 	translate['='] = 8;
 	translate[';'] = 9;
 }
+
+
+
+
+void TiParser::parseFile(std::string filename){
+	FILE* fd = fopen(filename.c_str(), "r");
+	if ( !fd ){
+		this->error( "File '" +filename+ "' not Found" );
+		return;
+	}
+	this->loadFile(fd);
+	this->parse();
+	fclose(fd);
+}
+
 
 
 
@@ -560,7 +587,7 @@ bool TiParser::parse(){
 using namespace std;
 
 bool TiParser::parseStream(){
-	this->output.clear();
+	this->output->clear();
 
 	// Init function array and other variables
 	TiToken token;
@@ -596,7 +623,7 @@ bool TiParser::parseStream(){
 		}
 	}
 
-	if ( this->output.text.size () <= 4 )
+	if ( this->output->text.size () <= 4 )
 		return false;
 
 	// Execute the strings in the buffer
@@ -634,10 +661,10 @@ bool TiParser::parseStream(){
 
 
 void TiParser::error(std::string msg){
-	output.clear();
-	output.printStr("class","Error");
-	output.printInt("line",this->lex.getLine());
-	output.printStr("msg",msg);
+	output->clear();
+	output->printStr("class","Error");
+	output->printInt("line",this->lex.getLine());
+	output->printStr("msg",msg);
 }
 
 bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
@@ -657,21 +684,38 @@ bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
 			return true;
 		} else if ( symbol == '{' ){
 			parser.nivel += 1;
-			parser.output.printObj("");
+			parser.output->printObj("");
 		} else if ( symbol == '}' ){
 			parser.nivel -= 1;
-			parser.output.printRet();
+			parser.output->printRet();
 			parser.isEndObj = true;
 		} else {
 			parser.error("Symbol not expected:"+token.text);
 			return false;
 		}
 	} else if ( token.type==TiToken::TEXT ){
-		if ( token.aux.size() > 0 )
-			token.aux[0] = toupper(token.aux[0]);
-		parser.output.printObj(token.aux);
-		parser.output.printStr("text",token.text);
-		parser.output.printRet();
+		// Parse included File
+		if ( token.aux.size() > 0 ){
+
+			if ( token.aux == "@" ){
+				parser.output->printObj("");
+				TiParser sub_parser(parser);
+				sub_parser.parseFile(token.text);
+				parser.output->printRet();
+			} else {
+				token.aux[0] = toupper(token.aux[0]);
+				parser.output->printObj(token.aux);
+				parser.output->printStr("text",token.text);
+				parser.output->printRet();
+			}
+
+		} else {
+			parser.output->printObj("");
+			parser.output->printStr("text",token.text);
+			parser.output->printRet();
+		}
+
+
 	} else {
 		parser.error("Symbol not expected:"+token.text);
 		return false;
@@ -691,7 +735,7 @@ bool TiParser::run_pass_1(TiParser& parser, TiToken& token){
 		parser.state = 2;
 	} else if ( symbol == '{' ){
 		parser.nivel += 1;
-		parser.output.printObj(parser.memory[0].text);
+		parser.output->printObj(parser.memory[0].text);
 		parser.state = parser.mem_i = 0;
 	} else {
 		parser.error("Expected a Symbol like '=' or '{', and not '"+token.text+"'");
@@ -703,21 +747,33 @@ bool TiParser::run_pass_1(TiParser& parser, TiToken& token){
 
 bool TiParser::run_pass_2(TiParser& parser, TiToken& token){
 	if ( token.type == TiToken::INT ){
-		parser.output.printInt(parser.memory[0].text,atoi(token.text.c_str()));
+		parser.output->printInt(parser.memory[0].text,atoi(token.text.c_str()));
 		parser.state = parser.mem_i = 0;
 	} else if ( token.type == TiToken::DOUBLE ){
-		parser.output.printDbl(parser.memory[0].text,atoi(token.text.c_str()));
+		parser.output->printDbl(parser.memory[0].text,atoi(token.text.c_str()));
 		parser.state = parser.mem_i = 0;
 	} else if ( token.type == TiToken::STRING ){
 		parser.memory[1] = token;
 		parser.state = 3;
 	} else if ( token.type == TiToken::TEXT ){
-		parser.output.printStr(parser.memory[0].text,token.text);
+
+		// Parse included File
+		if ( token.aux == "@" ){
+			parser.output->printVarObj(parser.memory[0].text,"");
+			TiParser sub_parser(parser);
+			sub_parser.parseFile(token.text);
+			parser.output->printRet();
+
+		// Set the text Attribute
+		} else {
+			parser.output->printStr(parser.memory[0].text,token.text);
+		}
 		parser.state = parser.mem_i = 0;
+
 	} else if ( token.type==TiToken::SYMBOL ){
 		if ( token.text[0] == '{' ){
 			parser.nivel += 1;
-			parser.output.printVarObj(parser.memory[0].text, "");
+			parser.output->printVarObj(parser.memory[0].text, "");
 			parser.state = parser.mem_i = 0;
 		} else if ( token.text[0] == '[' ){
 			parser.nivel = 0;
@@ -741,16 +797,16 @@ bool TiParser::run_pass_2(TiParser& parser, TiToken& token){
 bool TiParser::run_pass_3(TiParser& parser, TiToken& token){
 	if ( token.type == TiToken::SYMBOL ){
 		if ( token.text[0] == ';' || token.text[0] == '\n' ){
-			parser.output.printStr(parser.memory[0].text, parser.memory[1].text);
+			parser.output->printStr(parser.memory[0].text, parser.memory[1].text);
 
 		} else if ( token.text[0] == '{' ){
 			parser.nivel += 1;
-			parser.output.printVarObj(parser.memory[0].text,parser.memory[1].text);
+			parser.output->printVarObj(parser.memory[0].text,parser.memory[1].text);
 
 		} else if ( token.text[0] == '}' ){
 			parser.nivel -= 1;
-			parser.output.printStr(parser.memory[0].text,parser.memory[1].text);
-			parser.output.printRet();
+			parser.output->printStr(parser.memory[0].text,parser.memory[1].text);
+			parser.output->printRet();
 			parser.isEndObj = true;
 		} else {
 			parser.error("Expected a Text or a Symbol like ';','{','}', and not a '"+token.text+"'");
