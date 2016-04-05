@@ -1,4 +1,32 @@
 class=proj:cpp:lib
 name="libtiobj"
-description="    Library to handle the TiObj and parse the Ti Notation"
+version="0.8.0"
+
+brief="Library to handle the TiObj and parse the Ti Notation"
+description=<|    Library to handle the TiObj and parse the Ti Notation|>
 section="extra"
+
+install_prefix="/o2cl/class/lib"
+
+
+compiler={
+	flags="-std=c++11 -O2"
+}
+
+
+Lib{
+	name="tiobj"
+	Code{name="src/join.cpp"}
+	Code{name="src/tiasm.cpp"}
+	Code{name="src/tistream.cpp"}
+	Code{name="src/tivar.cpp"}
+	Code{name="src/parser.cpp"}
+	Code{name="src/tiobj.cpp"}
+	Code{name="src/titextasm.cpp"}
+	Code{name="src/tivet.cpp"}
+
+	Header{name="include/tiobj.hpp"}
+	Header{name="include/tiasm.hpp"}
+	Header{name="include/titextasm.hpp"}
+}
+
