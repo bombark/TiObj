@@ -33,134 +33,50 @@ using namespace std;
 /*=====================================================================================*/
 
 TiVet::TiVet(){
-	this->data = NULL;
-	this->_size = 0;
-	this->_max = 0;
 }
 
 TiVet::~TiVet(){
-	if ( data ){
-		for (int i=0; i<_size; i++){
-			this->data[i].~TiVar();
-		}
-		free(this->data);
-	}
+	//this->clear();
 }
 
-uint TiVet::size(){
-	return this->_size;
-}
 
 
 void TiVet::clear(){
-	if ( data ){
-		for (int i=0; i<_size; i++){
-			this->data[i].~TiVar();
+	for (size_t i=0; i<this->data.size(); i++){
+		delete this->data[i];
+	}
+	this->data.clear();
+	this->index.clear();
+}
+
+
+
+TiVar& TiVet::operator[](std::string name){
+	auto it = this->index.find ( name );
+	if (it != this->index.end()){
+		return *it->second;
+	} else {
+		return TiVar::ObjNull;
+	}
+}
+
+
+std::string TiVet::encode(int tab, bool indent, bool jmpline){
+	std::string res;
+	/*res = "[";
+	if ( _size > 0 ){
+		res += this->data[ this->order[0] ].toString();
+		for (int i=1; i<_size; i++){
+			res += ';';
+			res += this->data[ this->order[i] ].toString();
 		}
 	}
-	this->_size = 0;
+	res += "]";*/
+	return res;
 }
 
 
-TiVar* TiVet::allocVar(uint* out_pos){
-	if ( _max == 0 ){
-		_max = 4;
-		this->data = (TiVar*) malloc( _max*sizeof(TiVar) );
-		assert(this->data);
-	} else if ( this->_size + 1 > this->_max ){
-		_max = this->_max*2;
-		this->data = (TiVar*) realloc( this->data, _max*sizeof(TiVar) );
-		assert(this->data);
-	}
-	*out_pos = _size;
-	TiVar* tmp = &this->data[_size];
-	_size += 1;
-	return new(tmp) TiVar();
-}
-
-
-TiVar& TiVet::push(std::string value, std::string name){
-	TiVar* aux;
-	uint order_pos, time_pos;
-	bool exists = search(name, &aux, &order_pos);
-	if ( exists ){
-		*aux = value;
-		return *aux;
-	} else {
-		TiVar& var = *this->allocVar(&time_pos);
-		var = value;
-		var.name = name;
-		this->order.insert ( this->order.begin()+order_pos, time_pos );
-		return var;
-	}
-}
-
-TiVar& TiVet::push(long int value, std::string name){
-	TiVar* aux;
-	uint order_pos, time_pos;
-	bool exists = search(name, &aux, &order_pos);
-	if ( exists ){
-		*aux = value;
-		return *aux;
-	} else {
-		TiVar& var = *this->allocVar(&time_pos);
-		var = value;
-		var.name = name;
-		this->order.insert ( this->order.begin()+order_pos, time_pos );
-		return var;
-	}
-}
-
-TiVar& TiVet::push(double value, std::string name){
-	TiVar* aux;
-	uint order_pos, time_pos;
-	bool exists = search(name, &aux, &order_pos);
-	if ( exists ){
-		*aux = value;
-		return *aux;
-	} else {
-		TiVar& var = *this->allocVar(&time_pos);
-		var = value;
-		var.name = name;
-		this->order.insert ( this->order.begin()+order_pos, time_pos );
-		return var;
-	}
-}
-
-TiVar& TiVet::push(TiObj& value, std::string name){
-	TiVar* aux;
-	uint order_pos, time_pos;
-	bool exists = search(name, &aux, &order_pos);
-	if ( exists ){
-		*aux = value;
-		return *aux;
-	} else {
-		TiVar& var = *this->allocVar(&time_pos);
-		var = value;
-		var.name = name;
-		this->order.insert ( this->order.begin()+order_pos, time_pos );
-		return var;
-	}
-}
-
-TiVar& TiVet::push(TiObj* value, std::string name){
-	TiVar* aux;
-	uint order_pos, time_pos;
-	bool exists = search(name, &aux, &order_pos);
-	if ( exists ){
-		*aux = value;
-		return *aux;
-	} else {
-		TiVar& var = *this->allocVar(&time_pos);
-		var = *value;
-		var.name = name;
-		this->order.insert ( this->order.begin()+order_pos, time_pos );
-		return var;
-	}
-}
-
-
-bool TiVet::search(std::string query, TiVar** out_obj, uint* out_addpos){
+/*bool TiVet::search(std::string query, TiVar** out_obj, uint* out_addpos){
 	uint ini = 0;
 	uint end = _size;
 	if ( query == "" ){
@@ -186,34 +102,7 @@ bool TiVet::search(std::string query, TiVar** out_obj, uint* out_addpos){
 	*out_obj = NULL;
 	*out_addpos = end;
 	return false;
-}
+}*/
 
-
-TiVar& TiVet::operator[](std::string name){
-	uint pos;
-	TiVar* aux;
-	if ( this->search(name, &aux, &pos) ){
-		return *aux;
-	} else {
-		return TiVar::ObjNull;
-	}
-}
-
-
-
-
-std::string TiVet::encode(int tab, bool indent, bool jmpline){
-	std::string res;
-	res = "[";
-	if ( _size > 0 ){
-		res += this->data[ this->order[0] ].toString();
-		for (int i=1; i<_size; i++){
-			res += ';';
-			res += this->data[ this->order[i] ].toString();
-		}
-	}
-	res += "]";
-	return res;
-}
 
 /*-------------------------------------------------------------------------------------*/

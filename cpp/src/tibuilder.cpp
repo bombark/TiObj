@@ -48,16 +48,12 @@ using namespace std;
 
 /*=====================================================================================*/
 
-bool parseTiAsm(TiObj& out, std::string data){
-	return parseTiAsm_str(out, data.c_str(), data.size());
+bool build_tiasm(_TiObj& out, std::string data){
+	return build_tiasm_str(out, data.c_str(), data.size());
 }
 
-bool parseTiAsm_vector(TiObj& out, std::vector<unsigned char>& data){
-	return parseTiAsm_str(out, (char*) data.data(), data.size());
-}
-
-bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
-	uint size;
+bool build_tiasm_str(_TiObj& out, const char* data, size_t total){
+	size_t size;
 	long int i_val;
 	double f_val;
 	const char* name;
@@ -65,17 +61,19 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 	const char* cname;
 	uint i = 4, old_i = 0;
 
-	vector<TiObj*> stack;
-	TiObj* cur = &out;
+	vector<_TiObj*> stack;
+	_TiObj* cur = &out;
 	while ( i < total ){
-		/*if ( old_i == i ){
+		if ( old_i == i ){
 			cerr << "error stall\n";
 			break;
 		}
-		old_i = i;*/
+		old_i = i;
 
 		char cmd = data[i];
-		//cout << cmd << i<< endl;
+		if ( cmd == '\n' )
+			break;
+		//cout << cmd << i << endl;
 		if ( cmd == 'a' ){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
@@ -99,6 +97,7 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 			i += 4 + (size+1)&0xFFFFFFFE;
 			size = *((int*) &data[i]);
 			s_val = &data[i+4];
+
 			cur->set(name, s_val);
 			i += 4 + ((size+1)&0xFFFFFFFE);
 
@@ -107,7 +106,7 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 			name = &data[i+4];
 			i += 4 + ((size+1)&0xFFFFFFFE);
 
-			TiObj* novo = new TiObj();
+			_TiObj* novo = new _TiObj();
 			cur->set(name, novo);
 			stack.push_back(novo);
 			cur = novo;
@@ -116,18 +115,16 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
 			i += 4 + ((size+1)&0xFFFFFFFE);
-
-			size = *((int*) &data[i]);
-			cname = &data[i+4];
-			i += 4 + ((size+1)&0xFFFFFFFE);
-
-			TiObj* novo = new TiObj();
+			size = *((short*) &data[i]);
+			cname = &data[i+2];
+			i += 2 + ((size+1)&0xFFFFFFFE);
+			_TiObj* novo = new _TiObj();
 			cur->set(name, novo);
 			stack.push_back(novo);
 			cur = novo;
 			cur->classe = cname;
 		} else if ( cmd == 'g' ){
-			TiObj* novo = new TiObj();
+			_TiObj* novo = new _TiObj();
 			cur->box += novo;
 			stack.push_back( novo );
 			cur = novo;
@@ -137,7 +134,7 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
 			i += 4 + ((size+1)&0xFFFFFFFE);
-			TiObj* novo = new TiObj();
+			_TiObj* novo = new _TiObj();
 			cur->box += novo;
 			stack.push_back( novo );
 			cur = novo;
@@ -157,9 +154,12 @@ bool parseTiAsm_str(TiObj& out, const char* data, size_t total){
 
 		} else {
 
-			cerr << ":error\n";
+			cerr << "tibuilder:error\n";
 			break;
 		}
+	}
+	if ( i != total ){
+		cerr << "tibuilder:error\n";
 	}
 }
 

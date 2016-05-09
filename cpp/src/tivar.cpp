@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../include/tiasm.hpp"
+//#include "../include/tiasm.hpp"
 #include "../include/tiobj.hpp"
 
 using namespace std;
@@ -65,7 +65,7 @@ TiVar::~TiVar(){
 	}
 }
 
-std::string TiVar::atStr(){
+std::string TiVar::Str(){
 	if ( this->isInt() )
 		return std::to_string(this->num);
 	if ( this->isDbl() )
@@ -84,17 +84,10 @@ void TiVar::operator=(string value){
 		return;
 	if ( this->isObj() )
 		this->removeObject();
-
 	this->str  = value;
 	this->type = TiVar::STR;
 }
 
-/*void TiVar::operator=(int value){
-	if ( this->type == TYPE_OBJECT )
-		this->removeObject();
-	this->num = value;
-	this->type   = TYPE_INT;
-}*/
 
 void TiVar::operator=(long int value){
 	if ( this->isNull() )
@@ -114,21 +107,7 @@ void TiVar::operator=(double value){
 	this->type = TiVar::DBL;
 }
 
-void TiVar::operator=(TiObj& obj){
-	if ( this->isNull() )
-		return;
-	if ( this->isObj() ){
-		if ( &obj == this->objptr )
-			return;
-		this->removeObject();
-	}
-
-	this->type   = TiVar::OBJ;
-	this->objptr = &obj;
-	obj.count_ref += 1;
-}
-
-void TiVar::operator=(TiObj* obj){
+void TiVar::operator=(TiObj obj){
 	if ( this->isNull() )
 		return;
 	if ( this->isObj() ){
@@ -138,18 +117,9 @@ void TiVar::operator=(TiObj* obj){
 	}
 	this->type   = TiVar::OBJ;
 	this->objptr = obj;
-	obj->count_ref += 1;
 }
 
 
-void TiVar::operator=(TiVet& vector){
-	if ( this->isNull() )
-		return;
-	if ( this->isObj() )
-		this->removeObject();
-	this->type   = TiVar::VET;
-	this->vetptr = &vector;
-}
 
 /*void TiVar::operator=(TiVar& attr){
 	if ( this->isNull() )
@@ -178,67 +148,56 @@ std::string TiVar::toString(){
 	} else if (this->isDbl() ){
 		return std::to_string(this->dbl); 
 	} else if (this->isObj() ){
-		return this->objptr->encode(0,true);
+		return this->objptr.encode(0,true);
 	} else if (this->isVet() ){
-		TiVet* vetor = (TiVet*) this->objptr;
-		vetor->encode(0);
+
 	}
 }
 
-string TiVar::encode(int tab){
 
-	string res = "";
+void TiVar::encode(std::string& out, int tab){
 	if (this->isStr() ){
 		for (int i=1; i<tab; i++)
-			res += '\t';
-		res += this->name + " = " + this->toString() + ";\n";
+			out += '\t';
+		out += this->name;
+		out += " = ";
+		out += this->toString();
+		out += ";\n";
 
 	} else if (this->isInt() ){
 		for (int i=1; i<tab; i++)
-			res += '\t';
-		res += this->name; 
-		res += " = "; 
-		res += std::to_string(this->num); 
-		res += ";\n";
+			out += '\t';
+		out += this->name; 
+		out += " = "; 
+		out += std::to_string(this->num); 
+		out += ";\n";
 	} else if (this->isDbl()){
 		for (int i=1; i<tab; i++)
-			 res += '\t';
-		res += this->name; 
-		res += " = ";
-		res += std::to_string(this->dbl); 
-		res += ";\n";
+			 out += '\t';
+		out += this->name; 
+		out += " = ";
+		out += std::to_string(this->dbl); 
+		out += ";\n";
 	} else if ( this->isObj() ){
 		for (int i=1; i<tab; i++)
-			 res += '\t';
-		res += this->name+" = ";
-		res += this->objptr->encode(tab,false);
+			 out += '\t';
+		out += this->name;
+		out += " = ";
+		this->objptr.encode(out, tab,false);
 	} else if (this->isVet() ){
-		for (int i=1; i<tab; i++)
-			 res += '\t';
-		TiVet* ptr = (TiVet*) this->objptr;
-		res += this->name+" = ";
-		res += ptr->encode(tab,false);
-		res += "\n";
-	} /********* else if ( this->type == TYPE_TEXT ){
-		for (int i=1; i<tab; i++)
-			res += '\t';
-		res += this->name + " = " +this->strtype+ "<|"+this->str+"|>\n";
-	}*/
-	return res;
+		
+	}
 }
 
 
 void TiVar::removeObject(){
-	if ( this->objptr->count_ref <= 1 ){
-		//if ( this->objptr->magic == 0xCAFECAFE ){
-			delete this->objptr;
-			this->objptr = NULL;
-		//}
-	} else 
-		this->objptr->count_ref -= 1;
+	//if ( this->objptr->magic == 0xCAFECAFE ){
+		//delete this->objptr;
+		//this->objptr = NULL;
+	//}
 }
 
-void TiVar::tiasm(TiTextAsm& res){
+void TiVar::tiasm(TiAsm& res){
 	if (this->isStr() ){
 		res.printStr(this->name, this->str);
 	} else if (this->isInt() ){
@@ -247,7 +206,7 @@ void TiVar::tiasm(TiTextAsm& res){
 		res.printInt(this->name, this->dbl);
 
 	} else if ( this->isObj() ){
-			res.printVarObj(this->name, this->objptr->classe);
+			res.printVarObj(this->name, this->objptr.classe() );
 	
 	
 /*fazer		if ( this->objptr->classe == "" ){
