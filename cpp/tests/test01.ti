@@ -1,0 +1,18 @@
+name='felipe gustavo bombardelli'
+int=26
+double=123.456
+objeto={
+	name='teste1'
+	int=32
+	double=123.456
+}
+objeto2=Pessoa{
+	name='teste2'
+	int=26
+	double=123.456
+}
+box1{
+	name='teste3'
+	int=455
+	double=987.4321
+}

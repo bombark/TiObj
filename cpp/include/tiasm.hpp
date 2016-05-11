@@ -1,6 +1,6 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,10 +31,20 @@
 class TiAsm {
   public:
 	std::string text;
+	int min, now;
 
-	TiAsm();
+	TiAsm(int min=0);
 	inline void clear(){text="#T1V";}
-	
+
+	// Put Complex
+	void printInt(std::string name, long int a);
+	void printDbl(std::string name, double a);
+	void printStr(std::string name, std::string in);
+	void printVarObj(std::string name, std::string obj_class);
+	void printObj(std::string obj_class);
+	void printRet();
+
+  private:
 	// Put Basic
 	inline void putCmd(char cmd){
 		this->text += cmd;
@@ -45,13 +55,6 @@ class TiAsm {
 	void putStr(std::string text);
 	void putVarName(std::string name);
 
-	// Put Complex
-	void printInt(std::string name, long int a);
-	void printDbl(std::string name, double a);
-	void printStr(std::string name, std::string in);
-	void printVarObj(std::string name, std::string obj_class);
-	void printObj(std::string obj_class);
-	inline void printRet(){this->putCmd('i');}
 };
 
 /*-------------------------------------------------------------------------------------*/

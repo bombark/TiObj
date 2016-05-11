@@ -83,7 +83,9 @@ class TiObj {
 
 	inline size_t length();
 	inline size_t size();
+	inline void clear();
 
+	inline bool isNull();
 
 	/*inline void create(std::string text="");
 
@@ -112,17 +114,19 @@ class TiObj {
 
 class TiVar {
   public:
-	int type;
 	enum Type { NULO, EMPTY, STR, INT, DBL, OBJ, VET };
+	Type type;
 
 	char strtype[32];
 	std::string   name;
 	std::string   str;
+	
 	union {
 		double     dbl;
 		long int   num;
+		TiObj      objptr;
 	};
-	TiObj      objptr;
+	
 
 	
 	TiVar();
@@ -502,6 +506,14 @@ inline size_t TiObj::size(){
 	return this->ptr->size();
 }
 
+inline void TiObj::clear(){
+	this->ptr->clear();
+}
+
+inline bool TiObj::isNull(){
+	return this->ptr.get() == nullptr;
+}
+
 /*-------------------------------------------------------------------------------------*/
 
 
@@ -547,7 +559,7 @@ bool build_tiasm_str(_TiObj& out, const char* data, size_t total);
 /*====================================- TiStream -=====================================*/
 
 
-/*#include "tiasm.hpp"
+#include "tiparser.hpp"
 
 
 class TiStream {
@@ -555,8 +567,8 @@ class TiStream {
 
   public:
 	TiStream(FILE* fd);
-	bool next(TiObj out);
-};*/
+	bool next(TiObj& out);
+};
 
 
 

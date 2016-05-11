@@ -159,6 +159,10 @@ class TiLex {
 		return buffer.line;
 	}
 
+	inline bool isGood(){
+		return !buffer.isEof;
+	}
+
 private:
 	static bool run_unknown(TiLex& obj, TiToken& out, unsigned char ini);
 	static bool run_symb(TiLex& obj, TiToken& out, unsigned char ini);
@@ -208,6 +212,9 @@ class TiParser {
 
 	bool parse();
 	bool parseStream();
+	inline bool isGood(){
+		return this->lex.isGood();
+	}
 
   private:
 	void init();

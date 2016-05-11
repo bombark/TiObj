@@ -1,0 +1,10 @@
+name='aaaa'
+{
+	name='felipe1';url='../aaa/sss'
+}
+File{name='felipe2';url='../aaa/sss';score=1.2333}
+File{name='felipe3';url='../aaa/sss'}
+Folder{name='felipe4';url='../aaa/sss'}
+Folder{name='felipe5';url='../aaa/sss'}
+Folder{name='felipe6';url='../aaa/sss'}
+File:Image{name='felipe7';url='../aaa/sss'}

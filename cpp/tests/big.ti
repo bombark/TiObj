@@ -1,0 +1,370 @@
+Block{
+	code='CT';
+	lat='-25.451487';
+	log='-49.2322122';
+	Room{id=1;code='CT01';size=54;}
+	Room{id=2;code='CT02';size=54;}
+	Room{id=3;code='CT03';size=54;}
+	Room{id=4;code='CT04';size=54;}
+	Room{id=5;code='CT05';size=25;}
+	Room{id=6;code='CT06';size=36;}
+	Room{id=7;code='CT07';size=72;}
+	Room{id=8;code='CT08';size=36;}
+	Room{id=9;code='CT09';size=48;}
+}
+Block{
+	code='EB';
+	lat='0.0';
+	log='0.0';
+}
+Block{
+	code='EQ';
+	lat='-25.448797';
+	log='-49.2341427';
+	Room{id=10;code='EQ01';size=65;}
+	Room{id=11;code='EQ02';size=56;}
+	Room{id=12;code='EQ03';size=63;}
+	Room{id=13;code='EQ04';size=20;}
+	Room{id=15;code='EQ11';size=90;}
+	Room{id=16;code='EQ12';size=70;}
+	Room{id=17;code='EQ13';size=65;}
+	Room{id=18;code='EQ14';size=35;}
+	Room{id=19;code='EQ15';size=72;}
+}
+Block{
+	code='PA';
+	lat='-25.450472';
+	log='-49.2322392';
+	Room{id=22;code='PA01';size=107;}
+	Room{id=23;code='PA02';size=107;}
+}
+Block{
+	code='PC';
+	lat='-25.450734';
+	log='-49.2319122';
+	Room{id=25;code='PC01';size=80;}
+	Room{id=26;code='PC02';size=80;}
+	Room{id=27;code='PC03';size=55;}
+	Room{id=28;code='PC04';size=55;}
+	Room{id=29;code='PC05';size=30;}
+	Room{id=30;code='PC06';size=55;}
+	Room{id=31;code='PC07';size=55;}
+	Room{id=37;code='PC16';size=55;}
+	Room{id=38;code='PC17';size=55;}
+	Room{id=39;code='PC18';size=55;}
+}
+Block{
+	code='PD';
+	lat='-25.451361';
+	log='-49.2334662';
+	Room{id=40;code='PD01';size=60;}
+	Room{id=41;code='PD03';size=40;}
+	Room{id=42;code='PD04';size=40;}
+	Room{id=43;code='PD05';size=40;}
+	Room{id=44;code='PD06';size=40;}
+	Room{id=45;code='PD07';size=60;}
+	Room{id=46;code='PD11';size=60;}
+	Room{id=47;code='PD12';size=60;}
+	Room{id=48;code='PD13';size=60;}
+	Room{id=49;code='PD14';size=20;}
+	Room{id=50;code='PD15';size=60;}
+	Room{id=51;code='PD16';size=60;}
+	Room{id=52;code='PD18';size=60;}
+}
+Block{
+	code='PE';
+	lat='-25.451666';
+	log='-49.2339273';
+	Room{id=53;code='PE01';size=80;}
+	Room{id=54;code='PE03';size=80;}
+	Room{id=55;code='PE04';size=80;}
+}
+Block{
+	code='PF';
+	lat='-25.452049';
+	log='-49.2339593';
+	Room{id=58;code='PF01';size=60;}
+	Room{id=59;code='PF02';size=40;}
+	Room{id=60;code='PF03';size=60;}
+	Room{id=61;code='PF04';size=60;}
+	Room{id=62;code='PF06';size=60;}
+	Room{id=63;code='PF07';size=80;}
+	Room{id=64;code='PF11';size=80;}
+	Room{id=65;code='PF12';size=40;}
+	Room{id=66;code='PF13';size=60;}
+	Room{id=67;code='PF14';size=70;}
+	Room{id=68;code='PF15';size=60;}
+	Room{id=70;code='PF18';size=80;}
+}
+Block{
+	code='PG';
+	lat='-25.452359';
+	log='-49.2341363';
+	Room{id=71;code='PG01';size=80;}
+	Room{id=72;code='PG03';size=42;}
+	Room{id=73;code='PG04';size=70;}
+	Room{id=75;code='PG06';size=42;}
+	Room{id=76;code='PG07';size=80;}
+	Room{id=77;code='PG11';size=50;}
+	Room{id=79;code='PG15';size=70;}
+}
+Block{
+	code='PH';
+	lat='-25.452703';
+	log='-49.2342753';
+	Room{id=80;code='PH01';size=80;}
+	Room{id=81;code='PH03';size=70;}
+	Room{id=82;code='PH06';size=20;}
+	Room{id=85;code='PH11';size=80;}
+	Room{id=86;code='PH18';size=80;}
+}
+Block{
+	code='PI';
+	lat='0.0';
+	log='0.0';
+}
+Block{
+	code='PK';
+	lat='-25.451856';
+	log='-49.2345482';
+	Room{id=88;code='PK01';size=30;}
+	Room{id=90;code='PK03';size=70;}
+	Room{id=92;code='PK05';size=60;}
+	Room{id=93;code='PK06';size=60;}
+	Room{id=94;code='PK07';size=70;}
+	Room{id=97;code='PK10';size=60;}
+}
+Block{
+	code='PL';
+	lat='0.0';
+	log='0.0';
+	Room{id=100;code='PL03';size=60;}
+	Room{id=101;code='PL04';size=60;}
+	Room{id=102;code='PL06';size=60;}
+	Room{id=103;code='PL07';size=60;}
+	Room{id=104;code='PL10';size=60;}
+}
+Block{
+	code='PM';
+	lat='0.0';
+	log='0.0';
+	Room{id=105;code='PM01';size=80;}
+	Room{id=106;code='PM02';size=80;}
+	Room{id=107;code='PM03';size=80;}
+	Room{id=108;code='PM04';size=80;}
+}
+Block{
+	code='PQ';
+	lat='0.0';
+	log='0.0';
+}
+Block{
+	code='T';
+	lat='0.0';
+	log='0.0';
+}
+Schedule{id=1;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=2;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=3;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=4;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=5;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=6;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=7;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=8;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=9;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=10;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=11;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=12;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=13;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=14;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=15;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=16;day=4;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=17;day=6;ini=15;end=17;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=18;day=4;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=19;day=6;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=20;day=4;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=21;day=6;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=22;day=4;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=23;day=6;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=24;day=4;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=25;day=6;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=26;day=4;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=27;day=6;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=28;day=4;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=29;day=6;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=30;day=4;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=31;day=6;ini=15;end=17;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=32;day=3;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=33;day=5;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=34;day=3;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=35;day=5;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=36;day=3;ini=13;end=15;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=37;day=5;ini=13;end=15;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=38;day=3;ini=13;end=15;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=39;day=5;ini=13;end=15;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=40;day=2;ini=13;end=15;course=8;size=55;lat='-25.450842';log='-49.2324022';}
+Schedule{id=41;day=4;ini=13;end=15;course=8;size=55;lat='-25.450842';log='-49.2324022';}
+Schedule{id=42;day=2;ini=13;end=15;course=8;size=55;lat='-25.450842';log='-49.2324022';}
+Schedule{id=43;day=4;ini=13;end=15;course=8;size=55;lat='-25.450842';log='-49.2324022';}
+Schedule{id=44;day=4;ini=15;end=17;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=45;day=6;ini=15;end=17;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=46;day=4;ini=15;end=17;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=47;day=6;ini=15;end=17;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=48;day=4;ini=15;end=17;course=8;size=65;lat='-25.450842';log='-49.2324022';}
+Schedule{id=49;day=6;ini=15;end=17;course=8;size=65;lat='-25.450842';log='-49.2324022';}
+Schedule{id=50;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=51;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=52;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=53;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=54;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=55;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=56;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=57;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=58;day=3;ini=13;end=15;course=8;size=49;lat='-25.450842';log='-49.2324022';}
+Schedule{id=59;day=5;ini=13;end=15;course=8;size=49;lat='-25.450842';log='-49.2324022';}
+Schedule{id=60;day=3;ini=15;end=17;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=61;day=5;ini=15;end=17;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=62;day=3;ini=13;end=15;course=8;size=47;lat='-25.450842';log='-49.2324022';}
+Schedule{id=63;day=5;ini=13;end=15;course=8;size=47;lat='-25.450842';log='-49.2324022';}
+Schedule{id=64;day=2;ini=13;end=15;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=65;day=4;ini=13;end=15;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=66;day=2;ini=13;end=15;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=67;day=4;ini=13;end=15;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=68;day=4;ini=15;end=17;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=69;day=6;ini=15;end=17;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=70;day=4;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=71;day=6;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=72;day=2;ini=19;end=21;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=73;day=4;ini=19;end=21;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=74;day=2;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=75;day=4;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=76;day=4;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=77;day=6;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=78;day=4;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=79;day=6;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=80;day=4;ini=17;end=19;course=8;size=65;lat='-25.450842';log='-49.2324022';}
+Schedule{id=81;day=6;ini=17;end=19;course=8;size=65;lat='-25.450842';log='-49.2324022';}
+Schedule{id=82;day=2;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=83;day=4;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=84;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=85;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=86;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=87;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=88;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=89;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=90;day=3;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=91;day=5;ini=17;end=19;course=8;size=30;lat='-25.450842';log='-49.2324022';}
+Schedule{id=92;day=2;ini=13;end=15;course=14;size=30;lat='0.0';log='0.0';}
+Schedule{id=93;day=4;ini=13;end=15;course=14;size=30;lat='0.0';log='0.0';}
+Schedule{id=94;day=3;ini=13;end=15;course=14;size=30;lat='0.0';log='0.0';}
+Schedule{id=95;day=5;ini=13;end=15;course=14;size=30;lat='0.0';log='0.0';}
+Schedule{id=96;day=4;ini=9;end=11;course=6;size=35;lat='0.0';log='0.0';}
+Schedule{id=97;day=6;ini=9;end=11;course=6;size=35;lat='0.0';log='0.0';}
+Schedule{id=98;day=4;ini=9;end=11;course=6;size=35;lat='0.0';log='0.0';}
+Schedule{id=99;day=6;ini=9;end=11;course=6;size=35;lat='0.0';log='0.0';}
+Schedule{id=100;day=4;ini=7;end=9;course=5;size=50;lat='0.0';log='0.0';}
+Schedule{id=101;day=4;ini=9;end=10;course=5;size=50;lat='0.0';log='0.0';}
+Schedule{id=102;day=6;ini=7;end=9;course=5;size=50;lat='0.0';log='0.0';}
+Schedule{id=103;day=6;ini=9;end=11;course=5;size=50;lat='0.0';log='0.0';}
+Schedule{id=104;day=3;ini=9;end=11;course=9;size=60;lat='0.0';log='0.0';}
+Schedule{id=105;day=5;ini=9;end=11;course=9;size=60;lat='0.0';log='0.0';}
+Schedule{id=106;day=3;ini=7;end=9;course=9;size=30;lat='0.0';log='0.0';}
+Schedule{id=107;day=5;ini=7;end=9;course=9;size=30;lat='0.0';log='0.0';}
+Schedule{id=108;day=3;ini=7;end=9;course=10;size=35;lat='0.0';log='0.0';}
+Schedule{id=109;day=5;ini=7;end=9;course=10;size=35;lat='0.0';log='0.0';}
+Schedule{id=110;day=2;ini=17;end=19;course=3;size=65;lat='0.0';log='0.0';}
+Schedule{id=111;day=4;ini=17;end=19;course=3;size=65;lat='0.0';log='0.0';}
+Schedule{id=112;day=3;ini=21;end=23;course=7;size=45;lat='0.0';log='0.0';}
+Schedule{id=113;day=5;ini=19;end=21;course=7;size=45;lat='0.0';log='0.0';}
+Schedule{id=114;day=2;ini=7;end=9;course=2;size=50;lat='0.0';log='0.0';}
+Schedule{id=115;day=4;ini=7;end=9;course=2;size=50;lat='0.0';log='0.0';}
+Schedule{id=116;day=2;ini=7;end=9;course=4;size=50;lat='0.0';log='0.0';}
+Schedule{id=117;day=4;ini=7;end=9;course=4;size=50;lat='0.0';log='0.0';}
+Schedule{id=118;day=3;ini=17;end=19;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=119;day=5;ini=17;end=19;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=120;day=3;ini=17;end=19;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=121;day=5;ini=17;end=19;course=8;size=40;lat='-25.450842';log='-49.2324022';}
+Schedule{id=122;day=2;ini=17;end=19;course=8;size=42;lat='-25.450842';log='-49.2324022';}
+Schedule{id=123;day=4;ini=17;end=19;course=8;size=42;lat='-25.450842';log='-49.2324022';}
+Schedule{id=124;day=3;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=125;day=5;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=126;day=3;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=127;day=5;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=128;day=3;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=129;day=5;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=130;day=3;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=131;day=5;ini=7;end=9;course=1;size=50;lat='0.0';log='0.0';}
+Schedule{id=132;day=4;ini=9;end=11;course=3;size=64;lat='0.0';log='0.0';}
+Schedule{id=133;day=6;ini=9;end=11;course=3;size=64;lat='0.0';log='0.0';}
+Schedule{id=134;day=4;ini=9;end=11;course=2;size=60;lat='0.0';log='0.0';}
+Schedule{id=135;day=6;ini=9;end=11;course=2;size=60;lat='0.0';log='0.0';}
+Schedule{id=136;day=2;ini=9;end=11;course=10;size=36;lat='0.0';log='0.0';}
+Schedule{id=137;day=4;ini=9;end=11;course=10;size=36;lat='0.0';log='0.0';}
+Schedule{id=138;day=3;ini=7;end=9;course=4;size=40;lat='0.0';log='0.0';}
+Schedule{id=139;day=5;ini=7;end=9;course=4;size=40;lat='0.0';log='0.0';}
+Schedule{id=140;day=3;ini=7;end=9;course=4;size=40;lat='0.0';log='0.0';}
+Schedule{id=141;day=5;ini=7;end=9;course=4;size=40;lat='0.0';log='0.0';}
+Schedule{id=142;day=3;ini=7;end=9;course=12;size=5;lat='0.0';log='0.0';}
+Schedule{id=143;day=5;ini=7;end=9;course=12;size=5;lat='0.0';log='0.0';}
+Schedule{id=144;day=3;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=145;day=5;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=146;day=3;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=147;day=5;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=148;day=3;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=149;day=5;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=150;day=3;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=151;day=5;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=152;day=3;ini=13;end=15;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=153;day=5;ini=13;end=15;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=154;day=3;ini=13;end=15;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=155;day=5;ini=13;end=15;course=8;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=156;day=3;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=157;day=5;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=158;day=3;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=159;day=5;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=160;day=3;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=161;day=5;ini=15;end=17;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=162;day=2;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=163;day=4;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=164;day=2;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=165;day=4;ini=19;end=21;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=166;day=2;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=167;day=6;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=168;day=2;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=169;day=6;ini=17;end=19;course=8;size=60;lat='-25.450842';log='-49.2324022';}
+Schedule{id=170;day=3;ini=15;end=17;course=8;size=45;lat='-25.450842';log='-49.2324022';}
+Schedule{id=171;day=5;ini=15;end=17;course=8;size=45;lat='-25.450842';log='-49.2324022';}
+Schedule{id=172;day=3;ini=15;end=17;course=8;size=45;lat='-25.450842';log='-49.2324022';}
+Schedule{id=173;day=5;ini=15;end=17;course=8;size=45;lat='-25.450842';log='-49.2324022';}
+Schedule{id=174;day=3;ini=21;end=23;course=7;size=50;lat='0.0';log='0.0';}
+Schedule{id=175;day=5;ini=19;end=21;course=7;size=50;lat='0.0';log='0.0';}
+Schedule{id=176;day=3;ini=13;end=15;course=13;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=177;day=5;ini=13;end=15;course=13;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=178;day=3;ini=13;end=15;course=14;size=40;lat='0.0';log='0.0';}
+Schedule{id=179;day=5;ini=13;end=15;course=14;size=40;lat='0.0';log='0.0';}
+Schedule{id=180;day=2;ini=15;end=17;course=13;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=181;day=5;ini=15;end=17;course=13;size=35;lat='-25.450842';log='-49.2324022';}
+Schedule{id=182;day=2;ini=15;end=17;course=14;size=60;lat='0.0';log='0.0';}
+Schedule{id=183;day=5;ini=13;end=15;course=14;size=60;lat='0.0';log='0.0';}
+Schedule{id=184;day=3;ini=15;end=17;course=14;size=60;lat='0.0';log='0.0';}
+Schedule{id=185;day=5;ini=15;end=17;course=14;size=60;lat='0.0';log='0.0';}
+Schedule{id=186;day=2;ini=17;end=19;course=8;size=25;lat='-25.450842';log='-49.2324022';}
+Schedule{id=187;day=4;ini=17;end=19;course=8;size=25;lat='-25.450842';log='-49.2324022';}
+Schedule{id=188;day=2;ini=17;end=19;course=8;size=25;lat='-25.450842';log='-49.2324022';}
+Schedule{id=189;day=4;ini=17;end=19;course=8;size=25;lat='-25.450842';log='-49.2324022';}
+Schedule{id=190;day=3;ini=17;end=19;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=191;day=5;ini=17;end=19;course=8;size=50;lat='-25.450842';log='-49.2324022';}
+Schedule{id=192;day=2;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=193;day=4;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=194;day=2;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=195;day=4;ini=13;end=15;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=196;day=3;ini=15;end=17;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=197;day=5;ini=15;end=17;course=8;size=15;lat='-25.450842';log='-49.2324022';}
+Schedule{id=198;day=3;ini=15;end=17;course=8;size=10;lat='-25.450842';log='-49.2324022';}
+Schedule{id=199;day=5;ini=15;end=17;course=8;size=10;lat='-25.450842';log='-49.2324022';}
+Schedule{id=200;day=3;ini=15;end=17;course=8;size=10;lat='-25.450842';log='-49.2324022';}
+Schedule{id=201;day=5;ini=15;end=17;course=8;size=10;lat='-25.450842';log='-49.2324022';}
+Schedule{id=202;day=2;ini=19;end=21;course=8;size=47;lat='-25.450842';log='-49.2324022';}
+Schedule{id=203;day=4;ini=19;end=21;course=8;size=47;lat='-25.450842';log='-49.2324022';}
+Schedule{id=204;day=3;ini=13;end=15;course=14;size=40;lat='0.0';log='0.0';}
+Schedule{id=205;day=5;ini=13;end=15;course=14;size=40;lat='0.0';log='0.0';}

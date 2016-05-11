@@ -78,6 +78,7 @@ _TiObj::~_TiObj(){
 }
 
 void _TiObj::clear(){
+	this->classe.clear();
 	this->var.clear();
 	this->box.clear();
 }
@@ -561,14 +562,26 @@ ostream& operator<<(ostream& os, TiBox& box){
 
 
 
-/*TiStream::TiStream(FILE* fd){
-	parser.loadFile(fd);
+TiStream::TiStream(FILE* fd){
+	this->parser.output->min = 1;
+	this->parser.loadFile(fd);
 }
 
 
-bool TiStream::next(TiObj out){
-	parser.parseStream();
-}*/
+bool TiStream::next(TiObj& out){
+	if ( this->parser.isGood() ){
+		parser.parseStream();
+		_TiObj* ptr = out.ptr.get();
+		if ( ptr == nullptr ){
+			ptr = new _TiObj();
+			out.ptr.reset(ptr);
+		} else
+			ptr->clear();
+		build_tiasm(*ptr, parser.output->text);
+		return true;
+	}
+	return false;
+}
 
 
 

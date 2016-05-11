@@ -66,8 +66,6 @@ bool parseFile(std::string& out, std::string filename){
 bool parseFileFd(std::string& out, FILE* fd){
 	char ass[4];
 	G_parser.clear();
-	
-
 	G_parser.loadFile(fd);
 	G_parser.parse();
 	out = G_parser.output->text;
@@ -812,7 +810,7 @@ bool TiParser::run_pass_2(TiParser& parser, TiToken& token){
 		parser.output->printInt(parser.memory[0].text,atoi(token.text.c_str()));
 		parser.state = parser.mem_i = 0;
 	} else if ( token.type == TiToken::DOUBLE ){
-		parser.output->printDbl(parser.memory[0].text,atoi(token.text.c_str()));
+		parser.output->printDbl(parser.memory[0].text,atof(token.text.c_str()));
 		parser.state = parser.mem_i = 0;
 	} else if ( token.type == TiToken::STRING ){
 		parser.memory[1] = token;
