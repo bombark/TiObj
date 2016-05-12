@@ -647,7 +647,7 @@ bool TiParser::parse(){
 using namespace std;
 
 bool TiParser::parseStream(){
-	this->output->clear();
+	this->output->start();
 
 	// Init function array and other variables
 	TiToken token;
@@ -678,12 +678,12 @@ bool TiParser::parseStream(){
 			return false;
 		}
 
-		if ( this->isEndObj ){
+		if ( this->output->isObjEnd() ){
 			return true;
 		}
 	}
 
-	if ( this->output->text.size () <= 4 )
+	/*if ( this->output->text.size () <= 4 )
 		return false;
 
 	// Execute the strings in the buffer
@@ -704,7 +704,7 @@ bool TiParser::parseStream(){
 	} else if ( nivel < 0 ) {
 		this->error("There are more '}' than '{'");
 	} else
-		this->error("There are more '{' than '}'");
+		this->error("There are more '{' than '}'");*/
 
 	return false;
 }
@@ -721,7 +721,7 @@ bool TiParser::parseStream(){
 
 
 void TiParser::error(std::string msg){
-	output->clear();
+	output->start();
 	output->printStr("class","Error");
 	output->printInt("line",this->lex.getLine());
 	output->printStr("msg",msg);
@@ -748,7 +748,8 @@ bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
 		} else if ( symbol == '}' ){
 			parser.nivel -= 1;
 			parser.output->printRet();
-			parser.isEndObj = true;
+			if ( parser.nivel == 0 )
+				parser.isEndObj = true;
 		} else {
 			parser.error("Symbol not expected:"+token.text);
 			return false;
@@ -867,7 +868,8 @@ bool TiParser::run_pass_3(TiParser& parser, TiToken& token){
 			parser.nivel -= 1;
 			parser.output->printStr(parser.memory[0].text,parser.memory[1].text);
 			parser.output->printRet();
-			parser.isEndObj = true;
+			if ( parser.nivel == 0 )
+				parser.isEndObj = true;
 		} else {
 			parser.error("Expected a Text or a Symbol like ';','{','}', and not a '"+token.text+"'");
 			return false;

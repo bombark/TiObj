@@ -12,6 +12,9 @@ set_target_properties(tiobj-static PROPERTIES OUTPUT_NAME tiobj)
 add_executable(test_asm "tests/api.cpp")
 target_link_libraries(test_asm tiobj)
 
+add_executable("foreach" "tests/foreach.cpp")
+target_link_libraries("foreach" tiobj)
+
 
 install(TARGETS "tiobj" DESTINATION lib)
 install(TARGETS "tiobj-static" DESTINATION lib)

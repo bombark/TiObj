@@ -69,7 +69,9 @@ class TiObj {
 	inline std::string encode(int tab=0, bool indent=true, bool jmpline=true);
 
 	inline TiBox& box();
+	inline TiObj  box(size_t i);
 	inline TiVet& var();
+	inline TiVar& var(size_t i);
 
 	inline void create();
 	
@@ -469,8 +471,16 @@ inline TiBox& TiObj::box(){
 	return this->ptr->box;
 }
 
+inline TiObj  TiObj::box(size_t i){
+	return this->ptr->box[i];
+}
+
 inline TiVet& TiObj::var(){
 	return this->ptr->var;
+}
+
+inline TiVar& TiObj::var(size_t i){
+	return this->ptr->var[i];
 }
 
 

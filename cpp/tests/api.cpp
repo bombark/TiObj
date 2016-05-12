@@ -40,8 +40,9 @@ int main(int argc, char** argv){
 	
 	TiObj obj;
 	TiStream stream(stdin);
-	while ( stream.next(obj) )
-		cout << obj << endl;
+	while ( stream.next(obj) ){
+		//cout << obj << endl;
+	}
 	
 	
 	

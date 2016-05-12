@@ -198,7 +198,7 @@ class TiParser {
   private: TiParser(TiParser& up_parser);
 
   public:
-	inline void clear(){this->output->clear();}
+	inline void clear(){this->output->start();}
 
 	void parseFile(std::string filename);
 

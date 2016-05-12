@@ -32,9 +32,14 @@ class TiAsm {
   public:
 	std::string text;
 	int min, now;
+	bool is_obj_end;
 
 	TiAsm(int min=0);
-	inline void clear(){text="#T1V";}
+	inline void start(){
+		text="#T1V";
+		this->is_obj_end=false;
+		this->now=0;
+	}
 
 	// Put Complex
 	void printInt(std::string name, long int a);
@@ -43,6 +48,8 @@ class TiAsm {
 	void printVarObj(std::string name, std::string obj_class);
 	void printObj(std::string obj_class);
 	void printRet();
+
+	inline bool isObjEnd(){return this->is_obj_end;}
 
   private:
 	// Put Basic

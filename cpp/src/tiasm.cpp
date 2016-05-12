@@ -33,6 +33,7 @@ TiAsm::TiAsm(int min){
 	this->min = min;
 	this->now = 0;
 	this->text.reserve(1024);
+	this->is_obj_end = false;
 }
 
 
@@ -64,6 +65,8 @@ void TiAsm::printStr(std::string name, std::string text){
 void TiAsm::printVarObj(std::string name, std::string obj_class){
 	if ( this->now < this->min )
 		return;
+	
+	this->now += 1;
 	if ( obj_class == "" ){
 		this->putCmd('e');
 		this->putVarName(name);
@@ -91,9 +94,11 @@ void TiAsm::printObj(std::string obj_class){
 }
 
 void TiAsm::printRet(){
-	this->now -= 1;
 	if ( this->now > this->min )
 		this->putCmd('i');
+	else
+		this->is_obj_end = true;
+	this->now -= 1;
 }
 
 /*-------------------------------------------------------------------------------------*/

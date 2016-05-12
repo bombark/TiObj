@@ -570,7 +570,9 @@ TiStream::TiStream(FILE* fd){
 
 bool TiStream::next(TiObj& out){
 	if ( this->parser.isGood() ){
+
 		parser.parseStream();
+
 		_TiObj* ptr = out.ptr.get();
 		if ( ptr == nullptr ){
 			ptr = new _TiObj();
@@ -578,6 +580,10 @@ bool TiStream::next(TiObj& out){
 		} else
 			ptr->clear();
 		build_tiasm(*ptr, parser.output->text);
+
+
+		if ( ptr->isEmpty() )
+			return false;
 		return true;
 	}
 	return false;
