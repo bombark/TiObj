@@ -68,7 +68,9 @@ TiVar::~TiVar(){
 std::string TiVar::Str(){
 	if ( this->isInt() )
 		return std::to_string(this->num);
-	if ( this->isDbl() )
+	else if ( this->isDbl() )
+		return std::to_string(this->dbl);
+	else if ( this->isDbl() )
 		return std::to_string(this->dbl);
 	else
 		return this->str;
@@ -120,6 +122,25 @@ void TiVar::operator=(TiObj obj){
 }
 
 
+void TiVar::setBinary(void* ptr, size_t size){
+	if ( this->isNull() )
+		return;
+	if ( this->isObj() ){
+		this->removeObject();
+	}
+	this->type   = TiVar::BINARY;
+	
+	//printf("%p %d\n", ptr, size);
+	
+	string buf((const char*)ptr, size);
+	
+	//printf("%p\n", buf.data());
+	this->str = buf;
+}
+
+
+
+
 
 /*void TiVar::operator=(TiVar& attr){
 	if ( this->isNull() )
@@ -151,41 +172,36 @@ std::string TiVar::toString(){
 		return this->objptr.encode(0,true);
 	} else if (this->isVet() ){
 
+	} else if ( this->isBin() ){
+		return "<" + to_string(this->str.size()) + "|" + this->str + "\n";
 	}
 }
 
 
+
+
+
 void TiVar::encode(std::string& out, int tab){
+	for (int i=1; i<tab; i++)
+		out += '\t';
+	out += this->name;
+	out += " = ";
+
 	if (this->isStr() ){
-		for (int i=1; i<tab; i++)
-			out += '\t';
-		out += this->name;
-		out += " = ";
 		out += this->toString();
 		out += ";\n";
-
 	} else if (this->isInt() ){
-		for (int i=1; i<tab; i++)
-			out += '\t';
-		out += this->name; 
-		out += " = "; 
 		out += std::to_string(this->num); 
 		out += ";\n";
 	} else if (this->isDbl()){
-		for (int i=1; i<tab; i++)
-			 out += '\t';
-		out += this->name; 
-		out += " = ";
 		out += std::to_string(this->dbl); 
 		out += ";\n";
 	} else if ( this->isObj() ){
-		for (int i=1; i<tab; i++)
-			 out += '\t';
-		out += this->name;
-		out += " = ";
 		this->objptr.encode(out, tab,false);
 	} else if (this->isVet() ){
 		
+	} else if ( this->isBin() ){
+		out += this->toString();
 	}
 }
 
@@ -197,29 +213,16 @@ void TiVar::removeObject(){
 	//}
 }
 
-void TiVar::tiasm(TiAsm& res){
+void TiVar::toAsm(TiAsm& res){
 	if (this->isStr() ){
 		res.printStr(this->name, this->str);
 	} else if (this->isInt() ){
 		res.printInt(this->name, this->num);
 	} else if (this->isDbl()){
-		res.printInt(this->name, this->dbl);
-
+		res.printDbl(this->name, this->dbl);
 	} else if ( this->isObj() ){
-			res.printVarObj(this->name, this->objptr.classe() );
-	
-	
-/*fazer		if ( this->objptr->classe == "" ){
-			res += 'e';
-			res += ' ';
-			printStr(res,this->name);
-		} else {
-			res += 'f';
-			res += ' ';
-			printStr(res,this->name);
-			printStr(res,this->objptr->classe);
-		}
-		this->objptr->tiasm(res);*/
+		res.printVarObj(this->name, this->objptr.classe() );
+		this->objptr.ptr->toAsm(res);
 		res.printRet();
 	} else if (this->isVet() ){
 

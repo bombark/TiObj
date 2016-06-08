@@ -1,11 +1,11 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,7 +31,8 @@
 #include "tiasm.hpp"
 
 class _TiObj;
-class TiVet;
+class TiObjPkg;
+class TiVarPkg;
 class TiVar;
 class TiBox;
 
@@ -47,33 +48,39 @@ class TiObj {
 
   public:
 	TiObj();
+	TiObj(int a);
+	TiObj(bool is_lock, std::string filename);
 	TiObj(std::string text);
 	TiObj(_TiObj* a);
 
 
-	inline void  load(std::string file);
 	inline void  loadText(const char* text);
 	inline void  loadText(std::string text);
-	
 
 
-	inline std::string classe();
+	inline void  load( FILE* fd,         bool is_lock=false );
+	inline void  load( std::string file, bool is_lock=false );
+	inline void  save( std::string file, bool is_lock=false );
+
+	void create();
+	//inline void create(std::string text="");
+
+	inline std::string& classe();
 
 
 	inline TiVar& operator[](std::string name);
-	inline TiVar& operator[](int i);
+	inline TiVar& operator[](size_t i);
 	inline bool   operator==(TiObj akk);
 
 
 	inline void        encode(std::string& out, int tab=0, bool indent=true, bool jmpline=true);
 	inline std::string encode(int tab=0, bool indent=true, bool jmpline=true);
 
-	inline TiBox& box();
-	inline TiObj  box(size_t i);
-	inline TiVet& var();
-	inline TiVar& var(size_t i);
+	inline TiObjPkg& box();
+	inline TiObj     box(size_t i);
+	inline TiVarPkg& var();
+	inline TiVar&    var(size_t i);
 
-	inline void create();
 	
 	inline void set(std::string name, std::string value);
 	inline void set(std::string name, int value);
@@ -81,27 +88,27 @@ class TiObj {
 	inline void set(std::string name, float value);
 	inline void set(std::string name, double value);
 	inline void set(std::string name, TiObj value);
-
+	inline void setBinary(std::string name, void* ptr, size_t size);
 
 	inline size_t length();
 	inline size_t size();
-	inline void clear();
+	inline void   clear();
 
 	inline bool isNull();
-
-	/*inline void create(std::string text="");
 
 
 	inline std::string atStr (std::string name, std::string  _default="");
 	inline long int    atInt (std::string name, long int     _default=0);
 	inline double      atDbl (std::string name, double       _default=0.0);
-	//inline TiObj::ptr  atObj (std::string name){return ptr->atObj(name);}
+	inline TiObj       atObj (std::string name);
 
 
+	inline bool is  (std::string name);
+	inline bool has (std::string name);
 
-	inline int  load(FILE*  fd);
-	inline int  load(std::string filename);
-	inline int  save(std::string filename);*/
+	inline std::string toAsm();
+	//inline std::string toJson();
+	//inline std::string toXml();
 };
 
 /*-------------------------------------------------------------------------------------*/
@@ -116,7 +123,7 @@ class TiObj {
 
 class TiVar {
   public:
-	enum Type { NULO, EMPTY, STR, INT, DBL, OBJ, VET };
+	enum Type { NULO, EMPTY, STR, INT, DBL, OBJ, VET, BINARY };
 	Type type;
 
 	char strtype[32];
@@ -143,13 +150,14 @@ class TiVar {
 	inline bool isInt()  {return this->type == TiVar::INT;}
 	inline bool isObj()  {return this->type == TiVar::OBJ;}
 	inline bool isVet()  {return this->type == TiVar::VET;}
+	inline bool isBin()  {return this->type == TiVar::BINARY;}
 
 
 	std::string      Str();
 	inline long int  Int();
 	inline double    Dbl();
 	inline TiObj     Obj();
-	
+
 
 	void operator=(std::string value);
 	inline void operator=(int value){*this = (long int) value;}
@@ -158,16 +166,19 @@ class TiVar {
 	void operator=(TiObj obj);
 	//void operator=(TiVar& attr);
 
+	void setBinary(void* ptr, size_t size);
+
+
 	std::string toString();
 	
-	void        encode(std::string& out, int tab=0);
+	void encode(std::string& out, int tab=0);
 	inline std::string encode(int tab=0){
 		std::string out;
 		this->encode(out, tab);
 		return out;
 	}
 
-	void tiasm(TiAsm& res);
+	void toAsm(TiAsm& res);
 
 	static TiVar ObjNull;
 
@@ -180,29 +191,28 @@ class TiVar {
 
 
 
-/*======================================- TiBox -======================================*/
+/*====================================- TiObjPkg -=====================================*/
 
-class TiBox : public std::vector<TiObj> {
+class TiObjPkg : public std::vector<TiObj> {
   public:
-	inline TiObj  operator[](int id){return this->at(id);}
+	inline TiObj  operator[](size_t id){return this->at(id);}
 	inline void   operator+=(TiObj obj){this->push_back(obj);}
-	void   operator+=(std::string objstr);
+	       void   operator+=(std::string objstr);
 };
-
 
 /*-------------------------------------------------------------------------------------*/
 
 
-/*======================================- TiVet -======================================*/
+/*====================================- TiVarPkg 1 -===================================--
 
-class TiVet {
+class TiVarPkg {
 	std::vector< TiVar* > data;
 	std::map< std::string, TiVar* > index;
 
 
   public:
-	TiVet();
-	~TiVet();
+	TiVarPkg();
+	~TiVarPkg();
 
 	size_t size(){return this->data.size();}
 
@@ -231,10 +241,8 @@ class TiVet {
 	TiVar& push(TiObj value, std::string name=""){
 		return this->_push<TiObj>(value,name);
 	}
-	/*inline TiVar& push(_TiObj* value, std::string name=""){
-		this->_push<std::string>(value,name);
-	}*/
-
+	
+	TiVar& push(void* ptr, size_t size, std::string name="");
 
 
 	inline TiVar& operator[](size_t i){return *this->data[i];}
@@ -247,8 +255,6 @@ class TiVet {
 	//void        encode(std::string& res, int tab=0, bool indent=true, bool jmpline=true);
 	std::string encode(int tab=0, bool indent=true, bool jmpline=true);
 
-
-
   private:
 	template< typename T >
 	inline TiVar& _push(T value, std::string name){
@@ -256,20 +262,105 @@ class TiVet {
 		auto it = this->index.find ( name );
 		if (it != this->index.end()){
 			res = it->second;
-			*res = value;
 		} else {
 			res = new TiVar();
-			*res = value;
 			res->name = name;
 			this->data.push_back( res );
 			this->index.insert( std::pair<std::string,TiVar*>(name,res) );
 		}
+		*res = value;
 		return *res;
 	}
 
 };
 
-/*-------------------------------------------------------------------------------------*/
+---------------------------------------------------------------------------------------*/
+
+
+
+
+/*====================================- TiVarPkg 2 -===================================*/
+
+class TiVarPkg : public std::vector< TiVar* > {
+  public:
+	TiVarPkg();
+
+	void clear();
+
+	TiVar& push(std::string value, std::string name=""){
+		return this->_push<std::string>(value,name);
+	}
+	
+	TiVar& push(int value, std::string name=""){
+		return this->_push<long int>(value,name);
+	}
+	
+	TiVar& push(long int value, std::string name=""){
+		return this->_push<long int>(value,name);
+	}
+	
+	TiVar& push(double value, std::string name=""){
+		return this->_push<double>(value,name);
+	}
+	
+	TiVar& push(float value, std::string name=""){
+		return this->_push<double>(value,name);
+	}
+	
+	TiVar& push(TiObj value, std::string name=""){
+		return this->_push<TiObj>(value,name);
+	}
+	
+	TiVar& push(void* ptr, size_t size, std::string name="");
+
+
+	TiVar& search(std::string query);
+
+	inline TiVar& operator[](size_t i){return *this->at(i);}
+	inline TiVar& operator[](std::string name){return this->search(name);}
+
+	inline bool has(std::string name){
+		TiVar& obj = this->search(name);
+		return obj.isNull();
+	}
+
+	inline TiVar& last(){return *this->at( this->size()-1 );}
+
+  private:
+	bool   search(std::string query, TiVar** out_obj, size_t& out_addpos);
+	
+
+	template< typename T >
+	inline TiVar& _push(T value, std::string name){
+		TiVar* aux;
+		size_t order_pos;
+		bool exists = search(name, &aux, order_pos);
+		if ( exists ){
+			*aux = value;
+			return *aux;
+		} else {
+			TiVar* var = new TiVar();
+			*var = value;
+			var->name = name;
+			this->insert ( this->begin()+order_pos, var );
+			return *var;
+		}
+	}
+
+
+};
+
+/*---------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
 
 
 /*======================================- TiObj -======================================*/
@@ -278,8 +369,8 @@ class _TiObj {
   public:
 	std::string classe;
 
-	TiVet var;
-	TiBox box;
+	TiVarPkg var;
+	TiObjPkg box;
 
 
 
@@ -296,16 +387,6 @@ class _TiObj {
 	int  loadFile(FILE*  fd);
 	int  loadFile(std::string filename);
 	int  saveFile(std::string filename);
-
-
-	template<typename T>
-	void _set(std::string name, T value){
-		if ( name == "class" ){
-			this->classe = value;
-		} else {
-			this->var.push( value, name );
-		}
-	}
 
 
 	inline void set(std::string name, std::string value){
@@ -326,6 +407,13 @@ class _TiObj {
 	inline void set(std::string name, TiObj value){
 		this->var.push( value, name );
 	}
+	
+	
+	
+	inline void setBinary(std::string name, void* ptr, size_t size){
+		this->var.push( ptr, size, name );
+	}
+
 
 	/*void set(std::string name, TiVet& value){
 		this->_set<std::string>(name, value);
@@ -340,7 +428,7 @@ class _TiObj {
 
 
 	
-	inline TiVar&      at(int i){return this->var[i];}
+	inline TiVar&      at(size_t i){return this->var[i];}
 	       TiVar&      at(std::string name, bool         create=false);
 	
 	std::string atStr (std::string name, std::string  _default="");
@@ -375,8 +463,7 @@ class _TiObj {
 
 
 
-	       TiObj select(TiObj out, std::string classes);
-	inline TiObj select(std::string classes){return this->select(TiObj(this), classes);}
+	TiObj select (std::string classes);
 
 	TiObj orderby(TiObj out, std::string field);
 	TiObj orderby(std::string field);
@@ -384,7 +471,7 @@ class _TiObj {
 	//_TiObj& where(_TiObj& out, std::string condpkg);
 	//_TiObj& where(std::string condpkg);
 
-	void groupby(TiObj out, std::string field);
+	TiObj groupby(std::string field);
 
 
 	
@@ -393,16 +480,33 @@ class _TiObj {
 
 	static int  decode(TiObj out, std::string text);
 
-	void tiasm(TiAsm& res);
-	std::string tiasm();
+
+
+	void toAsm(TiAsm& res);
+	inline std::string toAsm(){
+		TiAsm res;
+		res.start();
+		this->toAsm(res);
+		return res.text;
+	}
 
 
 
 
 	static _TiObj ObjNull; 
 
-  private:
 
+
+
+  private:
+	template<typename T>
+	void _set(std::string name, T value){
+		if ( name == "class" ){
+			this->classe = value;
+		} else {
+			this->var.push( value, name );
+		}
+	}
 };
 
 
@@ -421,14 +525,6 @@ inline void TiObj::create(){
 	this->ptr.reset(ptr);
 }
 
-
-inline void TiObj::load(std::string file){
-	_TiObj* obj = new _TiObj();
-	obj->loadFile(file);
-	this->ptr.reset(obj);
-}
-
-
 inline void TiObj::loadText(const char* text){
 	_TiObj* obj = new _TiObj(text);
 	this->ptr.reset(obj);
@@ -439,13 +535,28 @@ inline void TiObj::loadText(std::string text){
 	this->ptr.reset(obj);
 }
 
+inline void TiObj::load(FILE* fd, bool is_lock){
+	_TiObj* obj = new _TiObj();
+	obj->loadFile(fd);
+	this->ptr.reset(obj);
+}
 
-inline std::string TiObj::classe(){
+inline void TiObj::load(std::string file, bool is_lock){
+	_TiObj* obj = new _TiObj();
+	obj->loadFile(file);
+	this->ptr.reset(obj);
+}
+
+inline void TiObj::save(std::string file, bool is_lock){
+	this->ptr->saveFile(file);
+}
+
+inline std::string& TiObj::classe(){
 	return this->ptr->classe;
 }
 
 
-inline TiVar& TiObj::operator[](int i){
+inline TiVar& TiObj::operator[](size_t i){
 	return this->ptr->at(i);
 }
 
@@ -467,7 +578,7 @@ inline std::string TiObj::encode(int tab, bool indent, bool jmpline){
 	return res;
 }
 
-inline TiBox& TiObj::box(){
+inline TiObjPkg& TiObj::box(){
 	return this->ptr->box;
 }
 
@@ -475,7 +586,7 @@ inline TiObj  TiObj::box(size_t i){
 	return this->ptr->box[i];
 }
 
-inline TiVet& TiObj::var(){
+inline TiVarPkg& TiObj::var(){
 	return this->ptr->var;
 }
 
@@ -508,6 +619,10 @@ inline void TiObj::set(std::string name, TiObj value){
 	this->ptr->set(name, value);
 }
 
+inline void TiObj::setBinary(std::string name, void* ptr, size_t size){
+	this->ptr->setBinary(name, ptr, size);
+}
+
 inline size_t TiObj::length(){
 	return this->ptr->length();
 }
@@ -523,6 +638,28 @@ inline void TiObj::clear(){
 inline bool TiObj::isNull(){
 	return this->ptr.get() == nullptr;
 }
+
+inline std::string TiObj::atStr (std::string name, std::string  _default){
+	return this->ptr->atStr(name, _default);
+}
+
+inline long int    TiObj::atInt (std::string name, long int     _default){
+	return this->ptr->atInt(name, _default);
+}
+
+inline double     TiObj::atDbl (std::string name, double       _default){
+	return this->ptr->atDbl(name, _default);
+}
+
+inline TiObj TiObj::atObj (std::string name){this->ptr->atObj(name);}
+
+
+
+inline bool TiObj::is  (std::string name){return this->ptr->is(name);}
+inline bool TiObj::has (std::string name){return this->ptr->has(name);}
+
+
+inline std::string TiObj::toAsm(){return this->ptr->toAsm();}
 
 /*-------------------------------------------------------------------------------------*/
 

@@ -43,7 +43,14 @@ _TiObj _TiObj::ObjNull;
 /*=====================================================================================*/
 
 TiObj::TiObj(){
-	this->ptr = nullptr;
+	_TiObj* novo = new _TiObj();
+	this->ptr.reset(novo);
+}
+
+TiObj::TiObj(bool is_lock, std::string filename){
+	_TiObj* novo = new _TiObj();
+	novo->loadFile(filename);
+	this->ptr.reset(novo);
 }
 
 TiObj::TiObj(std::string text){
@@ -53,6 +60,10 @@ TiObj::TiObj(std::string text){
 
 TiObj::TiObj(_TiObj* a){
 	this->ptr.reset(a);
+}
+
+TiObj::TiObj(int a){
+	this->ptr = nullptr;
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -139,8 +150,8 @@ int  _TiObj::saveFile(string filename){
 TiVar& _TiObj::at(string name, bool create){
 	if ( name == "" )
 		return TiVar::ObjNull;
-	TiVar& var = this->var[name];
 
+	TiVar& var = this->var[name];
 	if ( var.isNull() && create ){
 		return this->var.push( "", name );
 	}
@@ -195,46 +206,29 @@ void _TiObj::setObj(std::string name, std::string text){
 
 
 
-TiObj _TiObj::select(TiObj out, std::string classes){
-	/*string token;
+TiObj _TiObj::select(std::string classes){
+	TiObj out;
+	string token;
 	std::vector<std::string> vetclasse;
 	std::istringstream iss(classes);
-	while ( std::getline(iss, token, ',') ){
+	while ( std::getline(iss, token, '|') ){
 		vetclasse.push_back(std::move(token));
 	}
-
-	if ( this != out ){
-		out.clear();
-		for (int i=0; i<this->box.size(); i++){
-			TiObj obj = this->box[i];
-			for (int j=0; j<vetclasse.size(); j++){
-				if ( obj.is(vetclasse[j]) ){
-					out.box += &obj;
-				}
+	out.clear();
+	for (size_t i=0; i<this->size(); i++){
+		TiObj obj = this->box[i];
+		for (size_t j=0; j<vetclasse.size(); j++){
+			if ( obj.is(vetclasse[j]) ){
+				out.box() += obj;
 			}
-		}
-	} else {
-		for (int i=0; i<this->box.size(); ){
-			bool erased = false;
-			TiObj obj = this->box[i];
-			for (int j=0; j<vetclasse.size(); j++){
-				if ( !obj.is(vetclasse[j]) ){
-					out.box.erase( out.box.begin()+i );
-					erased = true;
-					break;
-				}
-			}
-			if ( !erased )
-				i += 1;
 		}
 	}
-
-	return out;*/
+	return out;
 }
 
 
 
-int partition(TiBox& box, uint left, uint right, std::string& field){
+int partition(TiObjPkg& box, uint left, uint right, std::string& field){
 	/*TiObj*  aux;
 	TiObj** boxdata = &box.at(0);
 	if ( !box[left].has(field) ){
@@ -268,7 +262,7 @@ int partition(TiBox& box, uint left, uint right, std::string& field){
 }
 
 
-void quickSort(TiBox& box, uint left, uint right, std::string& field){
+void quickSort(TiObjPkg& box, uint left, uint right, std::string& field){
 	uint pivot;
 	if(left<right){
 		pivot = partition(box,left,right,field);
@@ -278,11 +272,11 @@ void quickSort(TiBox& box, uint left, uint right, std::string& field){
 }
 
 TiObj _TiObj::orderby(TiObj out, std::string field){
-	/*for (int i=0; i<this->box.size(); i++){
-		out.box += this->box[i];
+	for (int i=0; i<this->box.size(); i++){
+		out.box() += this->box[i];
 	}
-	quickSort (out.box, 0, this->box.size(), field);
-	return out;*/
+	quickSort (out.box(), 0, this->box.size(), field);
+	return out;
 }
 
 TiObj _TiObj::orderby(std::string field){
@@ -291,25 +285,24 @@ TiObj _TiObj::orderby(std::string field){
 }
 
 
-void _TiObj::groupby(TiObj out, std::string field){
-	/*out.clear();
-	for (int i=0; i<this->box.size(); i++){
+TiObj _TiObj::groupby(std::string field){
+	TiObj out;
+	for (int i=0; i<this->size(); i++){
 		TiObj node = this->box[i];
-		if ( !node.has(field) ){
-			out.box += node;
-			continue;
-		}
-
-		TiObj cur;
-		string key = node.atStr(field);
-		if ( out.has(key) ){
-			cur = &out.atObj(key);
+		if ( node.has(field) ){
+			TiObj cur(0);
+			string key = node.atStr(field);
+			if ( out.has(key) ){
+				cur = out.atObj(key);
+			} else {
+				cur.create();
+				out.set(key, cur);
+			}
+			cur.box() += node;
 		} else {
-			cur = new TiObj();
-			out.set(key, cur);
+			out.box() += node;
 		}
-		cur->box += node;
-	}*/
+	}
 }
 
 
@@ -354,6 +347,7 @@ bool _TiObj::isOnly(string name){
 string _TiObj::atStr(string name, string _default){
 	if ( name == "class" )
 		return this->classe;
+
 	TiVar& var = this->at(name);
 	if ( var.isNull() ){
 		return _default;
@@ -484,25 +478,19 @@ int _TiObj::decode(TiObj out, string text){
 	return true;
 }
 
-void _TiObj::tiasm(TiAsm& res){
+void _TiObj::toAsm(TiAsm& res){
 	for (uint i=0; i<this->length(); i++){
-		TiVar& var = this->at(i);
-		var.tiasm(res);
+		this->at(i).toAsm(res);
 	}
 	for (uint i=0; i<this->size(); i++){
 		TiObj obj = this->box[i];
 		res.printObj(obj.classe());
-		//obj->tiasm(res);
+		obj.ptr->toAsm(res);
 		res.printRet();
 	}
 }
 
 
-std::string _TiObj::tiasm(){
-	TiAsm res;
-	this->tiasm(res);
-	return res.text;
-}
 
 /*-------------------------------------------------------------------------------------*/
 
@@ -513,13 +501,13 @@ std::string _TiObj::tiasm(){
 /*=====================================================================================*/
 
 
-/*void   TiBox::clear(){
+/*void   TiObjPkg::clear(){
 	for (size_t i=0; i<this->size(); i++){
 		delete this->at(i);
 	}
 }*/
 
-void TiBox::operator+=(string objstr){
+void TiObjPkg::operator+=(string objstr){
 	this->push_back( TiObj(new _TiObj(objstr)) );
 }
 
@@ -550,7 +538,7 @@ ostream& operator<<(ostream& os, TiVar& var){
 	return os << "[UNKNOWN]";
 }
 
-ostream& operator<<(ostream& os, TiBox& box){
+ostream& operator<<(ostream& os, TiObjPkg& box){
 	for (int i=0; i<box.size(); i++){
 		os << box[i].encode(1);
 	}

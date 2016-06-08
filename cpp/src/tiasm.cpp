@@ -139,16 +139,39 @@ void TiAsm::putDbl(double number){
 void TiAsm::putStr(std::string in){
 	uint  _size = in.size()+1;
 	char*  size = (char*) &_size;
+
 	for (uint i=0; i<4; i++){
 		this->text.push_back(size[i]);
 	}
+
 	this->text += in;
+
 	this->text.push_back('\0');
 	uint toalign = _size&0x1;
 	for (uint i=0; i<toalign; i++){
 		this->text.push_back('\0');
 	}
 }
+
+
+/*void TiAsm::putBin(std::string in){
+	uint  _size = in.size();
+	char*  size = (char*) &_size;
+
+	for (uint i=0; i<4; i++){
+		this->text.push_back(size[i]);
+	}
+
+	// this->text += in;
+	for (uint i=0; i<in.size(); i++){
+		this->text += in[i];
+	}
+
+	uint toalign = _size&0x1;
+	for (uint i=0; i<toalign; i++){
+		this->text.push_back('\0');
+	}
+}*/
 
 /*-------------------------------------------------------------------------------------*/
 
