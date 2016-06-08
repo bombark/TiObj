@@ -479,10 +479,10 @@ int _TiObj::decode(TiObj out, string text){
 }
 
 void _TiObj::toAsm(TiAsm& res){
-	for (uint i=0; i<this->length(); i++){
+	for (size_t i=0; i<this->length(); i++){
 		this->at(i).toAsm(res);
 	}
-	for (uint i=0; i<this->size(); i++){
+	for (size_t i=0; i<this->size(); i++){
 		TiObj obj = this->box[i];
 		res.printObj(obj.classe());
 		obj.ptr->toAsm(res);
@@ -490,6 +490,30 @@ void _TiObj::toAsm(TiAsm& res){
 	}
 }
 
+void _TiObj::toJson(std::string& out){
+	out += "{\n";
+	
+	out += "\"class\":\"";
+	out += this->classe;
+	out += "\"";
+	
+	for (size_t i=0; i<this->length(); i++){
+		out += ",\n";
+		this->at(i).toJson(out);
+	}
+
+	if ( this->size() > 0 ){
+		out += ",\n\"box\" : [";
+		this->box[0].ptr->toJson(out);
+		for (size_t i=1; i<this->size(); i++){
+			TiObj obj = this->box[i];
+			out += ",\n";
+			obj.ptr->toJson(out);
+		}
+		out += "\n]\n";
+	}
+	out += "}";
+}
 
 
 /*-------------------------------------------------------------------------------------*/

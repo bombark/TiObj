@@ -233,4 +233,31 @@ void TiVar::toAsm(TiAsm& res){
 	}*/
 }
 
+void TiVar::toJson(std::string& out){
+	if (this->isStr() ){
+		out += "\"";
+		out += this->name;
+		out += "\":\"";
+		out += this->str;
+		out += "\"";
+	} else if (this->isInt() ){
+		out += "\"";
+		out += this->name;
+		out += "\":";
+		out += std::to_string(this->num); 
+	} else if (this->isDbl()){
+		out += "\"";
+		out += this->name;
+		out += "\":";
+		out += std::to_string(this->dbl); 
+	} else if ( this->isObj() ){
+		out += "\"";
+		out += this->name;
+		out += "\":{";
+		this->objptr.ptr->toJson(out);
+		out += "}";
+	}
+}
+
+
 /*-------------------------------------------------------------------------------------*/

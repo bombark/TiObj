@@ -1,21 +1,36 @@
 #include <iostream>
+#include <fstream>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "../include/tiobj.hpp"
+
+#include <string.h>
+#include <jansson.h>
+#include <stdlib.h>
+
 
 using namespace std;
 
 
 
 volatile size_t G_i = 0;
+volatile bool   G_continue;
 
 
 void* terminator(void* ){
-	while(1){
-		sleep(1);
-		fprintf(stderr, "opaaaa %ld\n", G_i);
+	unsigned total=0;
+	unsigned secs = 5;
+	for (unsigned i=0; i<secs; i++){
 		G_i = 0;
+		sleep(1);
+		size_t cont = G_i;
+		fprintf(stderr, "opaaaa %ld\n", cont);
+		total += cont;
 	}
+	G_continue = false;
+	fprintf(stderr, "media: %f\n", total/(double)secs);
+	return NULL;
 }
 
 
@@ -23,33 +38,61 @@ void* terminator(void* ){
 
 int main(int argc, char** argv){
 	pthread_t id;
+	string name, url, base;
+	ofstream file;
+	mkdir("tmp",0755);
+	name = argv[1];
+	base = "../tests/" + name + ".ti";
+
+
+	cout << "Testing loading TiOn speed " << base << endl;
+	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
-
-
-	while (1){
-		TiObj b(false, "../tests/var_rand_100000.ti");
-		/*TiObj b(false, "var_100000.ts");
-		string var = b.atStr("teste2");
-		*/
-		//string var = b.atStr("teste2");
+	while ( G_continue ){
+		TiObj b(false, base);
 		G_i += 1;
 	}
 
-	/*static char buffer[1024*1024];
-	while (1){
-		//TiObj b(false, "../tests/big.ti");
-		//TiObj b(false, "all.ts");
-		FILE* fd = fopen("../tests/big.ti","r");
-		fread(buffer, 1, 21221, fd);
-		fclose(fd);
-		G_i += 1;
-	}*/
 
-	/*TiObj b;
-	for (int i=0; i<100000; i++){
-		b.set( Join("teste%s").at(i).ok, i );
+	url  = "tmp/"+name+".ti";
+	cout << "Testing loading TiOs speed " << url << endl;
+	TiObj c(false, base);
+	file.open ( url );
+	file << c.toAsm();
+	file.close();
+
+	G_continue = true;
+	pthread_create(&id, NULL, &terminator, NULL);
+	while ( G_continue ){
+		TiObj b(false, url);
+		G_i += 1;
 	}
-	cout << b;*/
+
+
+	url  = "tmp/"+name+".json";
+	cout << "Testing loading Json speed " << url << endl;
+	TiObj d(false, base);
+	file.open ( url );
+	file << d.toJson();
+	file.close();
+
+	G_continue = true;
+	pthread_create(&id, NULL, &terminator, NULL);
+	while ( G_continue ){
+		json_t *root;
+		json_error_t error;
+		std::ifstream json_file( url );
+		json_file.seekg(0, std::ios::end);
+		size_t size = json_file.tellg();
+		std::string buffer(size, ' ');
+		json_file.seekg(0);
+		json_file.read(&buffer[0], size); 
+		json_file.close();
+		root = json_loads(buffer.c_str(), 0, &error);
+		json_decref(root);
+		//free(text);
+		G_i += 1;
+	}
 
 
 	return 0;

@@ -18,7 +18,7 @@ add_executable(test_parser "tests/test_parser.cpp")
 target_link_libraries(test_parser tiobj)
 
 add_executable(test_speed "tests/test_speed.cpp")
-target_link_libraries(test_speed tiobj pthread)
+target_link_libraries(test_speed tiobj pthread jansson)
 
 
 

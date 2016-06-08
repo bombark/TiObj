@@ -107,7 +107,7 @@ class TiObj {
 	inline bool has (std::string name);
 
 	inline std::string toAsm();
-	//inline std::string toJson();
+	inline std::string toJson();
 	//inline std::string toXml();
 };
 
@@ -179,6 +179,8 @@ class TiVar {
 	}
 
 	void toAsm(TiAsm& res);
+	void toJson(std::string& out);
+
 
 	static TiVar ObjNull;
 
@@ -490,7 +492,12 @@ class _TiObj {
 		return res.text;
 	}
 
-
+	void toJson(std::string& out);
+	std::string toJson(){
+		std::string buf;
+		this->toJson(buf);
+		return buf;
+	}
 
 
 	static _TiObj ObjNull; 
@@ -660,6 +667,8 @@ inline bool TiObj::has (std::string name){return this->ptr->has(name);}
 
 
 inline std::string TiObj::toAsm(){return this->ptr->toAsm();}
+inline std::string TiObj::toJson(){return this->ptr->toJson();}
+
 
 /*-------------------------------------------------------------------------------------*/
 
