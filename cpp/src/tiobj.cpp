@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <errno.h>
 #include <string.h>
+#include <sys/file.h>
 #include "../include/tiparser.hpp"
 
 using namespace std;
@@ -49,7 +50,7 @@ TiObj::TiObj(){
 
 TiObj::TiObj(bool is_lock, std::string filename){
 	_TiObj* novo = new _TiObj();
-	novo->loadFile(filename);
+	novo->loadFile(filename, is_lock);
 	this->ptr.reset(novo);
 }
 
@@ -113,15 +114,21 @@ int _TiObj::loadText(std::string text){
 	return 1;
 }
 
-int _TiObj::loadFile(FILE* fd){
+int _TiObj::loadFile(FILE* fd, bool is_lock){
 	this->clear();
 	string buffer;
-	parseFileFd(buffer, fd);
+	if ( is_lock ){
+		flock( fileno(fd), LOCK_EX);
+		parseFileFd(buffer, fd);
+		flock( fileno(fd), LOCK_UN);
+	} else {
+		parseFileFd(buffer, fd);
+	}
 	build_tiasm(*this, buffer);
 	return 1;
 }
 
-int _TiObj::loadFile(string filename){
+int _TiObj::loadFile(string filename, bool is_lock){
 	FILE* fd = fopen(filename.c_str(), "r");
 	if ( !fd ){
 		this->clear();
@@ -130,12 +137,12 @@ int _TiObj::loadFile(string filename){
 		this->set("file", filename);
 		return 0;
 	}
-	this->loadFile(fd);
+	this->loadFile(fd,is_lock);
 	fclose(fd);
 	return 1;
 }
 
-int  _TiObj::saveFile(string filename){
+int  _TiObj::saveFile(string filename, bool is_lock){
 	string aux;
 	this->encode(aux, 0, true, false);
 	FILE* fd = fopen(filename.c_str(), "w");
@@ -188,13 +195,8 @@ void _TiObj::setText(string name, string strtype, string text){
 	*var = text;
 
 	//var.type = TYPE_TEXT;
-	var->type = TiVar::STR;
-
-	if ( strtype.size() >= sizeof(TiVar::strtype) ){
-		strncpy(var->strtype, strtype.c_str(), sizeof(TiVar::strtype)-1 );
-		var->strtype[ sizeof(TiVar::strtype) ] = '\0';
-	} else
-		strcpy(var->strtype, strtype.c_str());
+	var->type  = TiVar::STR;
+	var->strtype = strtype;
 }
 
 void _TiObj::setObj(std::string name, std::string text){
@@ -395,6 +397,7 @@ string _TiObj::toString(){
 	string res;
 	res += this->classe;
 	res += '{';
+	
 	for (int i=0; i<this->var.size(); i++){
 		res += var[i].name;
 		res += '=';
@@ -402,14 +405,9 @@ string _TiObj::toString(){
 		res += ';';
 	}
 
-
 	/*
-
 		FALTA MOSTRAR OS OBJETOS DO BOX --------------------------------------------------------------------------------
-
-
 	 */
-
 
 	res += '}';
 	return res;
@@ -515,6 +513,30 @@ void _TiObj::toJson(std::string& out){
 	out += "}";
 }
 
+
+void _TiObj::toYaml(std::string& out){
+	
+	/*out += " - class: ";
+	out += this->classe;
+	out += "\n";*/
+
+	for (size_t i=0; i<this->length(); i++){
+		//out += "   ";
+		this->at(i).toYaml(out);
+		out += '\n';
+	}
+
+	if ( this->size() > 0 ){
+		out += "   box:";
+		this->box[0].ptr->toJson(out);
+		for (size_t i=1; i<this->size(); i++){
+			TiObj obj = this->box[i];
+			out += "\n";
+			obj.ptr->toYaml(out);
+		}
+	}
+
+}
 
 /*-------------------------------------------------------------------------------------*/
 

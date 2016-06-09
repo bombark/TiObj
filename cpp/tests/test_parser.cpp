@@ -5,8 +5,10 @@ using namespace std;
 
 
 int main(int argc, char** argv){
-	TiObj b(false, "../tests/all.ti");
-	//cout << b.toAsm();
-	cout << b;
+	TiObj b(false, "../tests/big.ti");
+
+	//TiObj a = b.select("Block");
+	cout << b.box(0).at("code");
+
 	return 0;
 }

@@ -31,52 +31,37 @@ using namespace std;
 
 
 
-/*=====================================================================================
-
-
-TiVarPkg::~TiVarPkg(){
-	this->clear();
-}
+/*=====================================================================================*/
+/*
 
 
 void TiVarPkg::clear(){
-	for (size_t i=0; i<this->data.size(); i++){
-		delete this->data[i];
+	for ( auto& vr : *this ){
+		delete vr.second;
 	}
-	this->data.clear();
-	this->index.clear();
 }
 
 
-TiVar& TiVarPkg::operator[](std::string name){
-	auto it = this->index.find ( name );
-	if (it != this->index.end()){
-		return *it->second;
-	} else {
-		return TiVar::ObjNull;
-	}
-}
+
 
 
 TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 	TiVar* res;
-	auto it = this->index.find ( name );
-	if (it != this->index.end()){
+	auto it = this->find ( name );
+	if (it != this->end()){
 		res = it->second;
 	} else {
 		res = new TiVar();
 		res->name = name;
-		this->data.push_back( res );
-		this->index.insert( std::pair<std::string,TiVar*>(name,res) );
+		this->insert( std::pair<std::string,TiVar*>(name,res) );
 	}
-	
+
 	res->setBinary(ptr, size);
-	
 	return *res;
 }
 
-
----------------------------------------------------------------------------------------*/
+*/
+/*-------------------------------------------------------------------------------------*/
 
 
 

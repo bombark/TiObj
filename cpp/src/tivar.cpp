@@ -260,4 +260,24 @@ void TiVar::toJson(std::string& out){
 }
 
 
+void TiVar::toYaml(std::string& out){
+	if (this->isStr() ){
+		out += this->name;
+		out += " : ";
+		out += this->str;
+	} else if (this->isInt() ){
+		out += this->name;
+		out += " : ";
+		out += std::to_string(this->num); 
+	} else if (this->isDbl()){
+		out += this->name;
+		out += " : ";
+		out += std::to_string(this->dbl); 
+	} else if ( this->isObj() ){
+		out += this->name;
+		out += " : ";
+		this->objptr.ptr->toJson(out);
+	}
+}
+
 /*-------------------------------------------------------------------------------------*/

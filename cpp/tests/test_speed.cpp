@@ -9,6 +9,8 @@
 #include <jansson.h>
 #include <stdlib.h>
 
+#include <opencv2/core/core.hpp>
+
 
 using namespace std;
 
@@ -37,6 +39,11 @@ void* terminator(void* ){
 
 
 int main(int argc, char** argv){
+	if ( argc < 2 ){
+		cerr << "./test_speed name\n";
+		return 1;
+	}
+
 	pthread_t id;
 	string name, url, base;
 	ofstream file;
@@ -44,12 +51,11 @@ int main(int argc, char** argv){
 	name = argv[1];
 	base = "../tests/" + name + ".ti";
 
-
 	cout << "Testing loading TiOn speed " << base << endl;
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
-		TiObj b(false, base);
+		TiObj b(true, base);
 		G_i += 1;
 	}
 
@@ -64,7 +70,7 @@ int main(int argc, char** argv){
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
-		TiObj b(false, url);
+		TiObj b(true, url);
 		G_i += 1;
 	}
 
@@ -93,6 +99,23 @@ int main(int argc, char** argv){
 		//free(text);
 		G_i += 1;
 	}
+
+
+	url  = "tmp/"+name+".yaml";
+	cout << "Testing loading Yaml speed " << url << endl;
+	TiObj e(false, base);
+	
+	file.open ( url );
+	file << e.toYaml();
+	file.close();
+	
+	G_continue = true;
+	pthread_create(&id, NULL, &terminator, NULL);
+	while ( G_continue ){
+		cv::FileStorage fs(url, cv::FileStorage::READ);
+		G_i += 1;
+	}
+
 
 
 	return 0;

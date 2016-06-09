@@ -81,7 +81,7 @@ class TiObj {
 	inline TiVarPkg& var();
 	inline TiVar&    var(size_t i);
 
-	
+
 	inline void set(std::string name, std::string value);
 	inline void set(std::string name, int value);
 	inline void set(std::string name, long int value);
@@ -96,7 +96,7 @@ class TiObj {
 
 	inline bool isNull();
 
-
+	inline TiVar&      at    (std::string name);
 	inline std::string atStr (std::string name, std::string  _default="");
 	inline long int    atInt (std::string name, long int     _default=0);
 	inline double      atDbl (std::string name, double       _default=0.0);
@@ -106,8 +106,14 @@ class TiObj {
 	inline bool is  (std::string name);
 	inline bool has (std::string name);
 
+
+	inline TiObj select  (std::string name);
+	inline TiObj orderby (std::string name);
+	inline TiObj where   (std::string condition);
+
 	inline std::string toAsm();
 	inline std::string toJson();
+	inline std::string toYaml();
 	//inline std::string toXml();
 };
 
@@ -126,9 +132,9 @@ class TiVar {
 	enum Type { NULO, EMPTY, STR, INT, DBL, OBJ, VET, BINARY };
 	Type type;
 
-	char strtype[32];
-	std::string   name;
-	std::string   str;
+	std::string name;
+	std::string str;
+	std::string strtype;
 	
 	union {
 		double     dbl;
@@ -180,7 +186,7 @@ class TiVar {
 
 	void toAsm(TiAsm& res);
 	void toJson(std::string& out);
-
+	void toYaml(std::string& out);
 
 	static TiVar ObjNull;
 
@@ -386,9 +392,9 @@ class _TiObj {
 	int  loadText(const char* text);
 	int  loadText(std::string text);
 
-	int  loadFile(FILE*  fd);
-	int  loadFile(std::string filename);
-	int  saveFile(std::string filename);
+	int  loadFile(FILE*  fd, bool is_lock=false);
+	int  loadFile(std::string filename, bool is_lock);
+	int  saveFile(std::string filename, bool is_lock);
 
 
 	inline void set(std::string name, std::string value){
@@ -499,6 +505,13 @@ class _TiObj {
 		return buf;
 	}
 
+	void toYaml(std::string& out);
+	std::string toYaml(){
+		std::string buf = "%YAML:1.0\n";
+		this->toYaml(buf);
+		return buf;
+	}
+
 
 	static _TiObj ObjNull; 
 
@@ -544,18 +557,18 @@ inline void TiObj::loadText(std::string text){
 
 inline void TiObj::load(FILE* fd, bool is_lock){
 	_TiObj* obj = new _TiObj();
-	obj->loadFile(fd);
+	obj->loadFile(fd, is_lock);
 	this->ptr.reset(obj);
 }
 
 inline void TiObj::load(std::string file, bool is_lock){
 	_TiObj* obj = new _TiObj();
-	obj->loadFile(file);
+	obj->loadFile(file, is_lock);
 	this->ptr.reset(obj);
 }
 
 inline void TiObj::save(std::string file, bool is_lock){
-	this->ptr->saveFile(file);
+	this->ptr->saveFile(file, is_lock);
 }
 
 inline std::string& TiObj::classe(){
@@ -646,6 +659,10 @@ inline bool TiObj::isNull(){
 	return this->ptr.get() == nullptr;
 }
 
+inline TiVar& TiObj::at (std::string name){
+	return this->ptr->at(name);
+}
+
 inline std::string TiObj::atStr (std::string name, std::string  _default){
 	return this->ptr->atStr(name, _default);
 }
@@ -666,9 +683,15 @@ inline bool TiObj::is  (std::string name){return this->ptr->is(name);}
 inline bool TiObj::has (std::string name){return this->ptr->has(name);}
 
 
+inline TiObj TiObj::select(std::string name){return this->ptr->select(name);}
+inline TiObj TiObj::orderby (std::string name){return this->ptr->orderby(name);} // DANDO ERRO
+inline TiObj TiObj::where(std::string condition){
+	//return this->ptr->where(condition);
+}
+
 inline std::string TiObj::toAsm(){return this->ptr->toAsm();}
 inline std::string TiObj::toJson(){return this->ptr->toJson();}
-
+inline std::string TiObj::toYaml(){return this->ptr->toYaml();}
 
 /*-------------------------------------------------------------------------------------*/
 
