@@ -328,8 +328,7 @@ class TiVarPkg : public std::vector< TiVar* > {
 	inline TiVar& operator[](std::string name){return this->search(name);}
 
 	inline bool has(std::string name){
-		TiVar& obj = this->search(name);
-		return obj.isNull();
+		return !this->search(name).isNull();
 	}
 
 	inline TiVar& last(){return *this->at( this->size()-1 );}
@@ -456,9 +455,10 @@ class _TiObj {
 
 
 
-	       bool   has(std::string name);
-	inline bool isset(std::string name){return this->has(name);}
-	inline bool hasnt(std::string name){return !this->has(name);}
+	inline bool has(std::string name){
+		return (name=="class")? true: this->var.has(name);
+	}
+
 	//FAZER: unset(std::string name);
 
 

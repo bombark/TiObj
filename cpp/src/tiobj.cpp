@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/file.h>
+#include <unistd.h>
 #include "../include/tiparser.hpp"
 
 using namespace std;
@@ -114,17 +115,27 @@ int _TiObj::loadText(std::string text){
 	return 1;
 }
 
+#include <stdio.h>
+
 int _TiObj::loadFile(FILE* fd, bool is_lock){
 	this->clear();
 	string buffer;
+//cerr << "load " << is_lock << endl;
 	if ( is_lock ){
-		flock( fileno(fd), LOCK_EX);
+//cerr << "load_lock_b\n";
+		flock( fileno(fd), LOCK_EX );
+//cerr << "size: " << sz << endl;
 		parseFileFd(buffer, fd);
-		flock( fileno(fd), LOCK_UN);
+		flock( fileno(fd), LOCK_UN );
+
+//cerr << "load_lock_e\n";
 	} else {
 		parseFileFd(buffer, fd);
 	}
 	build_tiasm(*this, buffer);
+
+//cerr << this->atInt("rows") << endl;
+
 	return 1;
 }
 
@@ -137,7 +148,9 @@ int _TiObj::loadFile(string filename, bool is_lock){
 		this->set("file", filename);
 		return 0;
 	}
+
 	this->loadFile(fd,is_lock);
+
 	fclose(fd);
 	return 1;
 }
@@ -145,11 +158,26 @@ int _TiObj::loadFile(string filename, bool is_lock){
 int  _TiObj::saveFile(string filename, bool is_lock){
 	string aux;
 	this->encode(aux, 0, true, false);
-	FILE* fd = fopen(filename.c_str(), "w");
-	if ( !fd )
-		return 0;
-	fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
-	fclose(fd);
+
+	if ( is_lock ){
+//cerr << "save_lock_b\n";
+		FILE* fd = fopen(filename.c_str(), "a");
+		assert(fd);
+		flock( fileno(fd), LOCK_EX );
+		ftruncate(fileno(fd), 0);
+		fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
+		flock( fileno(fd), LOCK_UN);
+		fclose(fd);
+		
+//cerr << "save_lock_e\n";
+	} else {
+		FILE* fd = fopen(filename.c_str(), "w");
+		assert(fd);
+		fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
+		fclose(fd);
+	}
+
+
 	return 1;
 }
 
@@ -307,16 +335,6 @@ TiObj _TiObj::groupby(std::string field){
 	}
 }
 
-
-
-
-
-
-bool _TiObj::has(std::string name){
-	if ( name=="class" )
-		return true;
-	return this->var.has(name);
-}
 
 bool _TiObj::is(string name){
 	char token[1024];

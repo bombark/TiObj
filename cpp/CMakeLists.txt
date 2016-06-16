@@ -21,15 +21,19 @@ add_executable(test_speed "tests/test_speed.cpp")
 target_link_libraries(test_speed tiobj pthread jansson ${OpenCV_LIBS})
 
 
+add_executable(test_cv "tests/test_cv.cpp")
+target_link_libraries(test_cv tiobj ${OpenCV_LIBS})
+
 
 add_executable("foreach" "tests/foreach.cpp")
 target_link_libraries("foreach" tiobj)
 
 
 install(TARGETS "tiobj" DESTINATION lib)
-install(TARGETS "tiobj-static" DESTINATION lib)
+#install(TARGETS "tiobj-static" DESTINATION lib)
 
-install(FILES "include/tiobj.hpp"    DESTINATION include)
-install(FILES "include/tiparser.hpp" DESTINATION include)
-install(FILES "include/tiasm.hpp"    DESTINATION include)
+install(FILES "include/tiobj.hpp"      DESTINATION include)
+install(FILES "include/tiparser.hpp"   DESTINATION include)
+install(FILES "include/tiasm.hpp"      DESTINATION include)
+install(FILES "include/tiobj-cv.hpp"   DESTINATION include)
 

@@ -63,6 +63,8 @@ bool parseFile(std::string& out, std::string filename){
 	return res;
 }
 
+#include <iostream>
+
 bool parseFileFd(std::string& out, FILE* fd){
 	char ass[4];
 	G_parser.clear();
@@ -424,6 +426,9 @@ bool TiLex::run_text(TiLex& obj, TiToken& out, unsigned char ini){
 			out.text += c;
 		}
 
+
+		out.type = TiToken::BINARY;
+
 	} else {
 		// <string:type|string:text|>
 		while ( obj.buffer.read(c) ){
@@ -462,6 +467,7 @@ bool TiLex::run_text(TiLex& obj, TiToken& out, unsigned char ini){
 				obj.buffer.accept();
 			}
 		}
+
 	}
 
 	return true;
@@ -829,6 +835,11 @@ bool TiParser::run_pass_2(TiParser& parser, TiToken& token){
 		} else {
 			parser.output->printStr(parser.memory[0].text,token.text);
 		}
+		parser.state = parser.mem_i = 0;
+
+	} else if ( token.type == TiToken::BINARY ){
+
+		parser.output->printBin(parser.memory[0].text,token.text);
 		parser.state = parser.mem_i = 0;
 
 	} else if ( token.type==TiToken::SYMBOL ){

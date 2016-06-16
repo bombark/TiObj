@@ -96,6 +96,9 @@ class TiToken {
 	static const int     TEXT = 8;
 	static const int  COMMENT = 9;
 	static const int    ERROR = 10;
+	static const int   BINARY = 11;
+
+	//enum Type {UNKNOWN, STRING, INT, DOUBLE, SYMBOL, EMPTY, TEOF, TEXT, COMMENT, ERROR, BINARY}
 
 	int    type;
 	std::string text;

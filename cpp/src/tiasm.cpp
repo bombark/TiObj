@@ -62,6 +62,14 @@ void TiAsm::printStr(std::string name, std::string text){
 	this->putStr(text);
 }
 
+void TiAsm::printBin(std::string name, std::string text){
+	if ( this->now < this->min )
+		return;
+	this->putCmd('m');
+	this->putVarName(name);
+	this->putBin(text);
+}
+
 void TiAsm::printVarObj(std::string name, std::string obj_class){
 	if ( this->now < this->min )
 		return;
@@ -154,7 +162,7 @@ void TiAsm::putStr(std::string in){
 }
 
 
-/*void TiAsm::putBin(std::string in){
+void TiAsm::putBin(std::string in){
 	uint  _size = in.size();
 	char*  size = (char*) &_size;
 
@@ -164,14 +172,14 @@ void TiAsm::putStr(std::string in){
 
 	// this->text += in;
 	for (uint i=0; i<in.size(); i++){
-		this->text += in[i];
+		this->text.push_back( in[i] );
 	}
 
 	uint toalign = _size&0x1;
 	for (uint i=0; i<toalign; i++){
 		this->text.push_back('\0');
 	}
-}*/
+}
 
 /*-------------------------------------------------------------------------------------*/
 

@@ -118,5 +118,10 @@ int main(int argc, char** argv){
 
 
 
+	YAML::Emitter emitter;
+	emitter << YAML::Binary("Hello, World!", 13);
+	std::cout << emitter.c_str();
+
+
 	return 0;
 }

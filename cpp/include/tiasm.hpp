@@ -45,6 +45,7 @@ class TiAsm {
 	void printInt(std::string name, long int a);
 	void printDbl(std::string name, double a);
 	void printStr(std::string name, std::string in);
+	void printBin(std::string name, std::string text);
 	void printVarObj(std::string name, std::string obj_class);
 	void printObj(std::string obj_class);
 	void printRet();
@@ -60,6 +61,7 @@ class TiAsm {
 	void putInt(long int number);
 	void putDbl(double number);
 	void putStr(std::string text);
+	void putBin(std::string in);
 	void putVarName(std::string name);
 
 };

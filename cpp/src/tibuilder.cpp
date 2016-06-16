@@ -29,6 +29,7 @@
  * i: return Class
  * j: new Vector
  * l: return Vector
+ * m: Attr + Size + Binary
  *--------------------------------------------------------------------------------------*/
 
 
@@ -95,7 +96,7 @@ bool build_tiasm_str(_TiObj& out, const char* data, size_t total){
 			size = *((short*) &data[i+2]);
 			name = &data[i+4];
 			i += 4 + (size+1)&0xFFFFFFFE;
-			size = *((int*) &data[i]);
+			size = *((unsigned*) &data[i]);
 			s_val = &data[i+4];
 
 			cur->set(name, s_val);
@@ -151,6 +152,15 @@ bool build_tiasm_str(_TiObj& out, const char* data, size_t total){
 			} else
 				cur = &out;
 			i += 2;
+
+		} else if ( cmd == 'm' ){
+			size = *((short*) &data[i+2]);
+			name = &data[i+4];
+			i += 4 + (size+1)&0xFFFFFFFE;
+			size = *((unsigned*) &data[i]);
+			s_val = &data[i+4];
+			cur->setBinary(name, (char*)s_val, size);
+			i += 4 + ((size+1)&0xFFFFFFFE);
 
 		} else {
 
