@@ -67,8 +67,6 @@ TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 
 /*=====================================================================================*/
 
-TiVarPkg::TiVarPkg(){
-}
 
 
 void TiVarPkg::clear(){
@@ -142,7 +140,7 @@ TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 		aux->setBinary(ptr,size);
 		return *aux;
 	} else {
-		TiVar* var = new TiVar();
+		TiVar* var = new TiVar;
 		var->setBinary(ptr,size);
 		var->name = name;
 		this->insert ( this->begin()+order_pos, var );

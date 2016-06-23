@@ -11,6 +11,8 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 
 using namespace std;
 
@@ -45,27 +47,27 @@ int main(int argc, char** argv){
 	}
 
 	pthread_t id;
-	string name, url, base;
+	string name, url, base_url;
 	ofstream file;
 	mkdir("tmp",0755);
 	name = argv[1];
-	base = "../tests/" + name + ".ti";
+	base_url = "../tests/" + name + ".ti";
+
+	TiObj base( false, base_url );
+
 
 	cout << "Testing loading TiOn speed " << base << endl;
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
-		TiObj b(true, base);
+		TiObj b(true, base_url);
 		G_i += 1;
 	}
 
 
 	url  = "tmp/"+name+".ti";
 	cout << "Testing loading TiOs speed " << url << endl;
-	TiObj c(false, base);
-	file.open ( url );
-	file << c.toAsm();
-	file.close();
+	base.save(url, "binary");
 
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
@@ -77,11 +79,7 @@ int main(int argc, char** argv){
 
 	url  = "tmp/"+name+".json";
 	cout << "Testing loading Json speed " << url << endl;
-	TiObj d(false, base);
-	file.open ( url );
-	file << d.toJson();
-	file.close();
-
+	base.save(url, "json");
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
@@ -92,7 +90,7 @@ int main(int argc, char** argv){
 		size_t size = json_file.tellg();
 		std::string buffer(size, ' ');
 		json_file.seekg(0);
-		json_file.read(&buffer[0], size); 
+		json_file.read(&buffer[0], size);
 		json_file.close();
 		root = json_loads(buffer.c_str(), 0, &error);
 		json_decref(root);
@@ -102,13 +100,8 @@ int main(int argc, char** argv){
 
 
 	url  = "tmp/"+name+".yaml";
-	cout << "Testing loading Yaml speed " << url << endl;
-	TiObj e(false, base);
-	
-	file.open ( url );
-	file << e.toYaml();
-	file.close();
-	
+	cout << "Testing loading Yaml::OpenCv speed " << url << endl;
+	base.save(url, "yaml");
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
@@ -117,11 +110,15 @@ int main(int argc, char** argv){
 	}
 
 
-
-	YAML::Emitter emitter;
-	emitter << YAML::Binary("Hello, World!", 13);
-	std::cout << emitter.c_str();
-
+	url  = "tmp/"+name+".yaml";
+	cout << "Testing loading Yaml::Yaml speed " << url << endl;
+	base.save(url, "yaml");
+	G_continue = true;
+	pthread_create(&id, NULL, &terminator, NULL);
+	while ( G_continue ){
+		YAML::Node config = YAML::LoadFile( url );
+		G_i += 1;
+	}
 
 	return 0;
 }

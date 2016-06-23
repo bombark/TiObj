@@ -124,7 +124,7 @@ void TiAsm::putVarName(std::string name){
 	}
 	this->text += name;
 	this->text.push_back('\0');
-	uint toalign = _size&0x1;
+	uint toalign = (4 - (_size&0x3)&0x3);
 	for (uint i=0; i<toalign; i++){
 		this->text.push_back('\0');
 	}
@@ -155,7 +155,7 @@ void TiAsm::putStr(std::string in){
 	this->text += in;
 
 	this->text.push_back('\0');
-	uint toalign = _size&0x1;
+	uint toalign = (4 - (_size&0x3)&0x3);
 	for (uint i=0; i<toalign; i++){
 		this->text.push_back('\0');
 	}

@@ -1,6 +1,6 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,9 @@ using namespace std;
 
 
 _TiObj _TiObj::ObjNull;
+TiPool<_TiObj> _TiObj::pool;
+
+void tibuilder (TiBuffer& buffer, _TiObj* obj);
 
 /*-------------------------------------------------------------------------------------*/
 
@@ -45,12 +48,12 @@ _TiObj _TiObj::ObjNull;
 /*=====================================================================================*/
 
 TiObj::TiObj(){
-	_TiObj* novo = new _TiObj();
+	_TiObj* novo = new _TiObj;
 	this->ptr.reset(novo);
 }
 
 TiObj::TiObj(bool is_lock, std::string filename){
-	_TiObj* novo = new _TiObj();
+	_TiObj* novo = new _TiObj;
 	novo->loadFile(filename, is_lock);
 	this->ptr.reset(novo);
 }
@@ -75,7 +78,7 @@ TiObj::TiObj(int a){
 /*=====================================================================================*/
 
 _TiObj::_TiObj(){
-	this->classe = "";
+//cout << "create " << id << " " << sizeof(_TiObj) << endl;
 }
 
 _TiObj::_TiObj(const char* text){
@@ -101,17 +104,15 @@ int _TiObj::loadText(const char* text){
 	this->clear();
 	if ( text == NULL )
 		return 0;
-	string buffer;
-	parseText(buffer, text);
-	build_tiasm(*this, buffer);
+	TiBufferText buffer(text);
+	tibuilder( buffer, this );
 	return 1;
 }
 
 int _TiObj::loadText(std::string text){
 	this->clear();
-	string buffer;
-	parseText(buffer, text);
-	build_tiasm(*this, buffer);
+	TiBufferText buffer(text);
+	tibuilder( buffer, this );
 	return 1;
 }
 
@@ -119,7 +120,14 @@ int _TiObj::loadText(std::string text){
 
 int _TiObj::loadFile(FILE* fd, bool is_lock){
 	this->clear();
-	string buffer;
+
+	TiBufferFile buffer(fd);
+	tibuilder( buffer, this );
+
+
+
+
+	/*string buffer;
 //cerr << "load " << is_lock << endl;
 	if ( is_lock ){
 //cerr << "load_lock_b\n";
@@ -132,7 +140,7 @@ int _TiObj::loadFile(FILE* fd, bool is_lock){
 	} else {
 		parseFileFd(buffer, fd);
 	}
-	build_tiasm(*this, buffer);
+	build_tiasm(*this, buffer);*/
 
 //cerr << this->atInt("rows") << endl;
 
@@ -148,19 +156,24 @@ int _TiObj::loadFile(string filename, bool is_lock){
 		this->set("file", filename);
 		return 0;
 	}
-
 	this->loadFile(fd,is_lock);
-
 	fclose(fd);
 	return 1;
 }
 
-int  _TiObj::saveFile(string filename, bool is_lock){
+int  _TiObj::saveFile(string filename, string format, bool is_lock){
 	string aux;
-	this->encode(aux, 0, true, false);
-
+	if ( format == "ti" ){
+		this->encode(aux, 0, true, false);
+	} else if ( format == "binary" ){
+		aux = this->toAsm();
+	} else if ( format == "yaml" ){
+		aux = this->toYaml();
+	} else if ( format == "json" ){
+		aux = this->toJson();
+	}
+	
 	if ( is_lock ){
-//cerr << "save_lock_b\n";
 		FILE* fd = fopen(filename.c_str(), "a");
 		assert(fd);
 		flock( fileno(fd), LOCK_EX );
@@ -168,18 +181,16 @@ int  _TiObj::saveFile(string filename, bool is_lock){
 		fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
 		flock( fileno(fd), LOCK_UN);
 		fclose(fd);
-		
-//cerr << "save_lock_e\n";
 	} else {
 		FILE* fd = fopen(filename.c_str(), "w");
 		assert(fd);
 		fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
 		fclose(fd);
 	}
-
-
 	return 1;
 }
+
+
 
 
 TiVar& _TiObj::at(string name, bool create){
@@ -228,7 +239,7 @@ void _TiObj::setText(string name, string strtype, string text){
 }
 
 void _TiObj::setObj(std::string name, std::string text){
-	_TiObj* novo = new _TiObj();
+	_TiObj* novo = new _TiObj;
 	novo->loadText(text);
 	this->var.push( novo, name );
 }
@@ -614,14 +625,14 @@ ostream& operator<<(ostream& os, TiObjPkg& box){
 
 
 
-TiStream::TiStream(FILE* fd){
-	this->parser.output->min = 1;
-	this->parser.loadFile(fd);
-}
+/*TiStream::TiStream(FILE* fd){
+	//this->parser.output->min = 1;
+	//this->parser.loadFile(fd);
+}*/
 
 
-bool TiStream::next(TiObj& out){
-	if ( this->parser.isGood() ){
+//bool TiStream::next(TiObj& out){
+	/*if ( this->parser.good() ){
 
 		parser.parseStream();
 
@@ -638,8 +649,8 @@ bool TiStream::next(TiObj& out){
 			return false;
 		return true;
 	}
-	return false;
-}
+	return false;*/
+//}
 
 
 

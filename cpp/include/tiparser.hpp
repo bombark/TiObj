@@ -1,11 +1,11 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,218 +18,199 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-/*=====================================================================================*/
-
 #pragma once
 
-#include <string>
-#include <sys/types.h>     // include type uint
-#include "tiasm.hpp"
+#include <iostream>
+#include <stdio.h>
+#include <vector>
 
-extern "C" bool parseFile(std::string& out, std::string filename);
-extern "C" bool parseFileFd(std::string& out, FILE* fd);
-extern "C" bool parseText(std::string& out, std::string text);
-
-/*-------------------------------------------------------------------------------------*/
+class TiParser;
 
 
 
-/*=====================================================================================*/
-
-class TiBuffer {
-  public:
-	bool  isEof, isClose;
-	uint  size, max, cursor, line;
-	char* text;
-	FILE* fd;
-
-  public:
-	TiBuffer();
-	TiBuffer(std::string text);
-	~TiBuffer();
-
-	void loadFile(FILE* fd, uint buffersize=4096);
-	void loadText(std::string text);
-
-	inline bool next(unsigned char& out){
-		bool c = this->read(out);
-		this->accept();
-		return c;
-	}
-
-	inline bool read(unsigned char& out){
-		if ( !isEof ){
-			out = this->text[cursor];
-			return true;
-		} else {
-			out = '\0';
-			return false;
-		}
-	}
-
-	inline void accept(){
-		if ( this->text[cursor] == '\n' )
-			this->line += 1;
-		this->cursor += 1;
-		this->load();
-	}
-
-private:
-	void load();
-};
-
-/*-------------------------------------------------------------------------------------*/
-
-
-
-/*=====================================================================================*/
 
 class TiToken {
   public:
-	static const int  UNKNOWN = 0;
-	static const int   STRING = 1;
-	static const int      INT = 2;
-	static const int   DOUBLE = 3;
-	static const int   SYMBOL = 4;
-	static const int    EMPTY = 6;
-	static const int     TEOF = 7;
-	static const int     TEXT = 8;
-	static const int  COMMENT = 9;
-	static const int    ERROR = 10;
-	static const int   BINARY = 11;
+	enum Type {UNKNOWN, STRING, INT, DOUBLE, SYMBOL, EMPTY, END, TEXT, COMMENT, ERROR, BINARY};
 
-	//enum Type {UNKNOWN, STRING, INT, DOUBLE, SYMBOL, EMPTY, TEOF, TEXT, COMMENT, ERROR, BINARY}
-
-	int    type;
+	Type type;
 	std::string text;
 	std::string error;
 	std::string aux;
+	union {
+		char symbol;
+		long int num;
+		double   dbl;
+	};
+	std::vector<char> bin;
 
 	TiToken();
-
-	inline void operator=(TiToken& token){
-		// Wrong - the program executes a new malloc
-		//this->text = token.text;
-		// Correct
-		this->text.clear();
-		this->text.append(token.text);
-		this->type  = token.type;
-	}
-
-	std::string write();
 };
 
-/*-------------------------------------------------------------------------------------*/
 
 
 
-/*=====================================================================================*/
+
+
+class TiBuffer{
+  public:
+	size_t line;
+	unsigned char prev,last;
+	bool is_good;
+
+	inline  bool good(){return is_good;}
+	virtual bool next(){}
+	virtual int  readInt(){}
+	virtual std::string readStr(unsigned size){return std::string();}
+	virtual std::vector<char> read(size_t size){return std::vector<char>();}
+};
+
+
+
+
+
+
+class TiBufferText : public TiBuffer {
+	std::string text;
+	size_t cursor;
+
+  public:
+	TiBufferText(std::string text);
+	bool next();
+	//std::vector<char> read(size_t size);
+};
+
+
+
+
+#define TIBUFFERFILE_SIZE 4096
+
+class TiBufferFile : public TiBuffer {
+	FILE* fd;
+	char buffer[TIBUFFERFILE_SIZE];
+	size_t cursor, size, max, already_read;
+
+  public:
+	TiBufferFile(FILE* fd);
+	bool next();
+	int  readInt();
+	std::string readStr(unsigned size);
+	std::vector<char> read(size_t size);
+
+  private:
+	bool load();
+};
+
+
+
+
+
+
+
+
 
 class TiLex {
-	unsigned int  line;
-	unsigned char lastsymbol;
+	friend TiParser;
 
-	bool (*runpkg[9])(TiLex& obj, TiToken& out, unsigned char ini);
-
-  public:
-	unsigned char symbols[256];
-	TiBuffer buffer;
-
-	static const int  L_UNKNOWN = 0;
-	static const int     L_CHAR = 1;
-	static const int      L_INT = 2;
-	static const int     L_ASPA = 3;
-	static const int     L_SYMB = 4;
-	static const int      L_DEL = 5;	// Delete
-	static const int     L_TEXT = 6;
-	static const int     L_LCMT = 7;	// Comment Line
-	static const int      L_EOF = 8;
+  private:
+	TiBuffer* buffer;
+	TiToken out;
 
   public:
-	TiLex();
+	enum CharType {UNKNOWN, CHAR, INT, ASPA, SYMB, DEL, TEXT, COMMENT, END};
+	static unsigned char symbols[256];
 
-	inline void loadFile(FILE* fd){
-		buffer.loadFile(fd);
-	}
+  public:
+	void load(TiBuffer* buffer);
+	bool next();
 
-	inline void loadText(std::string text){
-		buffer.loadText(text);
-	}
+	inline size_t getLine(){return buffer->line;}
+	inline bool good(){return buffer->good();}
 
-	bool next(TiToken& out);
-
-	inline unsigned int getLine(){
-		return buffer.line;
-	}
-
-	inline bool isGood(){
-		return !buffer.isEof;
-	}
-
-private:
-	static bool run_unknown(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_symb(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_char(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_aspa(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_int(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_none(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_text(TiLex& obj, TiToken& out, unsigned char ini);
-	static bool run_lcmt(TiLex& obj, TiToken& out, unsigned char ini);
+  public:
+	static bool run_unknown(TiLex& lex);
+	static bool run_char(TiLex& lex);
+	static bool run_int(TiLex& lex);
+	static bool run_aspa(TiLex& lex);
+	static bool run_symb(TiLex& lex);
+	static bool run_text(TiLex& lex);
+	static bool run_comment(TiLex& lex);
 };
 
-/*-------------------------------------------------------------------------------------*/
 
 
 
 /*=====================================================================================*/
+
+class TiEvent{
+  public:
+	enum Type { ERROR, ATTR_INT, ATTR_DBL, ATTR_STR, ATTR_TEXT, ATTR_BIN, ATTR_OBJ };
+
+	int type;
+	std::string attr_name;
+	std::string str;
+	std::string text;
+	union {
+		long int num;
+		double   dbl;
+	};
+	std::vector<char> bin;
+};
+
 
 class TiParser {
 	TiLex lex;
-	char translate[256];
-	TiToken memory[2];
+	std::string mem[2];
 	int mem_i, state, nivel;
 	bool isEndObj;
 
   public:
-	TiAsm* output;
+	TiEvent out;
+	//TiParser();
+	//~TiParser();
 
 
-  public:
-	TiParser();
-	~TiParser();
+	void load(TiBuffer* buffer);
 
-  private: TiParser(TiParser& up_parser);
-
-  public:
-	inline void clear(){this->output->start();}
-
-	void parseFile(std::string filename);
-
-	inline void loadFile(FILE* fd){
-		lex.loadFile(fd);
-	}
-
-	inline void loadText(std::string text){
-		lex.loadText(text);
-	}
-
-	bool parse();
-	bool parseStream();
-	inline bool isGood(){
-		return this->lex.isGood();
-	}
 
   private:
-	void init();
+	//TiParser(TiParser& up_parser);
+
+  public:
+	//void parseFile(std::string filename);
+
+
+	bool next();
+
+	//inline void loadFile(FILE* fd){lex.loadFile(fd);}
+	//inline void loadText(std::string text){lex.loadText(text);}
+	inline bool good(){return this->lex.good();}
+
+  public:
+	static bool run_error(TiParser& pr);
+
+	static bool run_int_2(TiParser& pr);
+	static bool run_dbl_2(TiParser& pr);
+
+	static bool run_string_0(TiParser& pr);
+	static bool run_string_2(TiParser& pr);
+
+	static bool run_text_0(TiParser& pr);
+	static bool run_text_2(TiParser& pr);
+
+	static bool run_symbol_0(TiParser& pr);
+	static bool run_symbol_1(TiParser& pr);
+	static bool run_symbol_3(TiParser& pr);
+
+	static bool run_binary_2(TiParser& pr);
+	/*void init();
 	void error(std::string msg);
 	static bool run_pass_0(TiParser& parser, TiToken& token);
 	static bool run_pass_1(TiParser& parser, TiToken& token);
 	static bool run_pass_2(TiParser& parser, TiToken& token);
-	static bool run_pass_3(TiParser& parser, TiToken& token);
+	static bool run_pass_3(TiParser& parser, TiToken& token);*/
 
 	//TiVet* parseVector();
 };
 
 /*-------------------------------------------------------------------------------------*/
-
-

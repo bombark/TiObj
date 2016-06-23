@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project ("libtiobj")
 set(CMAKE_BUILD_TYPE RELEASE)
-set(CMAKE_CXX_FLAGS "-std=c++11 -O2")
+set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -O3")
 
 
 add_library (tiobj SHARED "src/join.cpp" "src/tiasm.cpp" "src/tistream.cpp" "src/tivar.cpp" "src/tiparser.cpp" "src/tiobj.cpp" "src/tiasm.cpp" "src/tivarpkg.cpp" "src/tibuilder.cpp" )
@@ -18,11 +18,14 @@ add_executable(test_parser "tests/test_parser.cpp")
 target_link_libraries(test_parser tiobj)
 
 add_executable(test_speed "tests/test_speed.cpp")
-target_link_libraries(test_speed tiobj pthread jansson ${OpenCV_LIBS})
+target_link_libraries(test_speed tiobj pthread jansson ${OpenCV_LIBS} yaml-cpp)
 
 
 add_executable(test_cv "tests/test_cv.cpp")
 target_link_libraries(test_cv tiobj ${OpenCV_LIBS})
+
+add_executable(test_basic "tests/basic.cpp")
+target_link_libraries(test_basic tiobj ${OpenCV_LIBS})
 
 
 add_executable("foreach" "tests/foreach.cpp")

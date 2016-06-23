@@ -5,7 +5,7 @@
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,7 +16,7 @@
  *  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
- 
+
 
 /*=====================================================================================*/
 
@@ -30,6 +30,8 @@
 using namespace std;
 
 TiVar TiVar::ObjNull(0);
+
+TiPool<TiVar> TiVar::pool;
 
 /*
 	Nao colocar o TiVar em uma estrutura de vector<TiVar>, pois para cada realocação
@@ -122,6 +124,17 @@ void TiVar::operator=(TiObj obj){
 }
 
 
+void TiVar::operator=(std::vector<char>& bin){
+	if ( this->isNull() )
+		return;
+	if ( this->isObj() ){
+		this->removeObject();
+	}
+	this->type = TiVar::BINARY;
+	this->bin  = bin;
+}
+
+
 void TiVar::setBinary(void* ptr, size_t size){
 	if ( this->isNull() )
 		return;
@@ -129,11 +142,11 @@ void TiVar::setBinary(void* ptr, size_t size){
 		this->removeObject();
 	}
 	this->type   = TiVar::BINARY;
-	
+
 	//printf("%p %d\n", ptr, size);
-	
+
 	string buf((const char*)ptr, size);
-	
+
 	//printf("%p\n", buf.data());
 	this->str = buf;
 }
@@ -165,15 +178,23 @@ std::string TiVar::toString(){
 		else
 			return "<|" + this->str + "|>";
 	} else if (this->isInt() ){
-		return std::to_string(this->num); 
+		return std::to_string(this->num);
 	} else if (this->isDbl() ){
-		return std::to_string(this->dbl); 
+		return std::to_string(this->dbl);
 	} else if (this->isObj() ){
 		return this->objptr.encode(0,true);
 	} else if (this->isVet() ){
 
 	} else if ( this->isBin() ){
-		return "<" + to_string(this->str.size()) + "|" + this->str + "\n";
+		string res;
+		res += '<';
+		res += to_string(this->bin.size());
+		res += '|';
+		for (size_t i=0; i<this->bin.size(); i++){
+			res.push_back( this->bin[i] );
+		}
+		res.push_back('\n');
+		return res;
 	}
 }
 
@@ -191,15 +212,15 @@ void TiVar::encode(std::string& out, int tab){
 		out += this->toString();
 		out += ";\n";
 	} else if (this->isInt() ){
-		out += std::to_string(this->num); 
+		out += std::to_string(this->num);
 		out += ";\n";
 	} else if (this->isDbl()){
-		out += std::to_string(this->dbl); 
+		out += std::to_string(this->dbl);
 		out += ";\n";
 	} else if ( this->isObj() ){
 		this->objptr.encode(out, tab,false);
 	} else if (this->isVet() ){
-		
+
 	} else if ( this->isBin() ){
 		out += this->toString();
 	}
@@ -244,12 +265,12 @@ void TiVar::toJson(std::string& out){
 		out += "\"";
 		out += this->name;
 		out += "\":";
-		out += std::to_string(this->num); 
+		out += std::to_string(this->num);
 	} else if (this->isDbl()){
 		out += "\"";
 		out += this->name;
 		out += "\":";
-		out += std::to_string(this->dbl); 
+		out += std::to_string(this->dbl);
 	} else if ( this->isObj() ){
 		out += "\"";
 		out += this->name;
@@ -268,11 +289,11 @@ void TiVar::toYaml(std::string& out){
 	} else if (this->isInt() ){
 		out += this->name;
 		out += " : ";
-		out += std::to_string(this->num); 
+		out += std::to_string(this->num);
 	} else if (this->isDbl()){
 		out += this->name;
 		out += " : ";
-		out += std::to_string(this->dbl); 
+		out += std::to_string(this->dbl);
 	} else if ( this->isObj() ){
 		out += this->name;
 		out += " : ";

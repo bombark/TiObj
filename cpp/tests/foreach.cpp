@@ -17,7 +17,7 @@ int main(int argc, char** argv){
 		cmd += argv[i];
 	}
 
-	TiObj obj;
+	/*TiObj obj;
 	TiStream stream(stdin);
 	while ( stream.next(obj) ){
 		cout << obj;
@@ -27,6 +27,6 @@ int main(int argc, char** argv){
 			setenv( var.name.c_str(), var.Str().c_str(), true );
 		}
 		system( cmd.c_str() );*/
-	}
+	//}
 	return 0;
 }

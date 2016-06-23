@@ -2,112 +2,88 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv2/core/core.hpp>
+#include <fstream>
+
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 
-#include "../include/tiparser.hpp"
 #include "../include/tiobj.hpp"
 
 using namespace std;
 using namespace  cv;
 
-void teste(string a){
-	string res;
-	parseFile(res, a);
-	cout << res;
-}
+
+volatile size_t G_i = 0;
 
 
-void teste2(){
-	TiObj obj;
-	obj.create();
-	
-	obj["name"] = "Felipe";
-	obj.set("idade", 10);
-	obj.set("ano", 1.222);
-	
-	
-	TiObj aux;
-	aux.create();
-	aux["name"] = "Clovis";
-	aux["idade"] = 61;
-	obj["pai"] = aux;
-	
-	obj.box() += aux;
-	cout << obj;
-	
-	//TiVet* var = &obj.var();
-}
-
-
-
-void operator<<(TiObj a, string b){
-	a.box() += TiObj(b);
-}
-
-void operator<<(TiObj a, Mat& img){
-	a.clear();
-	a.classe() = "Mat:Cv";
-	a.set("rows", img.rows);
-	a.set("cols", img.cols);
-	a.set("step", (long int)img.step[0]);
-	a.set("type", img.type());
-	if ( img.type() == CV_8UC1 ){
-		//buf.set("type", "char");
-		a.set("channels", 1);
-	} else if ( img.type() == CV_8UC2 ){
-		//buf.set("type", "char");
-		a.set("channels", 2);
-	} else if ( img.type() == CV_8UC3 ){
-		//buf.set("type", "char");
-		a.set("channels", 3);
-	} else if ( img.type() == CV_32S ){
-		//buf.set("type", "int");
-		a.set("channels", 1);
-	} else if ( img.type() == CV_32F ){
-		//buf.set("type", "float");
-		a.set("channels", 1);
+void* terminator(void* ){
+	unsigned total=0;
+	unsigned secs = 5;
+	for (unsigned i=0; i<secs; i++){
+		sleep(1);
+		size_t cont = G_i;
+		fprintf(stderr, "opaaaa %ld\n", cont);
+		total += cont;
+		G_i = 0;
 	}
-	a.setBinary("data", img.data, img.rows*img.step[0] );
+	fprintf(stderr, "media: %f\n", total/(double)secs);
+	return NULL;
 }
 
 
 
-
+#include <sys/stat.h>
 
 int main(int argc, char** argv){
-	TiObj b;
+	//TiObj a, b,c;
 
-	Mat img;
+	/*TiObj b;
+	b.load("../tests/var_1000.ti");
+
+	ofstream file;
+	file.open ( "tmp/var_1000.ti" );
+	file << b.toAsm();
+	file.close();*/
+
+	TiObj b;
+	b.load("../tests/test01.ti");
+	cout << b;
+
+	//cout << b;
+
+	/*Mat img;
 	img = imread("image.jpg");
 
 	b.create();
 	b << img;
-	cout << b;
+	cout << b;*/
 
 
 
 	//string a = argv[1];
-	
+
 	/*TiObj obj;
 	TiStream stream(stdin);
 	while ( stream.next(obj) ){
 		//cout << obj << endl;
 	}*/
-	
-	
+
+
 	/*TiParser parser;
-	
+
 	parser.loadFile(stdin);
 	parser.output->min = 1;
-	
+
 	_TiObj* a = new _TiObj();
 	while ( parser.isGood() ){
 		parser.parseStream();
 		cout << parser.output->text << endl;
-		
+
 		a->clear();
 		build_tiasm(*a, parser.output->text);
-		
+
 		string aux;
 		a->encode(aux,0,false,false);
 		cout << aux;
@@ -116,9 +92,9 @@ int main(int argc, char** argv){
 	//cout << obj.length() << endl;
 	//cout << obj.size() << endl;
 	//obj.tiasm();
-	
+
 	//cout << obj;
-	
+
 	//teste(a);
 	//teste(a);
 	//teste(a);

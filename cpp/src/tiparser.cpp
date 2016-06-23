@@ -1,903 +1,631 @@
-/*  This file is part of Library TiObj.
- *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
- *
- *  TiObj is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Foobar is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-
-/*===================================== INCLUDE =======================================*/
-
 #include "../include/tiparser.hpp"
-#include <string.h>
+#include <iostream>
 #include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>     // toupper()
-#include <functional>  // std::function
+#include <vector>
+#include <functional>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
 
 using namespace std;
 
-/*-------------------------------------------------------------------------------------*/
+#define QTDE_STATES 4
+#define QTDE_TYPES  10
 
-
-/*===================================== UTIL =======================================*/
-
-void addslashes(std::string& out, std::string& src){
-	out = "";
-	for (size_t i=0;i<src.size(); i++){
-		if ( src[i] == '\n' ){
-			out += "\\n";
-		} else if ( src[i] == '\t' ){
-			out += "\\t";
-		} else
-			out += src[i];
-	}
-}
+unsigned char TiLex::symbols[256];
+function< bool(TiLex&) > tilex_run[8];
+std::function<bool(TiParser&)> tiparser_run[QTDE_STATES][QTDE_TYPES];
 
 /*-------------------------------------------------------------------------------------*/
-
-
-/*===================================== Lib - API =====================================*/
-
-TiParser G_parser;
-
-bool parseFile(std::string& out, std::string filename){
-	FILE* fd = fopen(filename.c_str(),"r");
-	if ( !fd ){
-		return false;
-	}
-	bool res = parseFileFd(out, fd);
-	fclose(fd);
-	return res;
-}
-
-#include <iostream>
-
-bool parseFileFd(std::string& out, FILE* fd){
-	char ass[4];
-	G_parser.clear();
-	G_parser.loadFile(fd);
-	G_parser.parse();
-	out = G_parser.output->text;
-	return true;
-}
-
-bool parseText(string& out, string text){
-	G_parser.clear();
-	G_parser.loadText(text);
-	G_parser.parse();
-	out = G_parser.output->text;
-	return true;
-}
-
-/*--------------------------------------------------------------------------------------*/
-
-
-
-/*===================================== TiBuffer ======================================*/
-
-TiBuffer::TiBuffer(){
-	this->size    = 0;
-	this->fd      = NULL;
-	this->cursor  = 0;
-	this->text    = NULL;
-	this->isClose = false;
-	this->isEof   = true;
-}
-
-TiBuffer::TiBuffer(std::string text){
-	this->max  = 0;
-	this->text = NULL;
-	this->loadText(text);
-	this->isClose = false;
-	this->isEof   = true;
-}
-
-
-TiBuffer::~TiBuffer(){
-	if ( this->max > 0 && this->text != NULL)
-		free(this->text);
-	if ( this->isClose )
-		fclose(fd);
-}
-
-void TiBuffer::loadFile(FILE* fd, uint buffersize){
-	this->isClose = false;
-	this->isEof  = false;
-	this->size   = 0;
-	this->cursor = 0;
-	if ( this->text ){
-		if (buffersize > this->max){
-			free(this->text);
-			this->text = (char*) malloc(buffersize);
-			this->max  = buffersize;
-		}
-	} else {
-		this->text = (char*) malloc(buffersize);
-		this->max  = buffersize;
-	}
-	this->fd = fd;
-	this->load();
-	this->line = 1;
-}
-
-void TiBuffer::loadText(std::string text){
-	this->isClose = false;
-	this->fd     = NULL;
-	this->cursor = 0;
-	if ( text.size() == 0 ){
-		this->isEof  = true;
-		this->size   = 0;
-		return;
-	}
-	this->isEof  = false;
-	uint size = text.size();
-	if ( this->text ){
-		if (size > this->max){
-			free(this->text);
-			this->text = (char*) malloc(size);
-		}
-	} else {
-		this->text = (char*) malloc(size);
-	}
-	this->size = size;
-	this->max  = size;
-	strncpy(this->text, text.c_str(), size);
-	this->line = 1;
-}
-
-
-void TiBuffer::load(){
-	if ( this->cursor >= this->size ){
-		if ( this->fd == NULL){
-			this->isEof = true;
-			return;
-		} else {
-			if ( !feof(this->fd) ){
-				this->size   = fread(this->text, 1, this->max, this->fd);
-				this->cursor = 0;
-				if ( this->size == 0 ){
-					this->isEof = true;
-					return;
-				}
-			} else {
-				this->isEof = true;
-				return;
-			}
-		}
-	}
-}
-
-
-/*-------------------------------------------------------------------------------------*/
-
-
-
-/*====================================== TiToken ======================================*/
 
 
 TiToken::TiToken(){
-	this->text.reserve(256);
-	this->error.reserve(128);
-	this->aux.reserve(128);
 }
 
 
-std::string TiToken::write(){
-	string res, aux;
-	if ( type == TiToken::UNKNOWN )
-		res = "UNKNOWN";
-	else if ( type == TiToken::STRING )
-		res = "STRING ";
-	else if ( type == TiToken::INT )
-		res = "INT    ";
-	else if ( type == TiToken::DOUBLE )
-		res = "DOUBLE ";
-	else if ( type == TiToken::SYMBOL )
-		res = "SYMBOL ";
-	else if ( type == TiToken::TEOF ){
-		return "EOF\n";
-	} else if ( type == TiToken::TEXT ){
-		res = "TEXT   ";
-	} else if ( type == TiToken::COMMENT ){
-		res = "COMMENT";
-	} else if ( type == TiToken::ERROR ){
-		res = "ERROR  ";
+
+TiBufferText::TiBufferText(std::string text){
+	this->cursor = -1;
+	this->line   = 1;
+	this->text   = text;
+	this->is_good = text.size()>0;
+	this->last = '\0';
+}
+
+
+bool TiBufferText::next() {
+	this->prev = this->last;
+	if ( this->last == '\n' )
+		this->line += 1;
+	this->cursor += 1;
+	this->is_good = this->cursor < this->text.size();
+	this->last = this->is_good? this->text[ this->cursor ] : '\0';
+	return this->is_good;
+}
+
+
+
+
+
+
+
+
+
+
+
+TiBufferFile::TiBufferFile(FILE* fd) {
+	this->fd = fd;
+	this->is_good = !feof(fd);
+	this->last   = '\0';
+	this->cursor = 0;
+	this->size   = 0;
+	this->already_read = 0;
+
+	struct stat st;
+	int error = fstat(fileno(fd), &st);
+	this->max = st.st_size;
+	this->next();
+}
+
+
+bool TiBufferFile::next() {
+	bool ret = this->load();
+	this->prev = this->last;
+	this->last = this->buffer[this->cursor];
+	if ( this->last == '\n' )
+		this->line += 1;
+	this->cursor+=1;
+	return ret;
+}
+
+
+
+int TiBufferFile::readInt(){
+	int num;
+	int size_num = sizeof(int);
+	unsigned in_buffer = this->size - this->cursor;
+	if ( size_num <= in_buffer ){
+		num = *((int*)(this->buffer + this->cursor));
+		this->cursor += size_num;
+		return num;
+	} else {
+		if ( this->load() ){
+			num = *((int*)(this->buffer + this->cursor));
+			this->cursor += size_num;
+			return num;
+		}
+		return 0;
 	}
-	addslashes(aux, this->text);
-	res += ": " + aux;
+}
+
+
+std::string TiBufferFile::readStr(unsigned size){
+	string res;
+	res.resize(size);
+	unsigned in_buffer = this->size - this->cursor;
+	if ( size <= in_buffer ){
+		memcpy((void*)res.c_str(), this->buffer+this->cursor, size);
+		this->cursor += (size+3)&0xFFFFFFFC;
+	} else {
+		char* dst = (char*)res.c_str();
+		memcpy(dst, this->buffer+this->cursor, in_buffer);
+		this->cursor += in_buffer;
+		size  = (size+3)&0xFFFFFFFC - in_buffer;
+		dst  += in_buffer;
+		if ( size > TIBUFFERFILE_SIZE ){
+			fread(dst, 1, size, fd);
+		} else {
+			if ( this->load() ){
+				memcpy(dst, this->buffer, size);
+				this->cursor += size;
+			}
+		}
+	}
 	return res;
 }
 
-/*-------------------------------------------------------------------------------------*/
 
+/*long int TiBufferFile::readLong(){
+	return this->readInt() << 32 + this->readInt();
+}*/
 
+/*void TiBufferFile::read(char* buffer, size_t size){
 
-/*====================================== TiLex ========================================*/
-/* OBSERVACAO: Utilizar o caracter como unsigned char, pois ao encontrar
- * um caracter acima de 128, ele se transforma em negativo e ocasiona segfault
- *
- */
+	unsigned in_buffer = this->size - this->cursor;
+cout << this->cursor << " " << in_buffer << endl;
+	if ( size <= in_buffer ){
+		memcpy(buffer, this->buffer+this->cursor, size);
+		this->cursor += size;
+	} else {
+		memcpy(buffer, this->buffer+this->cursor, in_buffer);
+		this->cursor += in_buffer;
 
-TiLex::TiLex(){
-	for (int i=0; i<256; i++){
-		symbols[i] = L_UNKNOWN;
+		if ( size > TIBUFFERFILE_SIZE ){
+			memcpy(buffer, this->buffer, in_buffer);
+			size_t to_read = size - in_buffer;
+			buffer += in_buffer;
+			fread(buffer, 1, to_read, fd);
+		} else {
+			if ( this->load() ){
+				this->read(buffer,size);
+			}
+		}
 	}
-	for (int i='a'; i<='z'; i++){
-		symbols[i] = L_CHAR;
-	}
-	for (int i='A'; i<='Z'; i++){
-		symbols[i] = L_CHAR;
-	}
-	for (int i='0'; i<='9'; i++){
-		symbols[i] = L_INT;
-	}
-	symbols['\t'] = L_DEL;
-	symbols[' ']  = L_DEL;
-	symbols['=']  = L_SYMB;
-	symbols[':']  = L_CHAR;
-	symbols[';']  = L_SYMB;
-	symbols['.']  = L_SYMB;
-	symbols[',']  = L_SYMB;
-	symbols['(']  = L_SYMB;
-	symbols[')']  = L_SYMB;
-	symbols['{']  = L_SYMB;
-	symbols['}']  = L_SYMB;
-	symbols['[']  = L_SYMB;
-	symbols[']']  = L_SYMB;
-	symbols['<']  = L_TEXT;
-	symbols['>']  = L_SYMB;
-	symbols['#']  = L_LCMT;
-	symbols['\''] = L_ASPA;
-	symbols['\"'] = L_ASPA;
-	symbols['-']  = L_INT;
-	symbols['+']  = L_INT;
-	symbols['_']  = L_CHAR;
-	symbols['@']  = L_CHAR;
-	symbols['$']  = L_CHAR;
-	symbols['&']  = L_CHAR;
-	symbols['!']  = L_CHAR;
-	symbols['*']  = L_SYMB;
-	symbols['\n'] = L_SYMB;
-	lastsymbol = 0;
+}*/
 
-	 
-	runpkg[L_UNKNOWN] = run_unknown;
-	runpkg[L_CHAR]    = run_char;
-	runpkg[L_INT]     = run_int;
-	runpkg[L_ASPA]    = run_aspa;
-	runpkg[L_SYMB]    = run_symb;
-	runpkg[L_DEL]     = run_none;
-	runpkg[L_TEXT]    = run_text;
-	runpkg[L_LCMT]    = run_lcmt;
-	runpkg[L_EOF]     = run_none;
+std::vector<char> TiBufferFile::read(size_t size){
+	vector<char> out;
+	out.resize(size);
+	fread(out.data(), 1, size, fd);
+	return out;
 }
 
 
-bool TiLex::next(TiToken& out){
-	out.text = "";
-	out.type = TiToken::EMPTY;
-	unsigned char c, c1;
-	int type;
+bool TiBufferFile::load(){
+	if ( this->cursor >= this->size ){
+		if ( !feof(this->fd) ){
+			this->size = fread(this->buffer, sizeof(size_t), TIBUFFERFILE_SIZE/sizeof(size_t), this->fd);
+			if ( this->size == 0 ){
+				this->size = fread(this->buffer, 1, TIBUFFERFILE_SIZE, this->fd);
+			} else
+				this->size *= sizeof(size_t);
+			this->cursor = 0;
+			if ( this->size == 0 ){
+				this->is_good = false;
+				return false;
+			}
+		} else {
+			this->is_good = false;
+			return false;
+		}
+	}
+	return this->is_good;
+}
 
-	if ( this->buffer.isEof ){
-		out.type = TiToken::TEOF;
+
+
+
+
+void TiLex::load(TiBuffer* buffer){
+	this->buffer = buffer;
+}
+
+
+bool TiLex::next(){
+	out.type = TiToken::ERROR;
+	if ( !this->buffer->good() ){
+		out.type = TiToken::END;
 		return false;
 	}
 
-	// Remove char without mean as ' ', '\t', ...
-	while ( buffer.next(c) ){
-		type = this->symbols[c];
-		if ( type != L_DEL ){
-			break;
-		}
-	}
-
-	return runpkg[type](*this, out, c);
-}
-
-
-bool TiLex::run_unknown(TiLex& obj, TiToken& out, unsigned char ini){
-	out.text = ini;
-	out.type = TiToken::UNKNOWN;
-	return true;
-}
-
-bool TiLex::run_symb(TiLex& obj, TiToken& out, unsigned char ini){
-	out.text = ini;
-	out.type = TiToken::SYMBOL;
-	return true;
-}
-
-bool TiLex::run_char(TiLex& obj, TiToken& out, unsigned char ini){
-	unsigned char c;
 	int type;
-	out.text = ini;
-	out.type = TiToken::STRING;
-	while ( obj.buffer.read(c) ){
-		type = obj.symbols[c];
-		if ( type == TiLex::L_CHAR || type == TiLex::L_INT ){
-			out.text += c;
+	// Remove char without mean as ' ', '\t', ...
+	do {
+		type = TiLex::symbols[ buffer->last ];
+
+		if ( type != TiLex::DEL )
+			break;
+	} while ( buffer->next() );
+
+	return tilex_run[type](*this);
+}
+
+
+bool TiLex::run_unknown(TiLex& lex){
+	lex.out.type = TiToken::UNKNOWN;
+	lex.out.text = lex.buffer->last;
+	return true;
+}
+
+bool TiLex::run_char(TiLex& lex){
+	lex.out.type = TiToken::STRING;
+	string buf;
+	buf.reserve(32);
+	buf.push_back( lex.buffer->last );
+	while ( lex.buffer->next() ){
+		char c = lex.buffer->last;
+		int type = TiLex::symbols[c];
+		if ( type == TiLex::CHAR || type == TiLex::INT ){
+			buf.push_back(c);
 		} else {
 			break;
 		}
-		obj.buffer.accept();
+	}
+	lex.out.text = buf;
+	return true;
+}
+
+bool TiLex::run_int(TiLex& lex){
+	int i=0;
+	char num[512];
+	lex.out.type = TiToken::INT;
+	num[i] = lex.buffer->last;
+	while ( lex.buffer->next() ){
+		//if ( i >= 512 ){
+			// ELIMINAR O RESTO DO NUMERO ATEH O FIM DA LINHA
+		//}
+		i+=1;
+		char c = lex.buffer->last;
+		int type = TiLex::symbols[c];
+		if ( c == '.' || c == ',' ){
+			lex.out.type   = TiToken::DOUBLE;
+			num[i] = c;
+		} else if ( (c|0x20) == 'e' ){
+			lex.out.type  = TiToken::DOUBLE;
+			num[i] = c;
+		} else if ( type != TiLex::INT ){
+			break;
+		} else
+			num[i] = c;
+
+	}
+	num[i] = '\0';
+
+	if ( lex.out.type == TiToken::DOUBLE ){
+		lex.out.dbl = atof(num);
+	} else {
+		lex.out.num = atol(num);
 	}
 	return true;
 }
 
-bool TiLex::run_aspa(TiLex& obj, TiToken& out, unsigned char ini){
-	out.type = TiToken::STRING;
+
+bool TiLex::run_aspa(TiLex& lex){
 	bool special = false;
-	unsigned char c, aspa = ini;
-	while ( obj.buffer.read(c) ){
+	lex.out.type = TiToken::STRING;
+	unsigned char c, aspa = lex.buffer->last;
+	string buf;
+	buf.reserve(32);
+	while ( lex.buffer->next() ){
+		c = lex.buffer->last;
 		if ( special ){
 			if ( c == 'n' )
-				out.text += '\n';
+				buf += '\n';
 			else if ( c == 't' )
-				out.text += '\t';
+				buf += '\t';
 			else if ( c == '\'' )
-				out.text += '\'';
+				buf += '\'';
 			else if ( c == '\"' )
-				out.text += '\"';
+				buf += '\"';
 			else if ( c == '\\' )
-				out.text += '\\';
+				buf += '\\';
 			else
-				out.text += c;
+				buf += c;
 			special = false;
 		} else if ( c == '\\' ){
 			special = true;
 		} else if ( c == '\n' ){
-			out.error = "Expected a \" to close the string";
-			out.type = TiToken::ERROR;
+			lex.out.error = "Expected a \" to close the string";
+			lex.out.type = TiToken::ERROR;
 			return true;
 		} else if ( c == aspa ){
-			obj.buffer.accept();
+			lex.buffer->next();
 			break;
 		} else
-			out.text += c;
-		obj.buffer.accept();
+			buf += c;
 	}
+	lex.out.text = buf;
 	return true;
 }
 
-bool TiLex::run_int(TiLex& obj, TiToken& out, unsigned char ini){
-	unsigned char c;
-	int type;
-	out.text = ini;
-	out.type = TiToken::INT;
-	while ( obj.buffer.read(c) ){
-		type = obj.symbols[c];
-		if ( c == '.' || c == ',' ){
-			out.type   = TiToken::DOUBLE;
-			out.text += '.';
-		} else if ( c == 'e' || c == 'E' ){
-			out.type   = TiToken::DOUBLE;
-			out.text += 'e';
-		} else if ( type != L_INT ){
-			break;
-		} else
-			out.text += c;
-		obj.buffer.accept();
-	}
+
+
+bool TiLex::run_symb(TiLex& lex){
+	lex.out.type   = TiToken::SYMBOL;
+	lex.out.symbol = lex.buffer->last;
+	lex.buffer->next();
 	return true;
 }
 
-bool TiLex::run_none(TiLex& obj, TiToken& out, unsigned char ini){
-	return false;
-}
 
-bool TiLex::run_text(TiLex& obj, TiToken& out, unsigned char ini){
+bool TiLex::run_text(TiLex& lex){
 	unsigned int level = 1;
-	out.aux  = "";
-	out.text = "";
-	out.type = TiToken::TEXT;
+	string strtype, text;
+	strtype.reserve(32);
+	text.reserve(64);
+
+	lex.out.type = TiToken::TEXT;
 	bool special = false;
 	unsigned char c, c1;
-
-
 	// Get the Text type;
-	out.aux = "";
-	while ( obj.buffer.next(c) ){
+	while ( lex.buffer->next() ){
+		c = lex.buffer->last;
 		if ( c == '|' ){
 			break;
 		} else {
-			out.aux += c;
+			strtype += c;
 		}
 	}
 
-	uint size = atoi(out.aux.c_str());
+	size_t size = atoi(strtype.c_str());
 	if ( size > 0 ){
 		// <int:size|binary:data
-		for(uint i=0; i<size; i++){
-			obj.buffer.next(c);
-			out.text += c;
-		}
-
-
-		out.type = TiToken::BINARY;
-
+		lex.out.type = TiToken::BINARY;
+		lex.out.bin  = lex.buffer->read(size);
 	} else {
 		// <string:type|string:text|>
-		while ( obj.buffer.read(c) ){
+		lex.buffer->next();
+		while ( lex.buffer->good() ){
+			c = lex.buffer->last;
 			if ( special ){
 				if ( c == 'n' )
-					out.text += '\n';
+					text += '\n';
 				else if ( c == 't' )
-					out.text += '\t';
+					text += '\t';
 				else if ( c == '\'' )
-					out.text += '\'';
+					text += '\'';
 				else if ( c == '\"' )
-					out.text += '\"';
+					text += '\"';
 				else if ( c == '\\' )
-					out.text += '\\';
+					text += '\\';
 				else
-					out.text += c;
+					text += c;
 				special = false;
-				obj.buffer.accept();
+				lex.buffer->next();
 			} else if ( c == '\\' ){
 				special = true;
-				obj.buffer.accept();
-
+				lex.buffer->next();
 			} else if ( c == '|' ){
-				obj.buffer.accept();
-				obj.buffer.read(c1);
+				lex.buffer->next();
+				c1 = lex.buffer->last;
 				if ( c1 == '>' ){
-					obj.buffer.accept();
-					level -= 1;
-					if ( level == 0 )
-						break;
-					out.text += "|>";
-				} else
-					out.text += c;
-			} else {
-				out.text += c;
-				obj.buffer.accept();
-			}
-		}
-
-	}
-
-	return true;
-}
-
-bool TiLex::run_lcmt(TiLex& obj, TiToken& out, unsigned char ini){
-	unsigned char c;
-	out.text = ini;
-	out.type = TiToken::COMMENT;
-	while ( obj.buffer.next(c) ){
-		if ( c == '\n' )
-			break;
-		out.text += c;
-	}
-	return true;
-}
-
-/*-------------------------------------------------------------------------------------*/
-
-
-
-
-
-/*=====================================  TiParser  =======================================
- * a: Attr + (4b) int
- * b: Attr + (4b) float
- * c: Attr + text
- * d: Attr + ClassName + text
- * e: Attr + new Object 
- * f: Attr + ClassName + New Object
- * g: New Object
- * h: ClassName + New Object
- * i: return Class
- * j: new Vector
- * l: return Vector
- *--------------------------------------------------------------------------------------*/
-
-
-TiParser::TiParser(){
-	this->init();
-	this->output = new TiAsm();
-}
-
-TiParser::~TiParser(){
-	delete this->output;
-}
-
-
-TiParser::TiParser(TiParser& up_parser){
-	this->init();
-	this->output = up_parser.output;
-}
-
-void TiParser::init(){
-	for (int i=0; i<256; i++){
-		translate[i] = 0;
-	}
-	translate['{'] = 4;
-	translate['}'] = 5;
-	translate['['] = 6;
-	translate[']'] = 7;
-	translate['='] = 8;
-	translate[';'] = 9;
-}
-
-
-
-
-void TiParser::parseFile(std::string filename){
-	FILE* fd = fopen(filename.c_str(), "r");
-	if ( !fd ){
-		this->error( "File '" +filename+ "' not Found" );
-		return;
-	}
-	this->loadFile(fd);
-	this->parse();
-	fclose(fd);
-}
-
-
-
-
-bool TiParser::parse(){
-	unsigned char c = 0;
-	this->lex.buffer.read(c);
-	if ( c == '#' ){
-		this->lex.buffer.accept();
-		char ass[] = {'T','1','V'};
-
-		bool is_asm = true;
-		for (int i=0; i<sizeof(ass); i++){
-			this->lex.buffer.read(c);
-			if ( c != ass[i] ){
-				is_asm = false;
-				break;
-			}
-			this->lex.buffer.accept();
-		}
-		
-		if ( is_asm ){
-			while ( this->lex.buffer.next(c) ){
-				this->output->text += c;
-			}
-			return true;
-		} else {
-			// colocar em uma rotina ( excluir linha )
-			while ( this->lex.buffer.next(c) ){
-				if ( c == '\n' )
+					lex.buffer->next();
 					break;
-			}
-		}
-		return false;
-	}
-
-
-
-	// Init function array and other variables
-	TiToken token;
-	this->mem_i = this->state = this->nivel = 0;
-	std::function<bool(TiParser&, TiToken&)> run[] = {
-		run_pass_0,
-		run_pass_1,
-		run_pass_2,
-		run_pass_3
-	};
-
-	// Run the parser
-	while ( lex.next(token) ){
-		if ( token.type == TiToken::COMMENT)
-			continue;
-		if ( token.type == TiToken::ERROR ){
-			//cout << this->state << " : " << token.write() << endl;
-			this->error( token.error );
-			return false;
-		}
-
-		bool ok = run[this->state](*this, token);
-		//cout << this->state << " : " << token.write() << endl;
-		if ( !ok ){
-			return false;
-		}
-	}
-
-	// Execute the strings in the buffer
-	if ( this->state > 0 ){
-		token.text = "\n";
-		token.type = TiToken::SYMBOL;
-		bool ok = run[this->state](*this, token);
-		if ( !ok ){
-			if ( token.type == TiToken::ERROR ){
-				this->error("AQUI BB");
-			}
-			return false;
-		}
-	}
-
-	//cout << this->output << endl;
-	if ( nivel == 0 ){
-		return true;
-	} else if ( nivel < 0 ) {
-		this->error("There are more '}' than '{'");
-	} else
-		this->error("There are more '{' than '}'");
-
-	return false;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#include <iostream>
-using namespace std;
-
-bool TiParser::parseStream(){
-	this->output->start();
-
-	// Init function array and other variables
-	TiToken token;
-	this->mem_i = this->state = this->nivel = 0;
-
-	std::function<bool(TiParser&, TiToken&)> run[] = {
-		run_pass_0,
-		run_pass_1,
-		run_pass_2,
-		run_pass_3
-	};
-
-	this->isEndObj = false;
-
-	// Run the parser
-	while ( lex.next(token) ){
-		if ( token.type == TiToken::COMMENT)
-			continue;
-		if ( token.type == TiToken::ERROR ){
-			//cout << this->state << " : " << token.write() << endl;
-			this->error( token.error );
-			return false;
-		}
-
-		bool ok = run[this->state](*this, token);
-		//cout << this->state << " : " << token.write() << endl;
-		if ( !ok ){
-			return false;
-		}
-
-		if ( this->output->isObjEnd() ){
-			return true;
-		}
-	}
-
-	/*if ( this->output->text.size () <= 4 )
-		return false;
-
-	// Execute the strings in the buffer
-	if ( this->state > 0 ){
-		token.text = "\n";
-		token.type = TiToken::SYMBOL;
-		bool ok = run[this->state](*this, token);
-		if ( !ok ){
-			if ( token.type == TiToken::ERROR ){
-				this->error("AQUI BB");
-			}
-			return false;
-		}
-	}
-
-	if ( nivel == 0 ){
-		return true;
-	} else if ( nivel < 0 ) {
-		this->error("There are more '}' than '{'");
-	} else
-		this->error("There are more '{' than '}'");*/
-
-	return false;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-void TiParser::error(std::string msg){
-	output->start();
-	output->printStr("class","Error");
-	output->printInt("line",this->lex.getLine());
-	output->printStr("msg",msg);
-}
-
-bool TiParser::run_pass_0(TiParser& parser, TiToken& token){
-	if ( parser.mem_i > 0 ){
-		parser.error("Objects stack is corrupted");
-		return false;
-	}
-
-	if ( token.type == TiToken::STRING ){
-		parser.memory[0] = token;
-		parser.mem_i += 1;
-		parser.state  = 1;
-		return true;
-	} else if ( token.type==TiToken::SYMBOL ){
-		char symbol = token.text[0];
-		if ( symbol == '\n' || symbol == ';' ){
-			return true;
-		} else if ( symbol == '{' ){
-			parser.nivel += 1;
-			parser.output->printObj("");
-		} else if ( symbol == '}' ){
-			parser.nivel -= 1;
-			parser.output->printRet();
-			if ( parser.nivel == 0 )
-				parser.isEndObj = true;
-		} else {
-			parser.error("Symbol not expected:"+token.text);
-			return false;
-		}
-	} else if ( token.type==TiToken::TEXT ){
-		// Parse included File
-		if ( token.aux.size() > 0 ){
-
-			if ( token.aux == "@" ){
-				parser.output->printObj("");
-				TiParser sub_parser(parser);
-				sub_parser.parseFile(token.text);
-				parser.output->printRet();
+				} else
+					text += c;
 			} else {
-				token.aux[0] = toupper(token.aux[0]);
-				parser.output->printObj(token.aux);
-				parser.output->printStr("text",token.text);
-				parser.output->printRet();
+				text += c;
+				lex.buffer->next();
 			}
-
-		} else {
-			parser.output->printObj("");
-			parser.output->printStr("text",token.text);
-			parser.output->printRet();
 		}
 
-
-	} else {
-		parser.error("Symbol not expected:"+token.text);
-		return false;
 	}
 
+	lex.out.text = text;
 	return true;
 }
 
-bool TiParser::run_pass_1(TiParser& parser, TiToken& token){
-	if ( token.type != TiToken::SYMBOL ){
-		parser.error("Expected a Symbol like '=' or '{', and not "+token.text);
+
+bool TiLex::run_comment(TiLex& lex){
+	lex.out.text.clear();
+	lex.out.type = TiToken::COMMENT;
+	while ( lex.buffer->next() ){
+		if ( lex.buffer->last == '\n' )
+			break;
+	}
+	return true;
+}
+
+
+
+
+
+
+
+/*TiParser::TiParser(){
+	//this->lex.load(buffer);
+}*/
+
+void TiParser::load(TiBuffer* buffer){
+	this->lex.load(buffer);
+}
+
+
+
+bool TiParser::next(){
+	this->state = 0;
+	while ( lex.next() ){
+		bool is_complete = tiparser_run[ this->state ][ lex.out.type ](*this);
+		if ( is_complete ){
+			return true;
+		}
+		++this->state;
+	}
+	return false;
+}
+
+
+
+bool TiParser::run_error(TiParser& pr){
+	pr.out.type = TiEvent::ERROR;
+	cout <<"error\n";
+	return true;
+}
+
+
+bool TiParser::run_int_2(TiParser& pr){
+	pr.out.type = TiEvent::ATTR_INT;
+	pr.out.num  = pr.lex.out.num;
+	return true;
+}
+
+bool TiParser::run_dbl_2(TiParser& pr){
+	pr.out.type = TiEvent::ATTR_DBL;
+	pr.out.dbl  = pr.lex.out.dbl;
+	return true;
+}
+
+
+bool TiParser::run_string_0(TiParser& pr){
+	pr.out.attr_name = pr.lex.out.text;
+	return false;
+}
+
+bool TiParser::run_string_2(TiParser& pr){
+	pr.out.str = pr.lex.out.text;
+	return false;
+}
+
+
+bool TiParser::run_text_0(TiParser& pr){
+pr.out.type = TiEvent::ERROR;
+cout <<"error\n";
+//	pr.out.str = pr.lex.out.text;
+	return false;
+}
+
+bool TiParser::run_text_2(TiParser& pr){
+	pr.out.type = TiEvent::ATTR_TEXT;
+	pr.out.text = pr.lex.out.text;
+	pr.out.str = pr.lex.out.aux;
+	return true;
+}
+
+
+bool TiParser::run_symbol_0(TiParser& pr){
+	char symbol = pr.lex.out.symbol;
+	if ( symbol == '{' ){
+		return true;
+	} if ( symbol == '\n' || symbol == ';' ){
+		--pr.state;
 		return false;
 	}
+	return true;
+}
 
-	char symbol = token.text[0];
+bool TiParser::run_symbol_1(TiParser& pr){
+	char symbol = pr.lex.out.symbol;
 	if ( symbol == '=' ){
-		parser.state = 2;
+		return false;
 	} else if ( symbol == '{' ){
-		parser.nivel += 1;
-		parser.output->printObj(parser.memory[0].text);
-		parser.state = parser.mem_i = 0;
-	} else {
-		parser.error("Expected a Symbol like '=' or '{', and not '"+token.text+"'");
-		return false;
-	}
-
-	return true;
-}
-
-bool TiParser::run_pass_2(TiParser& parser, TiToken& token){
-	if ( token.type == TiToken::INT ){
-		parser.output->printInt(parser.memory[0].text,atoi(token.text.c_str()));
-		parser.state = parser.mem_i = 0;
-	} else if ( token.type == TiToken::DOUBLE ){
-		parser.output->printDbl(parser.memory[0].text,atof(token.text.c_str()));
-		parser.state = parser.mem_i = 0;
-	} else if ( token.type == TiToken::STRING ){
-		parser.memory[1] = token;
-		parser.state = 3;
-	} else if ( token.type == TiToken::TEXT ){
-
-		// Parse included File
-		if ( token.aux == "@" ){
-			parser.output->printVarObj(parser.memory[0].text,"");
-			TiParser sub_parser(parser);
-			sub_parser.parseFile(token.text);
-			parser.output->printRet();
-
-		// Set the text Attribute
-		} else {
-			parser.output->printStr(parser.memory[0].text,token.text);
-		}
-		parser.state = parser.mem_i = 0;
-
-	} else if ( token.type == TiToken::BINARY ){
-
-		parser.output->printBin(parser.memory[0].text,token.text);
-		parser.state = parser.mem_i = 0;
-
-	} else if ( token.type==TiToken::SYMBOL ){
-		if ( token.text[0] == '{' ){
-			parser.nivel += 1;
-			parser.output->printVarObj(parser.memory[0].text, "");
-			parser.state = parser.mem_i = 0;
-		} else if ( token.text[0] == '[' ){
-			parser.nivel = 0;
-			//parser.output += 'j';
-			//parser.output += ' ';
-			parser.state = parser.mem_i = 0;
-		} else {
-			parser.error("Symbol not expected: "+token.text);
-			return false;
-		}
-	} else if ( token.type==TiToken::ERROR ){
-		// Mensagem de erro estah no LEX;
-		return false;
-	} else {
-		parser.error("Symbol not expected: "+token.text);
-		return false;
+		//parser.output->printObj(parser.memory[0].text);
+		//pr.state = parser.mem_i = 0;
 	}
 	return true;
 }
 
-bool TiParser::run_pass_3(TiParser& parser, TiToken& token){
-	if ( token.type == TiToken::SYMBOL ){
-		if ( token.text[0] == ';' || token.text[0] == '\n' ){
-			parser.output->printStr(parser.memory[0].text, parser.memory[1].text);
-
-		} else if ( token.text[0] == '{' ){
-			parser.nivel += 1;
-			parser.output->printVarObj(parser.memory[0].text,parser.memory[1].text);
-
-		} else if ( token.text[0] == '}' ){
-			parser.nivel -= 1;
-			parser.output->printStr(parser.memory[0].text,parser.memory[1].text);
-			parser.output->printRet();
-			if ( parser.nivel == 0 )
-				parser.isEndObj = true;
-		} else {
-			parser.error("Expected a Text or a Symbol like ';','{','}', and not a '"+token.text+"'");
-			return false;
-		}
-	} else if ( token.type == TiToken::TEXT ){
-		//cur->setText(parser.memory[0].text, parser.memory[1].text, token.text );
+bool TiParser::run_symbol_3(TiParser& pr){
+	char symbol = pr.lex.out.symbol;
+	if ( symbol == ';' ){
+		pr.out.type = TiEvent::ATTR_STR;
+		return true;
+	} else if ( symbol == '{' ){
+		pr.out.type = TiEvent::ATTR_OBJ;
+		return true;
+	} else if ( symbol == '\n' ){
+		pr.out.type = TiEvent::ATTR_STR;
+		return true;
 	} else {
-		parser.error("Expected a Text or a Symbol like ';','{','}', and not a '"+token.text+"'");
-		return false;
+		pr.out.type = TiEvent::ERROR;
+		return true;
 	}
-	parser.state = parser.mem_i = 0;
+}
+
+
+bool TiParser::run_binary_2(TiParser& pr){
+	pr.out.type = TiEvent::ATTR_BIN;
+	pr.out.bin  = pr.lex.out.bin;
 	return true;
 }
+
+
+
+/*
+int main(){
+	//TiBufferText buf;
+	//buf.load( "felipe gustavo bombardelli" );
+
+
+	pthread_t id;
+	pthread_create(&id, NULL, &terminator, NULL);
+	while(1){
+		FILE* fd = fopen("var_1000.ti","r");
+
+		TiParser parser;
+		parser.loadFile( fd );
+
+		while ( parser.next() ){
+			//cout << "out:" << parser.out.type << " " << parser.out.num << endl;
+			//parser.out.dbl += 1.0;
+		}
+		fclose(fd);
+		G_i += 1;
+	}
+
+	return 0;
+}*/
+
+
+
+
+/*============================  TiGlobal  =============================*/
+
+
+class TiGlobal{
+  public:
+	TiGlobal(){
+		for (int i=0; i<256; i++){
+			TiLex::symbols[i] = TiLex::UNKNOWN;
+		}
+		for (int i='a'; i<='z'; i++){
+			TiLex::symbols[i] = TiLex::CHAR;
+		}
+		for (int i='A'; i<='Z'; i++){
+			TiLex::symbols[i] = TiLex::CHAR;
+		}
+		for (int i='0'; i<='9'; i++){
+			TiLex::symbols[i] = TiLex::INT;
+		}
+		TiLex::symbols['\r'] = TiLex::DEL;
+		TiLex::symbols['\t'] = TiLex::DEL;
+		TiLex::symbols[' ']  = TiLex::DEL;
+		TiLex::symbols['=']  = TiLex::SYMB;
+		TiLex::symbols[':']  = TiLex::CHAR;
+		TiLex::symbols[';']  = TiLex::SYMB;
+		TiLex::symbols['.']  = TiLex::SYMB;
+		TiLex::symbols[',']  = TiLex::SYMB;
+		TiLex::symbols['(']  = TiLex::SYMB;
+		TiLex::symbols[')']  = TiLex::SYMB;
+		TiLex::symbols['{']  = TiLex::SYMB;
+		TiLex::symbols['}']  = TiLex::SYMB;
+		TiLex::symbols['[']  = TiLex::SYMB;
+		TiLex::symbols[']']  = TiLex::SYMB;
+		TiLex::symbols['<']  = TiLex::TEXT;
+		TiLex::symbols['>']  = TiLex::SYMB;
+		TiLex::symbols['#']  = TiLex::COMMENT;
+		TiLex::symbols['\''] = TiLex::ASPA;
+		TiLex::symbols['\"'] = TiLex::ASPA;
+		TiLex::symbols['-']  = TiLex::INT;
+		TiLex::symbols['+']  = TiLex::INT;
+		TiLex::symbols['_']  = TiLex::CHAR;
+		TiLex::symbols['@']  = TiLex::CHAR;
+		TiLex::symbols['$']  = TiLex::CHAR;
+		TiLex::symbols['&']  = TiLex::CHAR;
+		TiLex::symbols['!']  = TiLex::SYMB;
+		TiLex::symbols['*']  = TiLex::SYMB;
+		TiLex::symbols['\n'] = TiLex::SYMB;
+
+		tilex_run[TiLex::UNKNOWN] = TiLex::run_unknown;
+		tilex_run[TiLex::CHAR]    = TiLex::run_char;
+		tilex_run[TiLex::INT]     = TiLex::run_int;
+		tilex_run[TiLex::ASPA]    = TiLex::run_aspa;
+		tilex_run[TiLex::SYMB]    = TiLex::run_symb;
+		tilex_run[TiLex::DEL]     = TiLex::run_unknown;
+		tilex_run[TiLex::TEXT]    = TiLex::run_text;
+		tilex_run[TiLex::COMMENT] = TiLex::run_comment;
+
+		for (int y=0; y<QTDE_STATES; y++){
+			for (int x=0; x<QTDE_TYPES; x++){
+				tiparser_run[y][x] = TiParser::run_error;
+			}
+		}
+
+		tiparser_run[2][TiToken::INT]    = TiParser::run_int_2;
+		tiparser_run[2][TiToken::DOUBLE] = TiParser::run_dbl_2;
+		tiparser_run[0][TiToken::STRING] = TiParser::run_string_0;
+		tiparser_run[2][TiToken::STRING] = TiParser::run_string_2;
+		tiparser_run[0][TiToken::TEXT]   = TiParser::run_text_0;
+		tiparser_run[2][TiToken::TEXT]   = TiParser::run_text_2;
+		tiparser_run[0][TiToken::SYMBOL] = TiParser::run_symbol_0;
+		tiparser_run[1][TiToken::SYMBOL] = TiParser::run_symbol_1;
+		tiparser_run[3][TiToken::SYMBOL] = TiParser::run_symbol_3;
+		tiparser_run[2][TiToken::BINARY] = TiParser::run_binary_2;
+	}
+};
+
+TiGlobal global;
+
+
+
 
 /*-------------------------------------------------------------------------------------*/
-
-
-
-
-

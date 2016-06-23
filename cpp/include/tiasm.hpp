@@ -36,7 +36,7 @@ class TiAsm {
 
 	TiAsm(int min=0);
 	inline void start(){
-		text="#T1V";
+		text="!T1V";
 		this->is_obj_end=false;
 		this->now=0;
 	}
