@@ -1,3 +1,26 @@
+/*  This file is part of Library TiObj.
+ *
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *
+ *  TiObj is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Foobar is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+
+
+/*=====================================  HEADER  ======================================*/
+
 #include "../include/tiparser.hpp"
 #include <iostream>
 #include <stdio.h>
@@ -19,17 +42,22 @@ std::function<bool(TiParser&)> tiparser_run[QTDE_STATES][QTDE_TYPES];
 /*-------------------------------------------------------------------------------------*/
 
 
-TiToken::TiToken(){
-}
 
 
+
+/*==================================  TiBufferText  ===================================*/
 
 TiBufferText::TiBufferText(std::string text){
-	this->cursor = -1;
-	this->line   = 1;
-	this->text   = text;
-	this->is_good = text.size()>0;
-	this->last = '\0';
+	this->cursor  = 0;
+	this->line    = 1;
+	this->text    = text;
+	if ( text.size()>0 ){
+		this->is_good = true;
+		this->last    = text[0];
+	} else {
+		this->is_good = false;
+		this->last    = '\0';
+	}
 }
 
 
@@ -39,19 +67,17 @@ bool TiBufferText::next() {
 		this->line += 1;
 	this->cursor += 1;
 	this->is_good = this->cursor < this->text.size();
-	this->last = this->is_good? this->text[ this->cursor ] : '\0';
+	this->last    = this->is_good ? this->text[ this->cursor ] : '\0';
 	return this->is_good;
 }
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
 
 
-
-
-
-
+/*==================================  TiBufferFile  ===================================*/
 
 TiBufferFile::TiBufferFile(FILE* fd) {
 	this->fd = fd;
@@ -112,7 +138,7 @@ std::string TiBufferFile::readStr(unsigned size){
 		this->cursor += in_buffer;
 		size  = (size+3)&0xFFFFFFFC - in_buffer;
 		dst  += in_buffer;
-		if ( size > TIBUFFERFILE_SIZE ){
+		if ( size > BUFFER_SIZE ){
 			fread(dst, 1, size, fd);
 		} else {
 			if ( this->load() ){
@@ -163,28 +189,22 @@ std::vector<char> TiBufferFile::read(size_t size){
 
 bool TiBufferFile::load(){
 	if ( this->cursor >= this->size ){
+		this->is_good = false;
+		this->cursor = 0;
 		if ( !feof(this->fd) ){
-			this->size = fread(this->buffer, sizeof(size_t), TIBUFFERFILE_SIZE/sizeof(size_t), this->fd);
-			if ( this->size == 0 ){
-				this->size = fread(this->buffer, 1, TIBUFFERFILE_SIZE, this->fd);
-			} else
-				this->size *= sizeof(size_t);
-			this->cursor = 0;
-			if ( this->size == 0 ){
-				this->is_good = false;
-				return false;
-			}
-		} else {
-			this->is_good = false;
-			return false;
+			this->size = fread(this->buffer, 1, BUFFER_SIZE, this->fd);
+			this->is_good = (this->size==0) ? false : true;
 		}
 	}
 	return this->is_good;
 }
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
+
+/*======================================  TiLex  ======================================*/
 
 void TiLex::load(TiBuffer* buffer){
 	this->buffer = buffer;
@@ -193,6 +213,7 @@ void TiLex::load(TiBuffer* buffer){
 
 bool TiLex::next(){
 	out.type = TiToken::ERROR;
+
 	if ( !this->buffer->good() ){
 		out.type = TiToken::END;
 		return false;
@@ -202,7 +223,6 @@ bool TiLex::next(){
 	// Remove char without mean as ' ', '\t', ...
 	do {
 		type = TiLex::symbols[ buffer->last ];
-
 		if ( type != TiLex::DEL )
 			break;
 	} while ( buffer->next() );
@@ -222,6 +242,7 @@ bool TiLex::run_char(TiLex& lex){
 	string buf;
 	buf.reserve(32);
 	buf.push_back( lex.buffer->last );
+
 	while ( lex.buffer->next() ){
 		char c = lex.buffer->last;
 		int type = TiLex::symbols[c];
@@ -236,15 +257,15 @@ bool TiLex::run_char(TiLex& lex){
 }
 
 bool TiLex::run_int(TiLex& lex){
-	int i=0;
+	int i=1;
 	char num[512];
 	lex.out.type = TiToken::INT;
-	num[i] = lex.buffer->last;
+	num[0] = lex.buffer->last;
 	while ( lex.buffer->next() ){
 		//if ( i >= 512 ){
 			// ELIMINAR O RESTO DO NUMERO ATEH O FIM DA LINHA
 		//}
-		i+=1;
+
 		char c = lex.buffer->last;
 		int type = TiLex::symbols[c];
 		if ( c == '.' || c == ',' ){
@@ -257,7 +278,7 @@ bool TiLex::run_int(TiLex& lex){
 			break;
 		} else
 			num[i] = c;
-
+		i+=1;
 	}
 	num[i] = '\0';
 
@@ -279,24 +300,20 @@ bool TiLex::run_aspa(TiLex& lex){
 	while ( lex.buffer->next() ){
 		c = lex.buffer->last;
 		if ( special ){
-			if ( c == 'n' )
-				buf += '\n';
-			else if ( c == 't' )
-				buf += '\t';
-			else if ( c == '\'' )
-				buf += '\'';
-			else if ( c == '\"' )
-				buf += '\"';
-			else if ( c == '\\' )
-				buf += '\\';
-			else
-				buf += c;
+			switch (c) {
+				case 'n': buf += '\n'; break;
+				case 't': buf += '\t'; break;
+				case '\'': buf += '\''; break;
+				case '\"': buf += '\"'; break;
+				case '\\': buf += '\\'; break;
+				default: buf += c;
+			}
 			special = false;
 		} else if ( c == '\\' ){
 			special = true;
 		} else if ( c == '\n' ){
-			lex.out.error = "Expected a \" to close the string";
 			lex.out.type = TiToken::ERROR;
+			lex.out.error = "Expected a \" to close the string";
 			return true;
 		} else if ( c == aspa ){
 			lex.buffer->next();
@@ -348,18 +365,14 @@ bool TiLex::run_text(TiLex& lex){
 		while ( lex.buffer->good() ){
 			c = lex.buffer->last;
 			if ( special ){
-				if ( c == 'n' )
-					text += '\n';
-				else if ( c == 't' )
-					text += '\t';
-				else if ( c == '\'' )
-					text += '\'';
-				else if ( c == '\"' )
-					text += '\"';
-				else if ( c == '\\' )
-					text += '\\';
-				else
-					text += c;
+				switch (c) {
+					case 'n' : text += '\n'; break;
+					case 't' : text += '\t'; break;
+					case '\'': text += '\''; break;
+					case '\"': text += '\"'; break;
+					case '\\': text += '\\'; break;
+					default  : text += c;
+				}
 				special = false;
 				lex.buffer->next();
 			} else if ( c == '\\' ){
@@ -397,41 +410,35 @@ bool TiLex::run_comment(TiLex& lex){
 }
 
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
 
-
-/*TiParser::TiParser(){
-	//this->lex.load(buffer);
-}*/
+/*====================================  TiParser  =====================================*/
 
 void TiParser::load(TiBuffer* buffer){
 	this->lex.load(buffer);
 }
 
-
-
 bool TiParser::next(){
 	this->state = 0;
-	while ( lex.next() ){
+	while ( true ){
+		lex.next();
 		bool is_complete = tiparser_run[ this->state ][ lex.out.type ](*this);
 		if ( is_complete ){
-			return true;
+			return (out.type!=TiEvent::END) ? true : false ;
 		}
 		++this->state;
 	}
-	return false;
 }
 
 
-
+//******* Runners *******
 bool TiParser::run_error(TiParser& pr){
 	pr.out.type = TiEvent::ERROR;
-	cout <<"error\n";
 	return true;
 }
-
 
 bool TiParser::run_int_2(TiParser& pr){
 	pr.out.type = TiEvent::ATTR_INT;
@@ -445,7 +452,6 @@ bool TiParser::run_dbl_2(TiParser& pr){
 	return true;
 }
 
-
 bool TiParser::run_string_0(TiParser& pr){
 	pr.out.attr_name = pr.lex.out.text;
 	return false;
@@ -456,11 +462,8 @@ bool TiParser::run_string_2(TiParser& pr){
 	return false;
 }
 
-
 bool TiParser::run_text_0(TiParser& pr){
-pr.out.type = TiEvent::ERROR;
-cout <<"error\n";
-//	pr.out.str = pr.lex.out.text;
+	pr.out.type = TiEvent::ERROR;
 	return false;
 }
 
@@ -471,85 +474,83 @@ bool TiParser::run_text_2(TiParser& pr){
 	return true;
 }
 
-
 bool TiParser::run_symbol_0(TiParser& pr){
-	char symbol = pr.lex.out.symbol;
-	if ( symbol == '{' ){
-		return true;
-	} if ( symbol == '\n' || symbol == ';' ){
-		--pr.state;
-		return false;
+	switch ( pr.lex.out.symbol ) {
+		case '{':
+			pr.out.type = TiEvent::BOX_OBJ;
+			pr.out.str.clear();
+			return true;
+		case '}':
+			pr.out.type = TiEvent::OBJ_END;
+			return true;
+		case '\n':  case ';':
+			--pr.state;
+			return false;
+		default:
+			pr.out.type = TiEvent::ERROR;
+			return true;
 	}
-	return true;
 }
 
 bool TiParser::run_symbol_1(TiParser& pr){
+	switch ( pr.lex.out.symbol ) {
+		case '=':
+			return false;
+		case '{':
+			pr.out.type = TiEvent::BOX_OBJ;
+			return true;
+		default:
+			pr.out.type = TiEvent::ERROR;
+			return true;
+	}
+}
+
+bool TiParser::run_symbol_2(TiParser& pr){
 	char symbol = pr.lex.out.symbol;
-	if ( symbol == '=' ){
-		return false;
-	} else if ( symbol == '{' ){
-		//parser.output->printObj(parser.memory[0].text);
-		//pr.state = parser.mem_i = 0;
+	if ( symbol == '{' ){
+		pr.out.type = TiEvent::ATTR_OBJ;
+		pr.out.str.clear();
+	} else {
+		pr.out.type = TiEvent::ERROR;
 	}
 	return true;
 }
 
 bool TiParser::run_symbol_3(TiParser& pr){
-	char symbol = pr.lex.out.symbol;
-	if ( symbol == ';' ){
-		pr.out.type = TiEvent::ATTR_STR;
-		return true;
-	} else if ( symbol == '{' ){
-		pr.out.type = TiEvent::ATTR_OBJ;
-		return true;
-	} else if ( symbol == '\n' ){
-		pr.out.type = TiEvent::ATTR_STR;
-		return true;
-	} else {
-		pr.out.type = TiEvent::ERROR;
-		return true;
+	switch ( pr.lex.out.symbol ) {
+		case ';': case '\n':
+			pr.out.type = TiEvent::ATTR_STR;
+			return true;
+		case '{':
+			pr.out.type = TiEvent::ATTR_OBJ;
+			return true;
+		default:
+			pr.out.type = TiEvent::ERROR;
+			return true;
 	}
 }
 
-
 bool TiParser::run_binary_2(TiParser& pr){
-	pr.out.type = TiEvent::ATTR_BIN;
-	pr.out.bin  = pr.lex.out.bin;
+	return true;
+}
+
+bool TiParser::run_end_0(TiParser& pr){
+	pr.out.type = TiEvent::END;
+	return true;
+}
+
+bool TiParser::run_end_3(TiParser& pr){
+	pr.out.type = TiEvent::ATTR_STR;
 	return true;
 }
 
 
-
-/*
-int main(){
-	//TiBufferText buf;
-	//buf.load( "felipe gustavo bombardelli" );
-
-
-	pthread_t id;
-	pthread_create(&id, NULL, &terminator, NULL);
-	while(1){
-		FILE* fd = fopen("var_1000.ti","r");
-
-		TiParser parser;
-		parser.loadFile( fd );
-
-		while ( parser.next() ){
-			//cout << "out:" << parser.out.type << " " << parser.out.num << endl;
-			//parser.out.dbl += 1.0;
-		}
-		fclose(fd);
-		G_i += 1;
-	}
-
-	return 0;
-}*/
+/*-------------------------------------------------------------------------------------*/
 
 
 
 
-/*============================  TiGlobal  =============================*/
-
+/*====================================  TiGlobal  =====================================*/
 
 class TiGlobal{
   public:
@@ -618,14 +619,14 @@ class TiGlobal{
 		tiparser_run[2][TiToken::TEXT]   = TiParser::run_text_2;
 		tiparser_run[0][TiToken::SYMBOL] = TiParser::run_symbol_0;
 		tiparser_run[1][TiToken::SYMBOL] = TiParser::run_symbol_1;
+		tiparser_run[2][TiToken::SYMBOL] = TiParser::run_symbol_2;
 		tiparser_run[3][TiToken::SYMBOL] = TiParser::run_symbol_3;
 		tiparser_run[2][TiToken::BINARY] = TiParser::run_binary_2;
+		tiparser_run[0][TiToken::END]    = TiParser::run_end_0;
+		tiparser_run[3][TiToken::END]    = TiParser::run_end_3;
 	}
 };
 
 TiGlobal global;
-
-
-
 
 /*-------------------------------------------------------------------------------------*/

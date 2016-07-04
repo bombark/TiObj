@@ -1,6 +1,6 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,9 +62,12 @@ TiVar::TiVar(string name){
 }
 
 TiVar::~TiVar(){
+//cout << "fim1 " <<  this->type << endl;
 	if ( this->isObj() ){
-		this->removeObject();
+		//this->removeObject();
+		this->objptr->clear();
 	}
+//cout << "fim2 " <<  this->type << endl;
 }
 
 std::string TiVar::Str(){
@@ -182,7 +185,7 @@ std::string TiVar::toString(){
 	} else if (this->isDbl() ){
 		return std::to_string(this->dbl);
 	} else if (this->isObj() ){
-		return this->objptr.encode(0,true);
+		return this->objptr->encode(0,true);
 	} else if (this->isVet() ){
 
 	} else if ( this->isBin() ){
@@ -218,7 +221,7 @@ void TiVar::encode(std::string& out, int tab){
 		out += std::to_string(this->dbl);
 		out += ";\n";
 	} else if ( this->isObj() ){
-		this->objptr.encode(out, tab,false);
+		this->objptr->encode(out, tab,false);
 	} else if (this->isVet() ){
 
 	} else if ( this->isBin() ){
@@ -228,10 +231,7 @@ void TiVar::encode(std::string& out, int tab){
 
 
 void TiVar::removeObject(){
-	//if ( this->objptr->magic == 0xCAFECAFE ){
-		//delete this->objptr;
-		//this->objptr = NULL;
-	//}
+	//delete this->objptr;
 }
 
 void TiVar::toAsm(TiAsm& res){
@@ -242,8 +242,8 @@ void TiVar::toAsm(TiAsm& res){
 	} else if (this->isDbl()){
 		res.printDbl(this->name, this->dbl);
 	} else if ( this->isObj() ){
-		res.printVarObj(this->name, this->objptr.classe() );
-		this->objptr.ptr->toAsm(res);
+		res.printVarObj(this->name, this->objptr->classe );
+		this->objptr->toAsm(res);
 		res.printRet();
 	} else if (this->isVet() ){
 
@@ -275,7 +275,7 @@ void TiVar::toJson(std::string& out){
 		out += "\"";
 		out += this->name;
 		out += "\":{";
-		this->objptr.ptr->toJson(out);
+		this->objptr->toJson(out);
 		out += "}";
 	}
 }
@@ -297,7 +297,7 @@ void TiVar::toYaml(std::string& out){
 	} else if ( this->isObj() ){
 		out += this->name;
 		out += " : ";
-		this->objptr.ptr->toJson(out);
+		this->objptr->toJson(out);
 	}
 }
 

@@ -47,9 +47,22 @@ int main(int argc, char** argv){
 	file << b.toAsm();
 	file.close();*/
 
-	TiObj b;
-	b.load("../tests/test01.ti");
-	cout << b;
+	//TiObj b;
+	//b.load("../tests/error01.ti");
+
+	TiObj p("name='felipe'");
+	cout << p;
+
+
+	/*for ( auto node : p->box ){
+		cout << node->atStr("name") << endl;
+	}*/
+
+
+	//for( auto var : b ){
+	/*for (auto i = b.begin(); i != b.end(); ++i){
+		//cout << i.name << endl;
+	}*/
 
 	//cout << b;
 

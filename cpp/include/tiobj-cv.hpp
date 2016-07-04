@@ -34,42 +34,42 @@
 
 void operator<<(TiObj nom, cv::Mat& akk){
 	//nom.clear();
-	nom.set("class", "Mat:Cv");
-	nom.set("rows", akk.rows);
-	nom.set("cols", akk.cols);
-	nom.set("step", (long int)akk.step[0]);
-	nom.set("type", akk.type());
+	nom->set("class", "Mat:Cv");
+	nom->set("rows", akk.rows);
+	nom->set("cols", akk.cols);
+	nom->set("step", (long int)akk.step[0]);
+	nom->set("type", akk.type());
 	if ( akk.type() == CV_8UC1 ){
 		//buf.set("type", "char");
-		nom.set("channels", 1);
+		nom->set("channels", 1);
 	} else if ( akk.type() == CV_8UC2 ){
 		//buf.set("type", "char");
-		nom.set("channels", 2);
+		nom->set("channels", 2);
 	} else if ( akk.type() == CV_8UC3 ){
 		//buf.set("type", "char");
-		nom.set("channels", 3);
+		nom->set("channels", 3);
 	} else if ( akk.type() == CV_32S ){
 		//buf.set("type", "int");
-		nom.set("channels", 1);
+		nom->set("channels", 1);
 	} else if ( akk.type() == CV_32F ){
 		//buf.set("type", "float");
-		nom.set("channels", 1);
+		nom->set("channels", 1);
 	}
-	
-	nom.setBinary("data", akk.data, akk.rows*akk.step[0] );
+
+	nom->setBinary("data", akk.data, akk.rows*akk.step[0] );
 }
 
 
 void operator<<(cv::Mat& nom, TiObj akk){
-	size_t   cols = akk.atInt("cols");
-	size_t   rows = akk.atInt("rows");
-	unsigned type = akk.atInt("type");
+	size_t   cols = akk->atInt("cols");
+	size_t   rows = akk->atInt("rows");
+	unsigned type = akk->atInt("type");
 
 	if ( !nom.data ){
 		nom.create( rows, cols, type );
 	}
 
-	std::string data = akk.atStr("data");
+	std::string data = akk->atStr("data");
 	const char* src = data.c_str();
 	for (size_t i=0; i<data.size(); i++){
 		nom.at<char>(i) = src[i];
@@ -78,5 +78,3 @@ void operator<<(cv::Mat& nom, TiObj akk){
 
 
 /*-------------------------------------------------------------------------------------*/
-
-

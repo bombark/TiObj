@@ -56,7 +56,7 @@ int main(int argc, char** argv){
 	TiObj base( false, base_url );
 
 
-	cout << "Testing loading TiOn speed " << base << endl;
+	cout << "Testing loading TiOn speed " << base_url << endl;
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
@@ -67,7 +67,7 @@ int main(int argc, char** argv){
 
 	url  = "tmp/"+name+".ti";
 	cout << "Testing loading TiOs speed " << url << endl;
-	base.save(url, "binary");
+	base->save(url, "binary");
 
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
@@ -79,7 +79,7 @@ int main(int argc, char** argv){
 
 	url  = "tmp/"+name+".json";
 	cout << "Testing loading Json speed " << url << endl;
-	base.save(url, "json");
+	base->save(url, "json");
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
@@ -101,7 +101,7 @@ int main(int argc, char** argv){
 
 	url  = "tmp/"+name+".yaml";
 	cout << "Testing loading Yaml::OpenCv speed " << url << endl;
-	base.save(url, "yaml");
+	base->save(url, "yaml");
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){
@@ -112,7 +112,7 @@ int main(int argc, char** argv){
 
 	url  = "tmp/"+name+".yaml";
 	cout << "Testing loading Yaml::Yaml speed " << url << endl;
-	base.save(url, "yaml");
+	base->save(url, "yaml");
 	G_continue = true;
 	pthread_create(&id, NULL, &terminator, NULL);
 	while ( G_continue ){

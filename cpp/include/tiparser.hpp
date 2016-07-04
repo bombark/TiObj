@@ -18,16 +18,24 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
+
+/*=====================================  HEADER  ======================================*/
+
 #pragma once
 
 #include <iostream>
 #include <stdio.h>
 #include <vector>
 
+class TiLex;
 class TiParser;
+class TiGlobal;
+
+/*-------------------------------------------------------------------------------------*/
 
 
 
+/*=====================================  TiToken  =====================================*/
 
 class TiToken {
   public:
@@ -43,21 +51,24 @@ class TiToken {
 		double   dbl;
 	};
 	std::vector<char> bin;
-
-	TiToken();
 };
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
+/*====================================  TiBuffer  =====================================*/
 
-
-class TiBuffer{
-  public:
+class TiBuffer {
+  protected:
+	friend TiLex; friend TiParser;
 	size_t line;
-	unsigned char prev,last;
 	bool is_good;
 
+  public:
+	unsigned char prev,last;
+
+  public:
 	inline  bool good(){return is_good;}
 	virtual bool next(){}
 	virtual int  readInt(){}
@@ -65,10 +76,11 @@ class TiBuffer{
 	virtual std::vector<char> read(size_t size){return std::vector<char>();}
 };
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
-
+/*==================================  TiBufferText  ===================================*/
 
 class TiBufferText : public TiBuffer {
 	std::string text;
@@ -76,43 +88,42 @@ class TiBufferText : public TiBuffer {
 
   public:
 	TiBufferText(std::string text);
-	bool next();
-	//std::vector<char> read(size_t size);
+	bool next() override;
 };
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
-#define TIBUFFERFILE_SIZE 4096
+/*==================================  TiBufferFile  ===================================*/
 
 class TiBufferFile : public TiBuffer {
+	const static unsigned BUFFER_SIZE = 4096;
+
 	FILE* fd;
-	char buffer[TIBUFFERFILE_SIZE];
+	char buffer[TiBufferFile::BUFFER_SIZE];
 	size_t cursor, size, max, already_read;
+
 
   public:
 	TiBufferFile(FILE* fd);
-	bool next();
-	int  readInt();
-	std::string readStr(unsigned size);
-	std::vector<char> read(size_t size);
+	bool next() override ;
+	int  readInt() override ;
+	std::string readStr(unsigned size)  override ;
+	std::vector<char> read(size_t size) override ;
 
   private:
 	bool load();
 };
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
-
-
-
-
+/*======================================  TiLex =======================================*/
 
 class TiLex {
 	friend TiParser;
-
-  private:
 	TiBuffer* buffer;
 	TiToken out;
 
@@ -127,7 +138,8 @@ class TiLex {
 	inline size_t getLine(){return buffer->line;}
 	inline bool good(){return buffer->good();}
 
-  public:
+  private:
+	friend TiGlobal;
 	static bool run_unknown(TiLex& lex);
 	static bool run_char(TiLex& lex);
 	static bool run_int(TiLex& lex);
@@ -137,16 +149,17 @@ class TiLex {
 	static bool run_comment(TiLex& lex);
 };
 
+/*-------------------------------------------------------------------------------------*/
 
 
 
-/*=====================================================================================*/
+/*====================================  TiEvent =======================================*/
 
 class TiEvent{
   public:
-	enum Type { ERROR, ATTR_INT, ATTR_DBL, ATTR_STR, ATTR_TEXT, ATTR_BIN, ATTR_OBJ };
+	enum Type { ERROR, ATTR_INT, ATTR_DBL, ATTR_STR, ATTR_TEXT, ATTR_BIN, ATTR_OBJ, BOX_OBJ, OBJ_END, END };
 
-	int type;
+	Type type;
 	std::string attr_name;
 	std::string str;
 	std::string text;
@@ -157,6 +170,11 @@ class TiEvent{
 	std::vector<char> bin;
 };
 
+/*-------------------------------------------------------------------------------------*/
+
+
+
+/*====================================  TiParser ======================================*/
 
 class TiParser {
 	TiLex lex;
@@ -166,51 +184,29 @@ class TiParser {
 
   public:
 	TiEvent out;
-	//TiParser();
-	//~TiParser();
 
-
+  public:
 	void load(TiBuffer* buffer);
+	bool next();
+	inline bool good(){return this->lex.good();}
 
 
   private:
-	//TiParser(TiParser& up_parser);
-
-  public:
-	//void parseFile(std::string filename);
-
-
-	bool next();
-
-	//inline void loadFile(FILE* fd){lex.loadFile(fd);}
-	//inline void loadText(std::string text){lex.loadText(text);}
-	inline bool good(){return this->lex.good();}
-
-  public:
+	friend TiGlobal;
 	static bool run_error(TiParser& pr);
-
 	static bool run_int_2(TiParser& pr);
 	static bool run_dbl_2(TiParser& pr);
-
 	static bool run_string_0(TiParser& pr);
 	static bool run_string_2(TiParser& pr);
-
 	static bool run_text_0(TiParser& pr);
 	static bool run_text_2(TiParser& pr);
-
 	static bool run_symbol_0(TiParser& pr);
 	static bool run_symbol_1(TiParser& pr);
+	static bool run_symbol_2(TiParser& pr);
 	static bool run_symbol_3(TiParser& pr);
-
 	static bool run_binary_2(TiParser& pr);
-	/*void init();
-	void error(std::string msg);
-	static bool run_pass_0(TiParser& parser, TiToken& token);
-	static bool run_pass_1(TiParser& parser, TiToken& token);
-	static bool run_pass_2(TiParser& parser, TiToken& token);
-	static bool run_pass_3(TiParser& parser, TiToken& token);*/
-
-	//TiVet* parseVector();
+	static bool run_end_0(TiParser& pr);
+	static bool run_end_3(TiParser& pr);
 };
 
 /*-------------------------------------------------------------------------------------*/

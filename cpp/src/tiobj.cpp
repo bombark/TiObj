@@ -5,7 +5,7 @@
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,49 +37,51 @@ using namespace std;
 
 
 _TiObj _TiObj::ObjNull;
-TiPool<_TiObj> _TiObj::pool;
+//TiPool<_TiObj> _TiObj::pool;
 
 void tibuilder (TiBuffer& buffer, _TiObj* obj);
+size_t partition(TiObjPkg& box, size_t left, size_t right, std::string& field);
+
 
 /*-------------------------------------------------------------------------------------*/
 
 
 
-/*=====================================================================================*/
+/*======================================  TiObj  ======================================*/
 
 TiObj::TiObj(){
 	_TiObj* novo = new _TiObj;
-	this->ptr.reset(novo);
+	this->reset(novo);
 }
 
 TiObj::TiObj(bool is_lock, std::string filename){
 	_TiObj* novo = new _TiObj;
-	novo->loadFile(filename, is_lock);
-	this->ptr.reset(novo);
+	novo->load(filename, is_lock);
+	this->reset(novo);
 }
 
 TiObj::TiObj(std::string text){
 	_TiObj* novo = new _TiObj(text);
-	this->ptr.reset(novo);
+	this->reset(novo);
 }
 
 TiObj::TiObj(_TiObj* a){
-	this->ptr.reset(a);
+	this->reset(a);
 }
 
 TiObj::TiObj(int a){
-	this->ptr = nullptr;
+	//this->ptr = nullptr;
 }
 
 /*-------------------------------------------------------------------------------------*/
 
 
 
-/*=====================================================================================*/
+/*=====================================  _TiObj  ======================================*/
 
-_TiObj::_TiObj(){
-//cout << "create " << id << " " << sizeof(_TiObj) << endl;
-}
+
+//******* Constructors and Destructors *******
+_TiObj::_TiObj(){}
 
 _TiObj::_TiObj(const char* text){
 	this->loadText(text);
@@ -100,68 +102,40 @@ void _TiObj::clear(){
 }
 
 
-int _TiObj::loadText(const char* text){
+//******* Loaders *******
+void _TiObj::loadText(const char* text){
 	this->clear();
 	if ( text == NULL )
-		return 0;
+		return ;
 	TiBufferText buffer(text);
 	tibuilder( buffer, this );
-	return 1;
 }
 
-int _TiObj::loadText(std::string text){
+void _TiObj::loadText(std::string text){
 	this->clear();
 	TiBufferText buffer(text);
 	tibuilder( buffer, this );
-	return 1;
 }
 
-#include <stdio.h>
-
-int _TiObj::loadFile(FILE* fd, bool is_lock){
+void _TiObj::load(FILE* fd, bool is_lock){
 	this->clear();
-
 	TiBufferFile buffer(fd);
 	tibuilder( buffer, this );
-
-
-
-
-	/*string buffer;
-//cerr << "load " << is_lock << endl;
-	if ( is_lock ){
-//cerr << "load_lock_b\n";
-		flock( fileno(fd), LOCK_EX );
-//cerr << "size: " << sz << endl;
-		parseFileFd(buffer, fd);
-		flock( fileno(fd), LOCK_UN );
-
-//cerr << "load_lock_e\n";
-	} else {
-		parseFileFd(buffer, fd);
-	}
-	build_tiasm(*this, buffer);*/
-
-//cerr << this->atInt("rows") << endl;
-
-	return 1;
 }
 
-int _TiObj::loadFile(string filename, bool is_lock){
+void _TiObj::load(string filename, bool is_lock){
 	FILE* fd = fopen(filename.c_str(), "r");
 	if ( !fd ){
 		this->clear();
 		this->classe="Error";
 		this->set("msg", strerror(errno));
 		this->set("file", filename);
-		return 0;
 	}
-	this->loadFile(fd,is_lock);
+	this->load(fd,is_lock);
 	fclose(fd);
-	return 1;
 }
 
-int  _TiObj::saveFile(string filename, string format, bool is_lock){
+void  _TiObj::save(string filename, string format, bool is_lock){
 	string aux;
 	if ( format == "ti" ){
 		this->encode(aux, 0, true, false);
@@ -172,7 +146,7 @@ int  _TiObj::saveFile(string filename, string format, bool is_lock){
 	} else if ( format == "json" ){
 		aux = this->toJson();
 	}
-	
+
 	if ( is_lock ){
 		FILE* fd = fopen(filename.c_str(), "a");
 		assert(fd);
@@ -187,7 +161,6 @@ int  _TiObj::saveFile(string filename, string format, bool is_lock){
 		fwrite(aux.c_str(), sizeof(char), aux.size(), fd);
 		fclose(fd);
 	}
-	return 1;
 }
 
 
@@ -196,12 +169,10 @@ int  _TiObj::saveFile(string filename, string format, bool is_lock){
 TiVar& _TiObj::at(string name, bool create){
 	if ( name == "" )
 		return TiVar::ObjNull;
-
 	TiVar& var = this->var[name];
 	if ( var.isNull() && create ){
 		return this->var.push( "", name );
 	}
-
 	return var;
 }
 
@@ -255,55 +226,19 @@ TiObj _TiObj::select(std::string classes){
 	while ( std::getline(iss, token, '|') ){
 		vetclasse.push_back(std::move(token));
 	}
-	out.clear();
+	out->clear();
 	for (size_t i=0; i<this->size(); i++){
 		TiObj obj = this->box[i];
 		for (size_t j=0; j<vetclasse.size(); j++){
-			if ( obj.is(vetclasse[j]) ){
-				out.box() += obj;
+			if ( obj->is(vetclasse[j]) ){
+				out->box += obj;
 			}
 		}
 	}
 	return out;
 }
 
-
-
-int partition(TiObjPkg& box, uint left, uint right, std::string& field){
-	/*TiObj*  aux;
-	TiObj** boxdata = &box.at(0);
-	if ( !box[left].has(field) ){
-		aux = boxdata[right-1];
-		boxdata[right-1] = boxdata[left];
-		boxdata[left] = aux;
-		return right-1;
-	}
-
-	uint i = left;
-	uint j;
-	string j_value;
-	string value = box[left].atStr(field);
-	for(j=left+1; j<right; j++){
-		if ( !box[j].has(field) )
-			continue;
-
-		j_value = box[j].atStr(field);
-		if( strcasecmp(j_value.c_str(), value.c_str()) < 0  ){
-			i=i+1;
-			aux = boxdata[i];
-			boxdata[i] = boxdata[j];
-			boxdata[j] = aux;
-		}
-	}
-	aux = boxdata[i];
-	boxdata[i] = boxdata[left];
-	boxdata[left] = aux;
-
-	return i;*/
-}
-
-
-void quickSort(TiObjPkg& box, uint left, uint right, std::string& field){
+void quickSort(TiObjPkg& box, size_t left, size_t right, std::string& field){
 	uint pivot;
 	if(left<right){
 		pivot = partition(box,left,right,field);
@@ -314,9 +249,9 @@ void quickSort(TiObjPkg& box, uint left, uint right, std::string& field){
 
 TiObj _TiObj::orderby(TiObj out, std::string field){
 	for (int i=0; i<this->box.size(); i++){
-		out.box() += this->box[i];
+		out->box += this->box[i];
 	}
-	quickSort (out.box(), 0, this->box.size(), field);
+	quickSort (out->box, 0, this->box.size(), field);
 	return out;
 }
 
@@ -330,18 +265,18 @@ TiObj _TiObj::groupby(std::string field){
 	TiObj out;
 	for (int i=0; i<this->size(); i++){
 		TiObj node = this->box[i];
-		if ( node.has(field) ){
+		if ( node->has(field) ){
 			TiObj cur(0);
-			string key = node.atStr(field);
-			if ( out.has(key) ){
-				cur = out.atObj(key);
+			string key = node->atStr(field);
+			if ( out->has(key) ){
+				cur = out->atObj(key);
 			} else {
 				cur.create();
-				out.set(key, cur);
+				out->set(key, cur);
 			}
-			cur.box() += node;
+			cur->box += node;
 		} else {
-			out.box() += node;
+			out->box += node;
 		}
 	}
 }
@@ -426,18 +361,12 @@ string _TiObj::toString(){
 	string res;
 	res += this->classe;
 	res += '{';
-	
 	for (int i=0; i<this->var.size(); i++){
 		res += var[i].name;
 		res += '=';
 		res += var[i].toString();
 		res += ';';
 	}
-
-	/*
-		FALTA MOSTRAR OS OBJETOS DO BOX --------------------------------------------------------------------------------
-	 */
-
 	res += '}';
 	return res;
 }
@@ -452,7 +381,7 @@ string _TiObj::toString(string name){
 	} else if ( attr.isDbl() ){
 		return std::to_string(attr.dbl);
 	} else if ( attr.isObj() ){
-		return attr.objptr.encode(0);
+		return attr.objptr->encode(0);
 	} else if ( attr.isVet() ){
 		//TiVet* tmp = (TiVet*) attr.objptr;
 		//return tmp->encode(0);
@@ -463,7 +392,7 @@ string _TiObj::toString(string name){
 void _TiObj::encode(std::string& res, int tab, bool indent, bool jmpline){
 
 
-	if ( indent == true ){ 
+	if ( indent == true ){
 		for (int i=1; i<tab; i++)
 			res += '\t';
 	}
@@ -476,7 +405,7 @@ void _TiObj::encode(std::string& res, int tab, bool indent, bool jmpline){
 	} else {
 		if ( this->classe != "" ){
 			res += this->classe;
-			res += ' '; 
+			res += ' ';
 		}
 		res += "{\n";
 	}
@@ -486,7 +415,7 @@ void _TiObj::encode(std::string& res, int tab, bool indent, bool jmpline){
 	}
 
 	for (int i=0; i<this->box.size(); i++){
-		this->box[i].encode(res, tab+1);
+		this->box[i]->encode(res, tab+1);
 	}
 
 	if ( tab == 0 ){
@@ -500,10 +429,10 @@ void _TiObj::encode(std::string& res, int tab, bool indent, bool jmpline){
 }
 
 
-int _TiObj::decode(TiObj out, string text){
+/*int _TiObj::decode(TiObj out, string text){
 	//out.clear();
 	return true;
-}
+}*/
 
 void _TiObj::toAsm(TiAsm& res){
 	for (size_t i=0; i<this->length(); i++){
@@ -511,19 +440,19 @@ void _TiObj::toAsm(TiAsm& res){
 	}
 	for (size_t i=0; i<this->size(); i++){
 		TiObj obj = this->box[i];
-		res.printObj(obj.classe());
-		obj.ptr->toAsm(res);
+		res.printObj(obj->classe);
+		obj->toAsm(res);
 		res.printRet();
 	}
 }
 
 void _TiObj::toJson(std::string& out){
 	out += "{\n";
-	
+
 	out += "\"class\":\"";
 	out += this->classe;
 	out += "\"";
-	
+
 	for (size_t i=0; i<this->length(); i++){
 		out += ",\n";
 		this->at(i).toJson(out);
@@ -531,11 +460,11 @@ void _TiObj::toJson(std::string& out){
 
 	if ( this->size() > 0 ){
 		out += ",\n\"box\" : [";
-		this->box[0].ptr->toJson(out);
+		this->box[0]->toJson(out);
 		for (size_t i=1; i<this->size(); i++){
 			TiObj obj = this->box[i];
 			out += ",\n";
-			obj.ptr->toJson(out);
+			obj->toJson(out);
 		}
 		out += "\n]\n";
 	}
@@ -544,7 +473,7 @@ void _TiObj::toJson(std::string& out){
 
 
 void _TiObj::toYaml(std::string& out){
-	
+
 	/*out += " - class: ";
 	out += this->classe;
 	out += "\n";*/
@@ -557,11 +486,11 @@ void _TiObj::toYaml(std::string& out){
 
 	if ( this->size() > 0 ){
 		out += "   box:";
-		this->box[0].ptr->toJson(out);
+		this->box[0]->toJson(out);
 		for (size_t i=1; i<this->size(); i++){
 			TiObj obj = this->box[i];
 			out += "\n";
-			obj.ptr->toYaml(out);
+			obj->toYaml(out);
 		}
 	}
 
@@ -592,7 +521,13 @@ void TiObjPkg::operator+=(string objstr){
 /*=====================================================================================*/
 
 ostream& operator<<(ostream& os, TiObj obj){
-	return os << obj.encode(0,true,false);
+	return os << obj->encode(0,true,false);
+}
+
+ostream& operator<<(ostream& os, _TiObj& obj){
+	string buf;
+	obj.encode(buf, 0,true,false);
+	return os << buf;
 }
 
 ostream& operator<<(ostream& os, TiVar& var){
@@ -609,13 +544,13 @@ ostream& operator<<(ostream& os, TiVar& var){
 	else if ( var.isVet() )
 		return os << "[VECTOR]";
 	else if ( var.isObj() )
-		return os << var.objptr.encode();
+		return os << var.objptr->encode(0);
 	return os << "[UNKNOWN]";
 }
 
 ostream& operator<<(ostream& os, TiObjPkg& box){
 	for (int i=0; i<box.size(); i++){
-		os << box[i].encode(1);
+		os << box[i]->encode(1);
 	}
 }
 
@@ -654,14 +589,30 @@ ostream& operator<<(ostream& os, TiObjPkg& box){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+size_t partition(TiObjPkg& box, size_t left, size_t right, std::string& field){
+	TiObj  aux;
+	if ( !box[left]->has(field) ){
+		aux = box[right-1];
+		box[right-1] = box[left];
+		box[left]    = aux;
+		return right-1;
+	}
+	size_t  j, i = left;
+	string j_value;
+	string value = box[left]->atStr(field);
+	for(j=left+1; j<right; j++){
+		if ( !box[j]->has(field) )
+			continue;
+		j_value = box[j]->atStr(field);
+		if( strcasecmp(j_value.c_str(), value.c_str()) < 0  ){
+			i=i+1;
+			aux = box[i];
+			box[i] = box[j];
+			box[j] = aux;
+		}
+	}
+	aux = box[i];
+	box[i] = box[left];
+	box[left] = aux;
+	return i;
+}

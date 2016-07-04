@@ -49,7 +49,7 @@ bool build_tiasm( TiBuffer& buffer, _TiObj* out );
 
 class TiBuilder {
   public:
-	vector< _TiObj* > stack;
+	std::vector< _TiObj* > stack;
 	_TiObj* cur;
 
 	inline void push( _TiObj* obj ){
@@ -57,7 +57,9 @@ class TiBuilder {
 		this->cur = obj;
 	}
 
-	inline void pop( _TiObj* obj ){
+	inline size_t size(){return this->stack.size();}
+
+	inline void pop(){
 		if ( this->stack.size() > 1 ){
 			this->stack.pop_back();
 			this->cur = this->stack[ this->stack.size()-1 ];
@@ -73,7 +75,14 @@ class TiBuilder {
 
 
 void tibuilder_run_error(TiParser& pr, TiBuilder& bu){
-
+	if ( bu.size() > 0 ){
+		bu.cur = nullptr;
+		_TiObj* cur = bu.stack[0];
+		cur->clear();
+		cur->set("classe","Error:Syntax");
+		cur->set("msg", "error");
+		cur->set("line", 10);
+	}
 }
 
 void tibuilder_run_attr_int(TiParser& pr, TiBuilder& bu){
@@ -99,19 +108,35 @@ void tibuilder_run_attr_bin(TiParser& pr, TiBuilder& bu){
 
 void tibuilder_run_attr_obj(TiParser& pr, TiBuilder& bu){
 	_TiObj* novo = new _TiObj;
+	novo->classe = pr.out.str;
 	bu.cur->set( pr.out.attr_name, novo );
 	bu.push(novo);
 }
 
+void tibuilder_run_box_obj(TiParser& pr, TiBuilder& bu){
+	_TiObj* novo = new _TiObj;
+	novo->classe = pr.out.attr_name;
+	bu.cur->box += novo;
+	bu.push(novo);
+}
 
-std::function<void(TiParser&,TiBuilder&)> tibuilder_run[7] ={
+void tibuilder_run_obj_end(TiParser& pr, TiBuilder& bu){
+	if ( bu.size() > 0 ){
+		bu.pop();
+	}
+}
+
+
+std::function<void(TiParser&,TiBuilder&)> tibuilder_run[] = {
 	tibuilder_run_error,
 	tibuilder_run_attr_int,
 	tibuilder_run_attr_dbl,
 	tibuilder_run_attr_str,
 	tibuilder_run_attr_text,
 	tibuilder_run_attr_bin,
-	tibuilder_run_attr_obj
+	tibuilder_run_attr_obj,
+	tibuilder_run_box_obj,
+	tibuilder_run_obj_end
 };
 
 
@@ -127,10 +152,10 @@ void tibuilder (TiBuffer& buffer, _TiObj* obj){
 			TiParser parser;
 			parser.load( &buffer );
 			while ( parser.next() ){
-cout << parser.out.type << endl;
-				if ( parser.out.type == TiEvent::ERROR )
+				if ( parser.out.type == TiEvent::ERROR ){
+					tibuilder_run_error(parser,builder);
 					break;
-
+				}
 				tibuilder_run[ parser.out.type ](parser, builder);
 			}
 		}

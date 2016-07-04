@@ -5,8 +5,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -O3")
 
 
 add_library (tiobj SHARED "src/join.cpp" "src/tiasm.cpp" "src/tistream.cpp" "src/tivar.cpp" "src/tiparser.cpp" "src/tiobj.cpp" "src/tiasm.cpp" "src/tivarpkg.cpp" "src/tibuilder.cpp" )
-add_library (tiobj-static STATIC "src/join.cpp" "src/tiasm.cpp" "src/tistream.cpp" "src/tivar.cpp" "src/tiparser.cpp" "src/tiobj.cpp" "src/tiasm.cpp" "src/tivarpkg.cpp" "src/tibuilder.cpp" )
-set_target_properties(tiobj-static PROPERTIES OUTPUT_NAME tiobj)
+#add_library (tiobj-static STATIC "src/join.cpp" "src/tiasm.cpp" "src/tistream.cpp" "src/tivar.cpp" "src/tiparser.cpp" "src/tiobj.cpp" "src/tiasm.cpp" "src/tivarpkg.cpp" "src/tibuilder.cpp" )
+#set_target_properties(tiobj-static PROPERTIES OUTPUT_NAME tiobj)
 
 
 find_package(OpenCV REQUIRED)

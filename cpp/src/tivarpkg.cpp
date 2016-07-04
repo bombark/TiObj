@@ -5,7 +5,7 @@
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.	
+ *  (at your option) any later version.
  *
  *  Foobar is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -34,16 +34,11 @@ using namespace std;
 /*=====================================================================================*/
 /*
 
-
 void TiVarPkg::clear(){
 	for ( auto& vr : *this ){
 		delete vr.second;
 	}
 }
-
-
-
-
 
 TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 	TiVar* res;
@@ -67,12 +62,16 @@ TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 
 /*=====================================================================================*/
 
-
+TiVarPkg::TiVarPkg(){
+	//this->reserve(32);
+}
 
 void TiVarPkg::clear(){
 	for (size_t i=0; i<this->size(); i++){
 		delete this->at(i);
 	}
+	std::vector<TiVar*>::clear();
+
 }
 
 bool TiVarPkg::search(std::string query, TiVar** out_obj, size_t& out_addpos){
@@ -150,4 +149,3 @@ TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
 
 
 /*-------------------------------------------------------------------------------------*/
-
