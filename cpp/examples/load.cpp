@@ -5,18 +5,25 @@ using namespace std;
 
 
 int main(int argc, char** argv){
-
-		TiObj text("name=felipe;idade=28;score=123.123 2222");
-		cout << text << endl;
+	try {
+		TiObj text("name=felipe;idade=28;score=123.123 ");
+		//cout << text << endl;
 
 		TiObj file1;
 		file1->load( argv[1] );
-		cout << file1 << endl;
+
+		for ( auto var : file1->var ){
+			cout << var->name << " -> " << var->Str() << endl;
+		}
+
+		for ( auto obj : file1->box ){
+			cout << obj << endl;
+		}
 
 
-
-	//TiObj file2(false,"teste.ti");
-	//cout << file2 << endl;
+	} catch (tiexception e){
+		cout << e.what() << endl;
+	}
 
 	return 0;
 }

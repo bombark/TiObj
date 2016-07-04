@@ -42,6 +42,18 @@ _TiObj _TiObj::ObjNull;
 void tibuilder (TiBuffer& buffer, _TiObj* obj);
 size_t partition(TiObjPkg& box, size_t left, size_t right, std::string& field);
 
+/*-------------------------------------------------------------------------------------*/
+
+
+
+/*======================================  TiObj  ======================================*/
+
+void TiObjPkg::clear(){
+	for (size_t i=0; i<this->size(); i++){
+		this->at(i).reset();
+	}
+	std::vector<TiObj>::clear();
+}
 
 /*-------------------------------------------------------------------------------------*/
 

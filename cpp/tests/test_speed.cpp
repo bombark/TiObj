@@ -41,9 +41,12 @@ void* terminator(void* ){
 
 
 int main(int argc, char** argv){
+	bool exec = false;
 	if ( argc < 2 ){
 		cerr << "./test_speed name\n";
 		return 1;
+	} else if ( argc == 3 ) {
+		exec = true;
 	}
 
 	pthread_t id;
@@ -65,15 +68,17 @@ int main(int argc, char** argv){
 	}
 
 
-	url  = "tmp/"+name+".ti";
-	cout << "Testing loading TiOs speed " << url << endl;
-	base->save(url, "binary");
+	if ( exec ){
+		url  = "tmp/"+name+".ti";
+		cout << "Testing loading TiOs speed " << url << endl;
+		base->save(url, "binary");
 
-	G_continue = true;
-	pthread_create(&id, NULL, &terminator, NULL);
-	while ( G_continue ){
-		TiObj b(true, url);
-		G_i += 1;
+		G_continue = true;
+		pthread_create(&id, NULL, &terminator, NULL);
+		while ( G_continue ){
+			TiObj b(true, url);
+			G_i += 1;
+		}
 	}
 
 

@@ -84,6 +84,7 @@ class TiObj : public std::shared_ptr<_TiObj> {
 
 class TiObjPkg : public std::vector<TiObj> {
   public:
+	void clear();
 	inline TiObj  operator[](size_t id){return this->at(id);}
 	inline void   operator+=(TiObj obj){this->push_back(obj);}
 	inline void   operator+=(std::string objstr);

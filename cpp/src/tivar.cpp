@@ -231,7 +231,7 @@ void TiVar::encode(std::string& out, int tab){
 
 
 void TiVar::removeObject(){
-	//delete this->objptr;
+	this->objptr.reset();
 }
 
 void TiVar::toAsm(TiAsm& res){

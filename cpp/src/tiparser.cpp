@@ -56,6 +56,7 @@ std::string TiToken::value(){
 	switch (this->type) {
 		case INT:    res += to_string(this->num); break;
 		case DOUBLE: res += to_string(this->dbl); break;
+		case SYMBOL: res += this->symbol; break;
 		case END:    break;
 		default:     res += this->text;
 	}
@@ -237,22 +238,20 @@ void TiLex::load(TiBuffer* buffer){
 
 
 bool TiLex::next(){
-	out.type = TiToken::ERROR;
-
-	if ( !this->buffer->good() ){
-		out.type = TiToken::END;
-		return false;
-	}
-
 	int type;
-	// Remove char without mean as ' ', '\t', ...
 	do {
 		type = TiLex::symbols[ buffer->last ];
 		if ( type != TiLex::DEL )
 			break;
 	} while ( buffer->next() );
 
-	return tilex_run[type](*this);
+
+	if ( this->buffer->good() ){
+		return tilex_run[type](*this);
+	} else {
+		out.type = TiToken::END;
+		return false;
+	}
 }
 
 
