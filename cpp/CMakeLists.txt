@@ -27,6 +27,8 @@ target_link_libraries(test_cv tiobj ${OpenCV_LIBS})
 add_executable(test_basic "tests/basic.cpp")
 target_link_libraries(test_basic tiobj ${OpenCV_LIBS})
 
+add_executable(outros "tests/curiosidades.cpp")
+target_link_libraries(outros tiobj ${OpenCV_LIBS})
 
 
 

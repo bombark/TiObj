@@ -9,6 +9,8 @@ using namespace std;
 class Teste {
   public:
 	int a,b;
+	Teste(){
+	}
 };
 
 class TesteVirtual {
