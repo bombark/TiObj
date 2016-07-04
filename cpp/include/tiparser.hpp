@@ -37,8 +37,7 @@ class TiGlobal;
 
 /*=====================================  TiToken  =====================================*/
 
-class TiToken {
-  public:
+struct TiToken {
 	enum Type {UNKNOWN, STRING, INT, DOUBLE, SYMBOL, EMPTY, END, TEXT, COMMENT, ERROR, BINARY};
 
 	Type type;
@@ -51,6 +50,8 @@ class TiToken {
 		double   dbl;
 	};
 	std::vector<char> bin;
+
+	std::string value();
 };
 
 /*-------------------------------------------------------------------------------------*/
@@ -62,7 +63,7 @@ class TiToken {
 class TiBuffer {
   protected:
 	friend TiLex; friend TiParser;
-	size_t line;
+	size_t line, cursor;
 	bool is_good;
 
   public:
@@ -84,7 +85,6 @@ class TiBuffer {
 
 class TiBufferText : public TiBuffer {
 	std::string text;
-	size_t cursor;
 
   public:
 	TiBufferText(std::string text);
@@ -102,12 +102,15 @@ class TiBufferFile : public TiBuffer {
 
 	FILE* fd;
 	char buffer[TiBufferFile::BUFFER_SIZE];
-	size_t cursor, size, max, already_read;
+	size_t size, max, already_read;
 
 
   public:
+	TiBufferFile();
 	TiBufferFile(FILE* fd);
-	bool next() override ;
+
+	void load(FILE* fd);
+	bool next()    override ;
 	int  readInt() override ;
 	std::string readStr(unsigned size)  override ;
 	std::vector<char> read(size_t size) override ;
@@ -155,9 +158,8 @@ class TiLex {
 
 /*====================================  TiEvent =======================================*/
 
-class TiEvent{
-  public:
-	enum Type { ERROR, ATTR_INT, ATTR_DBL, ATTR_STR, ATTR_TEXT, ATTR_BIN, ATTR_OBJ, BOX_OBJ, OBJ_END, END };
+struct TiEvent {
+	enum Type { ERROR, ATTR_INT, ATTR_DBL, ATTR_STR, ATTR_TEXT, ATTR_BIN, ATTR_OBJ, BOX_OBJ, OBJ_END, OBJ_END_WITH_STR, END };
 
 	Type type;
 	std::string attr_name;
@@ -168,6 +170,7 @@ class TiEvent{
 		double   dbl;
 	};
 	std::vector<char> bin;
+	size_t line,cursor;
 };
 
 /*-------------------------------------------------------------------------------------*/

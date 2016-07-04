@@ -1,7 +1,19 @@
 name='aaaa'
+idade=1233;
+obj={
+	teste='atrapalhar1'
+}
 File{name='felipe1';url='../aaa/sss'}
 File{name='felipe2';url='../aaa/sss';score=1.2333}
-File{name='felipe3';url='../aaa/sss'}
+File{
+	name='felipe3-ee';url='../aaa/sss'
+	aqui=111
+	Objeto{name='atrapalhar2'}
+	obj={
+		name='atrapalhar3'
+	}
+
+}
 Folder{name='felipe4';url='../aaa/sss'}
 Folder{name='felipe5';url='../aaa/sss'}
 Folder{name='felipe6';url='../aaa/sss'}

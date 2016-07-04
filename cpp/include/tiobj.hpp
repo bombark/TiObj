@@ -25,9 +25,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <typeinfo>
 #include <memory>
-#include <map>
+#include <exception>
+
 #include "tiasm.hpp"
 #include "tipool.hpp"
 
@@ -36,6 +36,23 @@ class TiVarPkg;
 class TiVar;
 class TiBox;
 class _TiObj;
+
+/*-------------------------------------------------------------------------------------*/
+
+
+
+/*====================================- Exception -====================================*/
+
+class tiexception : public std::exception {
+	std::string msg;
+  public:
+	tiexception(std::string msg) : exception(){
+		this->msg = msg;
+	}
+	virtual const char* what() const throw(){
+		return this->msg.c_str();
+	}
+};
 
 /*-------------------------------------------------------------------------------------*/
 
@@ -69,7 +86,7 @@ class TiObjPkg : public std::vector<TiObj> {
   public:
 	inline TiObj  operator[](size_t id){return this->at(id);}
 	inline void   operator+=(TiObj obj){this->push_back(obj);}
-	       void   operator+=(std::string objstr);
+	inline void   operator+=(std::string objstr);
 };
 
 /*-------------------------------------------------------------------------------------*/
@@ -276,6 +293,9 @@ class _TiObj {
 	inline void set(std::string name, long int value){
 		this->_set<long int>(name, value);
 	}
+	inline void set(std::string name, size_t value){
+		this->_set<long int>(name, value);
+	}
 	inline void set(std::string name, float value){
 		this->_set<double>(name, value);
 	}
@@ -339,8 +359,8 @@ class _TiObj {
 
 	TiObj select (std::string classes);
 
-	TiObj orderby(TiObj out, std::string field);
-	TiObj orderby(std::string field);
+	//TiObj orderby(TiObj out, std::string field);
+	void orderby(std::string field);
 
 	//_TiObj& where(_TiObj& out, std::string condpkg);
 	//_TiObj& where(std::string condpkg);
@@ -350,8 +370,8 @@ class _TiObj {
 
 
 
-	void encode(std::string& out, int tab, bool indent=false, bool jmpline=false);
-	inline std::string encode(int tab, bool indent=false, bool jmpline=false){
+	void encode(std::string& out, int tab, bool indent=true, bool jmpline=true);
+	inline std::string encode(int tab, bool indent=true, bool jmpline=true){
 		std::string out; this->encode(out,tab,indent,jmpline); return out;
 	}
 
@@ -426,17 +446,44 @@ inline void TiObj::create(){
 }
 
 inline TiVar& TiObj::operator[](std::string name){
-	return (*this)->var[name];
+	return this->get()->at(name,true);
 }
 
 inline TiVar& TiObj::operator[](size_t id){
-	return (*this)->var[id];
+	return this->get()->var[id];
+}
+
+inline void TiObjPkg::operator+=(std::string objstr){
+	this->push_back( TiObj(new _TiObj(objstr)) );
 }
 
 /*-------------------------------------------------------------------------------------*/
 
 
 
+/*====================================- TiStream -=====================================*/
+
+#include "tiparser.hpp"
+
+bool tibuilder_step (TiParser& parser, _TiObj* obj);
+
+class TiStream {
+	TiBufferFile buffer;
+	TiParser     parser;
+
+  public:
+	TiStream(FILE* fd){
+		this->buffer.load(fd);
+		this->parser.load(&buffer);
+	}
+
+	inline bool next(TiObj out){
+		out->clear();
+		return tibuilder_step(parser,out.get());
+	}
+};
+
+/*-------------------------------------------------------------------------------------*/
 
 
 
@@ -460,31 +507,12 @@ class Join {
 /*-------------------------------------------------------------------------------------*/
 
 
+
 /*====================================- Friends -======================================*/
 
 std::ostream& operator<<(std::ostream& os, TiObj  obj);
 std::ostream& operator<<(std::ostream& os, _TiObj& obj);
 std::ostream& operator<<(std::ostream& os, TiVar& var);
 std::ostream& operator<<(std::ostream& os, TiBox& box);
-
-/*-------------------------------------------------------------------------------------*/
-
-
-
-
-
-/*====================================- TiStream -=====================================*/
-
-
-
-/*class TiStream {
-	TiParser parser;
-
-  public:
-	TiStream(FILE* fd);
-	bool next(TiObj& out);
-};*/
-
-
 
 /*-------------------------------------------------------------------------------------*/

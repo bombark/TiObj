@@ -18,7 +18,8 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-/*=====================================================================================*/
+
+/*=====================================  HEADER  ======================================*/
 
 #include "../include/tiobj.hpp"
 #include <iostream>
@@ -31,47 +32,15 @@ using namespace std;
 
 
 
-/*=====================================================================================*/
-/*
+/*====================================  TiVarPkg  =====================================*/
 
-void TiVarPkg::clear(){
-	for ( auto& vr : *this ){
-		delete vr.second;
-	}
-}
-
-TiVar& TiVarPkg::push(void* ptr, size_t size, std::string name){
-	TiVar* res;
-	auto it = this->find ( name );
-	if (it != this->end()){
-		res = it->second;
-	} else {
-		res = new TiVar();
-		res->name = name;
-		this->insert( std::pair<std::string,TiVar*>(name,res) );
-	}
-
-	res->setBinary(ptr, size);
-	return *res;
-}
-
-*/
-/*-------------------------------------------------------------------------------------*/
-
-
-
-/*=====================================================================================*/
-
-TiVarPkg::TiVarPkg(){
-	//this->reserve(32);
-}
+TiVarPkg::TiVarPkg(){}
 
 void TiVarPkg::clear(){
 	for (size_t i=0; i<this->size(); i++){
 		delete this->at(i);
 	}
 	std::vector<TiVar*>::clear();
-
 }
 
 bool TiVarPkg::search(std::string query, TiVar** out_obj, size_t& out_addpos){
@@ -80,13 +49,11 @@ bool TiVarPkg::search(std::string query, TiVar** out_obj, size_t& out_addpos){
 		out_addpos = 0;
 		return false;
 	}
-
 	if ( query > this->last().name ){
 		out_obj    = nullptr;
 		out_addpos = this->size();
 		return false;
 	}
-
 	size_t ini = 0;
 	size_t end = this->size();
 	while ( ini<end ){
@@ -107,7 +74,6 @@ bool TiVarPkg::search(std::string query, TiVar** out_obj, size_t& out_addpos){
 	out_addpos = end;
 	return false;
 }
-
 
 TiVar& TiVarPkg::search(std::string query){
 	size_t ini = 0;

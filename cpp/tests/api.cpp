@@ -50,8 +50,15 @@ int main(int argc, char** argv){
 	//TiObj b;
 	//b.load("../tests/error01.ti");
 
-	TiObj p("name='felipe'");
-	cout << p;
+	//TiObj p("name='felipe';idade=10;score=1.2356");
+	//cout << p;
+
+	TiStream stream(stdin);
+
+	TiObj obj;
+	while ( stream.next(obj) ){
+		cout << obj << endl;
+	}
 
 
 	/*for ( auto node : p->box ){

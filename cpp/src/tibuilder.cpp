@@ -1,6 +1,6 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,25 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-/*=====================================  TiParser  =======================================
+
+
+/*=====================================  HEADER  =======================================*/
+
+#include "../include/tiobj.hpp"
+#include "../include/tiparser.hpp"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+using namespace std;
+
+bool build_tiasm( TiBuffer& buffer, _TiObj* out );
+
+/*--------------------------------------------------------------------------------------*/
+
+
+
+/*=====================================  TiAsm  ========================================
  * a: Attr + (4b) int
  * b: Attr + (4b) float
  * c: Attr + text
@@ -33,24 +51,15 @@
  *--------------------------------------------------------------------------------------*/
 
 
-/*=====================================================================================*/
 
-#include "../include/tiobj.hpp"
-#include "../include/tiparser.hpp"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+/*===================================  TiContext  ======================================*/
 
-
-using namespace std;
-
-
-bool build_tiasm( TiBuffer& buffer, _TiObj* out );
-
-class TiBuilder {
-  public:
+struct TiContext {
 	std::vector< _TiObj* > stack;
 	_TiObj* cur;
+
+	TiContext(){}
+	TiContext( _TiObj* obj ){this->push(obj);}
 
 	inline void push( _TiObj* obj ){
 		this->stack.push_back(obj);
@@ -68,66 +77,77 @@ class TiBuilder {
 };
 
 
-/*-------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------*/
 
 
-/*=====================================================================================*/
 
+/*===================================  TiBuilder  ======================================*/
 
-void tibuilder_run_error(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_error(TiParser& pr, TiContext& bu){
 	if ( bu.size() > 0 ){
 		bu.cur = nullptr;
 		_TiObj* cur = bu.stack[0];
 		cur->clear();
 		cur->set("classe","Error:Syntax");
-		cur->set("msg", "error");
-		cur->set("line", 10);
+		cur->set("msg", pr.out.str );
+		cur->set("line", pr.out.line );
+		cur->set("cursor", pr.out.cursor );
 	}
 }
 
-void tibuilder_run_attr_int(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_int(TiParser& pr, TiContext& bu){
 	bu.cur->set( pr.out.attr_name, pr.out.num );
 }
 
-void tibuilder_run_attr_dbl(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_dbl(TiParser& pr, TiContext& bu){
 	bu.cur->set( pr.out.attr_name, pr.out.dbl );
 }
 
-void tibuilder_run_attr_str(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_str(TiParser& pr, TiContext& bu){
 	bu.cur->set( pr.out.attr_name, pr.out.str );
 }
 
-void tibuilder_run_attr_text(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_text(TiParser& pr, TiContext& bu){
 	//bu.cur->setText( pr.out.attr_name, pr.out.str, pr.out.text );
 	bu.cur->set( pr.out.attr_name, pr.out.text );
 }
 
-void tibuilder_run_attr_bin(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_bin(TiParser& pr, TiContext& bu){
 	bu.cur->set( pr.out.attr_name, pr.out.bin );
 }
 
-void tibuilder_run_attr_obj(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_attr_obj(TiParser& pr, TiContext& bu){
 	_TiObj* novo = new _TiObj;
 	novo->classe = pr.out.str;
 	bu.cur->set( pr.out.attr_name, novo );
 	bu.push(novo);
 }
 
-void tibuilder_run_box_obj(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_box_obj(TiParser& pr, TiContext& bu){
 	_TiObj* novo = new _TiObj;
 	novo->classe = pr.out.attr_name;
 	bu.cur->box += novo;
 	bu.push(novo);
 }
 
-void tibuilder_run_obj_end(TiParser& pr, TiBuilder& bu){
+void tibuilder_run_obj_end(TiParser& pr, TiContext& bu){
 	if ( bu.size() > 0 ){
 		bu.pop();
 	}
 }
 
+void tibuilder_run_obj_end_with_str(TiParser& pr, TiContext& bu){
+	bu.cur->set( pr.out.attr_name, pr.out.str );
+	if ( bu.size() > 0 ){
+		bu.pop();
+	}
+}
 
-std::function<void(TiParser&,TiBuilder&)> tibuilder_run[] = {
+void tibuilder_run_end(TiParser& pr, TiContext& bu){
+	assert("Error!");
+}
+
+std::function<void(TiParser&,TiContext&)> tibuilder_run[] = {
 	tibuilder_run_error,
 	tibuilder_run_attr_int,
 	tibuilder_run_attr_dbl,
@@ -136,15 +156,13 @@ std::function<void(TiParser&,TiBuilder&)> tibuilder_run[] = {
 	tibuilder_run_attr_bin,
 	tibuilder_run_attr_obj,
 	tibuilder_run_box_obj,
-	tibuilder_run_obj_end
+	tibuilder_run_obj_end,
+	tibuilder_run_obj_end_with_str,
+	tibuilder_run_end
 };
 
-
-
 void tibuilder (TiBuffer& buffer, _TiObj* obj){
-	TiBuilder builder;
-	builder.push(obj);
-
+	TiContext context(obj);
 	if ( buffer.good() ){
 		if ( buffer.last == '!'){
 			build_tiasm( buffer, obj );
@@ -153,16 +171,49 @@ void tibuilder (TiBuffer& buffer, _TiObj* obj){
 			parser.load( &buffer );
 			while ( parser.next() ){
 				if ( parser.out.type == TiEvent::ERROR ){
-					tibuilder_run_error(parser,builder);
-					break;
+					tibuilder_run_error(parser,context);
+					//throw tiexception( "hhhhh" );
 				}
-				tibuilder_run[ parser.out.type ](parser, builder);
+				tibuilder_run[ parser.out.type ](parser,context);
 			}
 		}
 	}
 }
 
+bool tibuilder_step (TiParser& parser, _TiObj* obj){
+	TiContext context;
+	while ( parser.next() ){
+		if ( parser.out.type == TiEvent::ERROR ){
+			tibuilder_run_error(parser,context);
+			return false;
+		}
 
+		if ( context.size() == 0 ){
+			if ( parser.out.type != TiEvent::BOX_OBJ )
+				continue;
+			context.push(obj);
+			obj->classe = parser.out.attr_name;
+		} else {
+			if (
+				context.size() == 1 && (
+					parser.out.type == TiEvent::OBJ_END ||
+					parser.out.type == TiEvent::OBJ_END_WITH_STR
+				)
+			){
+				tibuilder_run[ parser.out.type ](parser,context);
+				return true;
+			}
+			tibuilder_run[ parser.out.type ](parser,context);
+		}
+	}
+	return false;
+}
+
+/*--------------------------------------------------------------------------------------*/
+
+
+
+/*======================================================================================*/
 
 #include <sys/stat.h>
 
@@ -198,7 +249,6 @@ void tiasm_run_b ( TiBuffer& buffer, _TiObj* cur, unsigned short attr_size ){
 }
 
 void tiasm_run_cd ( TiBuffer& buffer, _TiObj* cur, unsigned short attr_size ){
-
 	/*uint size = *((short*) &data[i+2]);
 	const char* name = &data[i+4];
 	i += 4 + (size+1)&0xFFFFFFFE;
@@ -209,8 +259,6 @@ void tiasm_run_cd ( TiBuffer& buffer, _TiObj* cur, unsigned short attr_size ){
 	i += 4 + ((size+1)&0xFFFFFFFE);*/
 }
 
-
-
 std::function<void(TiBuffer&, _TiObj*, unsigned short)> tiasm_run[] = {
 	tiasm_run_a,
 	tiasm_run_b,
@@ -219,8 +267,6 @@ std::function<void(TiBuffer&, _TiObj*, unsigned short)> tiasm_run[] = {
 	//tiasm_run_e
 
 };
-
-
 
 bool build_tiasm( TiBuffer& buffer, _TiObj* out ){
 	char ass[3];
@@ -233,86 +279,8 @@ bool build_tiasm( TiBuffer& buffer, _TiObj* out ){
 
 	while ( buffer.good() ){
 		int cmd = buffer.readInt();
-		//cout << (cmd&0xFF)-'a' << endl;
 		tiasm_run[ (cmd&0xFF)-'a' ](buffer, cur, cmd>>16);
 	}
 }
 
-
 /*-------------------------------------------------------------------------------------*/
-
-		/*} else if ( cmd == 'c' || cmd == 'd' ){
-			size = *((short*) &data[i+2]);
-			name = &data[i+4];
-			i += 4 + (size+1)&0xFFFFFFFE;
-			size = *((unsigned*) &data[i]);
-			s_val = &data[i+4];
-
-			cur->set(name, s_val);
-			i += 4 + ((size+1)&0xFFFFFFFE);
-
-		} else if ( cmd == 'e' ){
-			size = *((short*) &data[i+2]);
-			name = &data[i+4];
-			i += 4 + ((size+1)&0xFFFFFFFE);
-
-			_TiObj* novo = new _TiObj;
-			cur->set(name, novo);
-			stack.push_back(novo);
-			cur = novo;
-
-		} else if ( cmd == 'f' ){
-			size = *((short*) &data[i+2]);
-			name = &data[i+4];
-			i += 4 + ((size+1)&0xFFFFFFFE);
-			size = *((short*) &data[i]);
-			cname = &data[i+2];
-			i += 2 + ((size+1)&0xFFFFFFFE);
-			_TiObj* novo = new _TiObj;
-			cur->set(name, novo);
-			stack.push_back(novo);
-			cur = novo;
-			cur->classe = cname;
-		} else if ( cmd == 'g' ){
-			_TiObj* novo = new _TiObj;
-			cur->box += novo;
-			stack.push_back( novo );
-			cur = novo;
-			i += 2;
-
-		} else if ( cmd == 'h' ){
-			size = *((short*) &data[i+2]);
-			name = &data[i+4];
-			i += 4 + ((size+1)&0xFFFFFFFE);
-			_TiObj* novo = new _TiObj;
-			cur->box += novo;
-			stack.push_back( novo );
-			cur = novo;
-			cur->classe = name;
-
-		} else if ( cmd == 'i' ){
-			int stack_size = stack.size();
-			if ( stack_size > 1 ){
-				stack.pop_back();
-				cur = stack[ stack_size-2];
-			} else if ( stack_size == 1 ){
-				stack.pop_back();
-				cur = &out;
-			} else
-				cur = &out;
-			i += 2;
-
-		} else if ( cmd == 'm' ){
-			size = *((short*) &data[i+2]);
-			name = &data[i+4];
-			i += 4 + (size+1)&0xFFFFFFFE;
-			size = *((unsigned*) &data[i]);
-			s_val = &data[i+4];
-			cur->setBinary(name, (char*)s_val, size);
-			i += 4 + ((size+1)&0xFFFFFFFE);
-
-		} else {
-
-			cerr << "tibuilder:error\n";
-			break;
-		}*/

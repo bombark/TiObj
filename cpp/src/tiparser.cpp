@@ -39,10 +39,32 @@ unsigned char TiLex::symbols[256];
 function< bool(TiLex&) > tilex_run[8];
 std::function<bool(TiParser&)> tiparser_run[QTDE_STATES][QTDE_TYPES];
 
+const char* TITOKEN_NAMES[] = {
+	"UNKNOWN", "STRING", "INT", "DOUBLE", "SYMBOL", "EMPTY", "END", "TEXT", "COMMENT", "ERROR", "BINARY"
+};
+
 /*-------------------------------------------------------------------------------------*/
 
 
 
+/*=====================================  TiToken  =====================================*/
+
+std::string TiToken::value(){
+	string res;
+	res = TITOKEN_NAMES[ this->type ];
+	res += '(';
+	switch (this->type) {
+		case INT:    res += to_string(this->num); break;
+		case DOUBLE: res += to_string(this->dbl); break;
+		case END:    break;
+		default:     res += this->text;
+	}
+	res+=')';
+	return res;
+	//UNKNOWN, STRING, INT, DOUBLE, SYMBOL, EMPTY, END, TEXT, COMMENT, ERROR, BINARY
+}
+
+/*-------------------------------------------------------------------------------------*/
 
 
 /*==================================  TiBufferText  ===================================*/
@@ -75,21 +97,25 @@ bool TiBufferText::next() {
 
 
 
-
-
 /*==================================  TiBufferFile  ===================================*/
 
+TiBufferFile::TiBufferFile(){
+}
+
 TiBufferFile::TiBufferFile(FILE* fd) {
+	this->load(fd);
+}
+
+void TiBufferFile::load(FILE* fd) {
 	this->fd = fd;
 	this->is_good = !feof(fd);
 	this->last   = '\0';
 	this->cursor = 0;
 	this->size   = 0;
 	this->already_read = 0;
-
-	struct stat st;
-	int error = fstat(fileno(fd), &st);
-	this->max = st.st_size;
+	//struct stat st;
+	//int error = fstat(fileno(fd), &st);
+	//this->max = st.st_size;
 	this->next();
 }
 
@@ -200,7 +226,6 @@ bool TiBufferFile::load(){
 }
 
 /*-------------------------------------------------------------------------------------*/
-
 
 
 
@@ -409,9 +434,7 @@ bool TiLex::run_comment(TiLex& lex){
 	return true;
 }
 
-
 /*-------------------------------------------------------------------------------------*/
-
 
 
 
@@ -436,7 +459,12 @@ bool TiParser::next(){
 
 //******* Runners *******
 bool TiParser::run_error(TiParser& pr){
-	pr.out.type = TiEvent::ERROR;
+	pr.out.type   = TiEvent::ERROR;
+	pr.out.str    = "Token ";
+	pr.out.str    += pr.lex.out.value();
+	pr.out.str    += " não esperado";
+	pr.out.line   = pr.lex.buffer->line;
+	pr.out.cursor = pr.lex.buffer->cursor;
 	return true;
 }
 
@@ -523,6 +551,9 @@ bool TiParser::run_symbol_3(TiParser& pr){
 			return true;
 		case '{':
 			pr.out.type = TiEvent::ATTR_OBJ;
+			return true;
+		case '}':
+			pr.out.type = TiEvent::OBJ_END_WITH_STR;
 			return true;
 		default:
 			pr.out.type = TiEvent::ERROR;

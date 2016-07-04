@@ -1,6 +1,6 @@
 /*  This file is part of Library TiObj.
  *
- *  Copyright (C) 2015  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
+ *  Copyright (C) 2016  Felipe Gustavo Bombardelli <felipebombardelli@gmail.com>
  *
  *  TiObj is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-/*=====================================================================================*/
 
-//#pragma once
+/*=====================================  HEADER  ======================================*/
+
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -32,7 +33,8 @@
 /*-------------------------------------------------------------------------------------*/
 
 
-/*=====================================================================================*/
+
+/*===================================  TiPoolNode  ====================================*/
 
 template<typename Tipo>
 class TiPoolNode {
@@ -71,7 +73,6 @@ class TiPoolNode {
 
 	/** @brief Get the value in the position pos */
 	inline Tipo& at(size_t pos){
-//cout << pos << " " << sizeof(Block) + pos*sizeof(T)  << endl;
 		Tipo* ptr = (Tipo*) ((char*)this->_at(pos) + sizeof(int));
 		return *ptr;
 	}
@@ -82,7 +83,6 @@ class TiPoolNode {
 	Tipo* malloc(){
 		unsigned char id  = this->getFreeId();
 		this->status     &= ~(0x1L << id);
-//printf("malloc var %ld %ld\n", this->id, this->data[id].id);
 		return &this->at(id);
 	}
 
@@ -120,7 +120,7 @@ class TiPoolNode {
 
 
 
-/*=====================================================================================*/
+/*=====================================  TiPool  ======================================*/
 
 template<typename Tipo>
 class TiPool {
@@ -155,7 +155,6 @@ class TiPool {
 	void free (void* ptr){
 		int b_id =  *( ((int*)ptr)-1 );
 		TiPoolNode<Tipo>* node = (TiPoolNode<Tipo>*) ((char*) ptr - TiPoolNode<Tipo>::back( b_id ));
-//printf("d %p\n", node);
 		node->free(b_id);
 		for (size_t i=0; i<this->stack_free.size(); i++){
 			if ( this->stack_free[i] == node )
