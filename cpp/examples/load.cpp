@@ -6,7 +6,7 @@ using namespace std;
 
 int main(int argc, char** argv){
 	try {
-		TiObj text("name=felipe;idade=28;score=123.123 ");
+		//TiObj text("name=felipe;idade=28;score=123.123 ");
 		//cout << text << endl;
 
 		TiObj file1;
