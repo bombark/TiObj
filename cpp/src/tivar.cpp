@@ -31,7 +31,7 @@ using namespace std;
 
 TiVar TiVar::ObjNull(0);
 
-TiPool<TiVar> TiVar::pool;
+//TiPool<TiVar> TiVar::pool;
 
 /*
 	Nao colocar o TiVar em uma estrutura de vector<TiVar>, pois para cada realocação
@@ -64,8 +64,7 @@ TiVar::TiVar(string name){
 TiVar::~TiVar(){
 //cout << "fim1 " <<  this->type << endl;
 	if ( this->isObj() ){
-		//this->removeObject();
-		this->objptr->clear();
+		this->removeObject();
 	}
 //cout << "fim2 " <<  this->type << endl;
 }
@@ -118,12 +117,15 @@ void TiVar::operator=(TiObj obj){
 	if ( this->isNull() )
 		return;
 	if ( this->isObj() ){
-		if ( obj == this->objptr )
+		/*if ( obj == this->objptr )
 			return;
-		this->removeObject();
+		this->removeObject();*/
+		this->objptr = obj;
+	} else {
+		this->objptr.reset();
+		this->objptr = obj;
 	}
 	this->type   = TiVar::OBJ;
-	this->objptr = obj;
 }
 
 

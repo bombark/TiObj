@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cassert>
 
 using namespace std;
 
@@ -170,14 +171,16 @@ void tibuilder (TiBuffer& buffer, _TiObj* obj){
 			TiParser parser;
 			parser.load( &buffer );
 			while ( parser.next() ){
+//cout << parser.out.type <<  << endl;
 				if ( parser.out.type == TiEvent::ERROR ){
 					tibuilder_run_error(parser,context);
-					//throw tiexception( "hhhhh" );
+					throw tiexception( obj->toString() );
 				}
 				tibuilder_run[ parser.out.type ](parser,context);
 			}
 		}
 	}
+cout << "ok!" << endl;
 }
 
 bool tibuilder_step (TiParser& parser, _TiObj* obj){

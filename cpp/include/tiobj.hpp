@@ -30,7 +30,7 @@
 #include <exception>
 
 #include "tiasm.hpp"
-#include "tipool.hpp"
+//#include "tipool.hpp"
 
 class TiObjPkg;
 class TiVarPkg;
@@ -109,8 +109,8 @@ class TiVar {
 	union {
 		double     dbl;
 		long int   num;
-		TiObj      objptr;
 	};
+	TiObj      objptr;
 	std::vector<char> bin;
 
 
@@ -163,13 +163,13 @@ class TiVar {
 
 
 
-	void* operator new(size_t stAllocateBlock){
+	/*void* operator new(size_t stAllocateBlock){
 		return TiVar::pool.malloc();
 	}
 	void operator delete(void* obj){
 		TiVar::pool.free(obj);
 	}
-	static TiPool<TiVar> pool;
+	static TiPool<TiVar> pool;*/
 
 
 
@@ -248,7 +248,7 @@ class TiVarPkg : public std::vector< TiVar* > {
 			*aux = value;
 			return *aux;
 		} else {
-			TiVar* var = new TiVar;
+			TiVar* var = new TiVar();
 			*var = value;
 			var->name = name;
 			this->insert ( this->begin()+order_pos, var );

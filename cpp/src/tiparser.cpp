@@ -39,6 +39,7 @@ unsigned char TiLex::symbols[256];
 function< bool(TiLex&) > tilex_run[8];
 std::function<bool(TiParser&)> tiparser_run[QTDE_STATES][QTDE_TYPES];
 
+
 const char* TITOKEN_NAMES[] = {
 	"UNKNOWN", "STRING", "INT", "DOUBLE", "SYMBOL", "EMPTY", "END", "TEXT", "COMMENT", "ERROR", "BINARY"
 };
@@ -514,8 +515,7 @@ bool TiParser::run_symbol_0(TiParser& pr){
 			--pr.state;
 			return false;
 		default:
-			pr.out.type = TiEvent::ERROR;
-			return true;
+			return TiParser::run_error(pr);
 	}
 }
 
@@ -527,8 +527,7 @@ bool TiParser::run_symbol_1(TiParser& pr){
 			pr.out.type = TiEvent::BOX_OBJ;
 			return true;
 		default:
-			pr.out.type = TiEvent::ERROR;
-			return true;
+			return TiParser::run_error(pr);
 	}
 }
 
@@ -538,7 +537,7 @@ bool TiParser::run_symbol_2(TiParser& pr){
 		pr.out.type = TiEvent::ATTR_OBJ;
 		pr.out.str.clear();
 	} else {
-		pr.out.type = TiEvent::ERROR;
+		return TiParser::run_error(pr);
 	}
 	return true;
 }
@@ -555,8 +554,7 @@ bool TiParser::run_symbol_3(TiParser& pr){
 			pr.out.type = TiEvent::OBJ_END_WITH_STR;
 			return true;
 		default:
-			pr.out.type = TiEvent::ERROR;
-			return true;
+			return TiParser::run_error(pr);
 	}
 }
 
