@@ -130,9 +130,9 @@ class TiVar {
 
 
 	std::string      Str();
-	inline long int  Int();
-	inline double    Dbl();
-	inline TiObj     Obj();
+	inline long int  Int(){return this->num;}
+	inline double    Dbl(){return this->dbl;}
+	inline TiObj     Obj(){return this->objptr;}
 
 
 	void operator=(std::string value);

@@ -180,7 +180,6 @@ void tibuilder (TiBuffer& buffer, _TiObj* obj){
 			}
 		}
 	}
-cout << "ok!" << endl;
 }
 
 bool tibuilder_step (TiParser& parser, _TiObj* obj){
