@@ -572,6 +572,11 @@ bool TiParser::run_end_3(TiParser& pr){
 	return true;
 }
 
+bool TiParser::run_comment(TiParser& pr){
+	pr.state -= 1; // anular o state++ 
+	return false;
+}
+
 
 /*-------------------------------------------------------------------------------------*/
 
@@ -652,6 +657,11 @@ class TiGlobal{
 		tiparser_run[2][TiToken::BINARY] = TiParser::run_binary_2;
 		tiparser_run[0][TiToken::END]    = TiParser::run_end_0;
 		tiparser_run[3][TiToken::END]    = TiParser::run_end_3;
+		
+		tiparser_run[0][TiToken::COMMENT] = TiParser::run_comment;
+		tiparser_run[1][TiToken::COMMENT] = TiParser::run_comment;
+		tiparser_run[2][TiToken::COMMENT] = TiParser::run_comment;
+		tiparser_run[3][TiToken::COMMENT] = TiParser::run_comment;
 	}
 };
 

@@ -210,6 +210,7 @@ class TiParser {
 	static bool run_binary_2(TiParser& pr);
 	static bool run_end_0(TiParser& pr);
 	static bool run_end_3(TiParser& pr);
+	static bool run_comment(TiParser& pr);
 };
 
 /*-------------------------------------------------------------------------------------*/
